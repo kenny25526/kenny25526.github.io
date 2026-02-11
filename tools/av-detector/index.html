@@ -1,0 +1,373 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Windows/Linux 杀软识别 | Kenny 的网络安全博客</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="7ad0ff"><meta name="description" content="Windows&#x2F;Linux 杀软识别             复制 CMD: tasklist &#x2F;SVC       复制 PowerShell 进程命令       开始识别       清空                       命中条数：0       厂商数量：0                                     系统进程">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Windows&#x2F;Linux 杀软识别">
+<meta property="og:url" content="https://www.52jl.top/tools/av-detector/index.html">
+<meta property="og:site_name" content="Kenny 的网络安全博客">
+<meta property="og:description" content="Windows&#x2F;Linux 杀软识别             复制 CMD: tasklist &#x2F;SVC       复制 PowerShell 进程命令       开始识别       清空                       命中条数：0       厂商数量：0                                     系统进程">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/avatar.jpg">
+<meta property="article:published_time" content="2026-02-11T06:15:28.068Z">
+<meta property="article:modified_time" content="2026-02-11T06:15:28.068Z">
+<meta property="article:author" content="Kenny">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/avatar.jpg"><script type="application/ld+json"></script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/tools/av-detector/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Windows/Linux 杀软识别',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'page'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Patrick+Hand&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div class="bg-animation" id="web_bg" style="background-image: url(/img/shinchan-crayon-bg.svg);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">8</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div></div></div></div><div class="page" id="body-wrap"><header class="not-home-page" id="page-header" style="background-image: url(/img/shinchan-hero.svg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Kenny 的网络安全博客</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="page-site-info"><h1 id="site-title">Windows/Linux 杀软识别</h1></div></header><main class="layout" id="content-inner"><div id="page"><div class="container" id="article-container">
+<div class="av-tool">
+  <div class="av-shell">
+    <h2 class="av-title">Windows/Linux 杀软识别</h2>
+
+    <div class="av-row">
+      <button class="av-btn alt" id="av-copy-cmd">复制 CMD: tasklist /SVC</button>
+      <button class="av-btn alt" id="av-copy-ps">复制 PowerShell 进程命令</button>
+      <button class="av-btn" id="av-run">开始识别</button>
+      <button class="av-btn warn" id="av-clear">清空</button>
+    </div>
+
+    <textarea id="av-input" rows="10" placeholder="粘贴进程列表（tasklist/PowerShell/ps 输出）"></textarea>
+    <div class="av-meta">
+      <span>命中条数：<b id="av-count">0</b></span>
+      <span>厂商数量：<b id="av-vendors">0</b></span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>系统进程</th>
+          <th>杀软/EDR</th>
+        </tr>
+      </thead>
+      <tbody id="av-result"></tbody>
+    </table>
+    <div class="av-note">提示：优先精确匹配进程名，再做路径/前缀匹配。可用于资产盘点与防护识别。</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const input = $("#av-input");
+  const result = $("#av-result");
+  const count = $("#av-count");
+  const vendors = $("#av-vendors");
+
+  const CMD_TEXT = "tasklist /SVC";
+  const PS_TEXT = "Get-WmiObject Win32_Process | Where-Object {$_.Name -like '*.exe'} | Select-Object Name, ProcessId";
+
+  const sig = {
+    "360safe.exe": "360安全卫士",
+    "360tray.exe": "360安全卫士",
+    "360sd.exe": "360杀毒",
+    "zhudongfangyu.exe": "360主动防御",
+    "qhactivedefense.exe": "360TotalSecurity",
+    "qhsafemain.exe": "360TotalSecurity",
+    "qhsafetray.exe": "360TotalSecurity",
+    "qhsrv.exe": "360主机卫士",
+    "qhwebshellguard.exe": "360主机卫士",
+    "baidusdsvc.exe": "百度杀毒",
+    "baidusdtray.exe": "百度杀毒",
+    "baidusd.exe": "百度杀毒",
+    "avp.exe": "Kaspersky",
+    "klnagent.exe": "Kaspersky",
+    "avgsvc.exe": "AVG",
+    "avgui.exe": "AVG",
+    "avastsvc.exe": "Avast",
+    "avastui.exe": "Avast",
+    "avgnt.exe": "Avira",
+    "avguard.exe": "Avira",
+    "egui.exe": "ESET NOD32",
+    "ekrn.exe": "ESET NOD32",
+    "eshasrv.exe": "ESET NOD32",
+    "mbamservice.exe": "Malwarebytes",
+    "mbamtray.exe": "Malwarebytes",
+    "ccsvchst.exe": "Norton/Symantec",
+    "rtvscan.exe": "Norton/Symantec",
+    "smcgui.exe": "Symantec",
+    "mfevtps.exe": "McAfee/Trellix",
+    "mfeesp.exe": "McAfee/Trellix",
+    "mctray.exe": "McAfee/Trellix",
+    "macmnsvc.exe": "Trellix EDR",
+    "sophosui.exe": "Sophos",
+    "savmain.exe": "Sophos",
+    "sophoshealth.exe": "Sophos",
+    "mssense.exe": "Microsoft Defender for Endpoint",
+    "msmpeng.exe": "Windows Defender",
+    "securityhealthservice.exe": "Windows Defender",
+    "mpcmdrun.exe": "Windows Defender",
+    "smartscreen.exe": "Windows Defender",
+    "sentinelagent.exe": "SentinelOne",
+    "sentinelservicehost.exe": "SentinelOne",
+    "sentinelui.exe": "SentinelOne",
+    "csfalconservice.exe": "CrowdStrike Falcon",
+    "csfalconcontainer.exe": "CrowdStrike Falcon",
+    "elastic-agent.exe": "Elastic Security",
+    "elastic-endpoint.exe": "Elastic Security",
+    "forticlient.exe": "Fortinet",
+    "fortitray.exe": "Fortinet",
+    "fortiscand.exe": "Fortinet",
+    "hipsdaemon.exe": "火绒安全",
+    "hipstray.exe": "火绒安全",
+    "wsctrl.exe": "火绒安全",
+    "wsctrlsvc.exe": "火绒安全",
+    "qqpcmgr.exe": "腾讯电脑管家",
+    "qqpctray.exe": "腾讯电脑管家",
+    "qqpcrtp.exe": "腾讯电脑管家",
+    "tqclient.exe": "奇安信天擎",
+    "tqtray.exe": "奇安信天擎",
+    "qaxengmanager.exe": "奇安信天擎",
+    "qaxentclient.exe": "奇安信天擎",
+    "qaxtray.exe": "奇安信天擎",
+    "aliyundun.exe": "阿里云盾",
+    "aliyundunupdate.exe": "阿里云盾",
+    "aliyun_assist_service.exe": "阿里云助手",
+    "baradagent.exe": "腾讯云安全",
+    "sgagent.exe": "腾讯云安全",
+    "ydservice.exe": "腾讯云安全",
+    "ydedr.exe": "腾讯云安全",
+    "safedog.exe": "安全狗",
+    "safedogguardcenter.exe": "安全狗",
+    "safedogsiteiis.exe": "安全狗",
+    "safedogsiteapache.exe": "安全狗",
+    "hws.exe": "护卫神",
+    "hwsd.exe": "护卫神",
+    "hws_ui.exe": "护卫神",
+    "edr_agent.exe": "深信服 EDR",
+    "edr_monitor.exe": "深信服 EDR",
+    "edr_sec_plan.exe": "深信服 EDR",
+    "tbagent.exe": "微步 OneSEC",
+    "tbagentsrv.exe": "微步 OneSEC",
+    "tbguard.exe": "微步 OneSEC",
+    "ravmond.exe": "瑞星",
+    "rfwmain.exe": "瑞星防火墙",
+    "ksafesvc.exe": "金山毒霸",
+    "ksafetray.exe": "金山毒霸",
+    "kwatch.exe": "金山毒霸",
+    "kxescore.exe": "金山毒霸",
+    "zabbix_agentd": "Zabbix Agent"
+  };
+
+  const pathSig = {
+    "/usr/local/aegis/aegis_client/": "阿里云盾",
+    "/usr/local/aegis/aegis_update/aliyundunupdate": "阿里云盾",
+    "/usr/local/share/aliyun-assist": "阿里云助手",
+    "/usr/local/qcloud/stargate/": "腾讯云安全",
+    "/usr/local/qcloud/monitor/": "腾讯云安全",
+    "/usr/local/qcloud/yunjing/": "腾讯云安全",
+    "/usr/local/qcloud/tat_agent/": "腾讯云 TAT",
+    "/sangfor/edr/agent": "深信服 EDR"
+  };
+
+  const copyText = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const t = document.createElement("textarea");
+      t.value = text;
+      document.body.appendChild(t);
+      t.select();
+      document.execCommand("copy");
+      t.remove();
+    }
+  };
+
+  const normalizeToken = (line) => {
+    const trimmed = line.trim().replace(/^["']|["']$/g, "");
+    if (!trimmed) return "";
+    const first = trimmed.split(/\s+/)[0].toLowerCase();
+    const slash = Math.max(first.lastIndexOf("/"), first.lastIndexOf("\\"));
+    return slash >= 0 ? first.slice(slash + 1) : first;
+  };
+
+  const matchOne = (line) => {
+    const low = line.toLowerCase();
+    const key = normalizeToken(line);
+    if (sig[key]) return { process: key, vendor: sig[key] };
+    for (const [k, v] of Object.entries(sig)) {
+      if (low.startsWith(k + " ") || low.includes(" " + k + " ")) return { process: k, vendor: v };
+    }
+    for (const [k, v] of Object.entries(pathSig)) {
+      if (low.includes(k)) return { process: k, vendor: v };
+    }
+    return null;
+  };
+
+  const run = () => {
+    const lines = input.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    const rows = [];
+    const dedup = new Set();
+    for (const line of lines) {
+      const m = matchOne(line);
+      if (!m) continue;
+      const id = `${m.process}@@${m.vendor}`;
+      if (dedup.has(id)) continue;
+      dedup.add(id);
+      rows.push(m);
+    }
+
+    result.innerHTML = "";
+    if (!rows.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = "<td>未识别到已收录进程</td><td>可补充样本</td>";
+      result.appendChild(tr);
+      count.textContent = "0";
+      vendors.textContent = "0";
+      return;
+    }
+
+    rows.forEach((r) => {
+      const tr = document.createElement("tr");
+      const td1 = document.createElement("td");
+      const td2 = document.createElement("td");
+      td1.textContent = r.process;
+      td2.textContent = r.vendor;
+      tr.appendChild(td1);
+      tr.appendChild(td2);
+      result.appendChild(tr);
+    });
+
+    count.textContent = String(rows.length);
+    vendors.textContent = String(new Set(rows.map(r => r.vendor)).size);
+  };
+
+  $("#av-copy-cmd").addEventListener("click", () => copyText(CMD_TEXT));
+  $("#av-copy-ps").addEventListener("click", () => copyText(PS_TEXT));
+  $("#av-run").addEventListener("click", run);
+  $("#av-clear").addEventListener("click", () => {
+    input.value = "";
+    result.innerHTML = "";
+    count.textContent = "0";
+    vendors.textContent = "0";
+  });
+})();
+</script>
+
+</div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Kenny</div><div class="author-info-description">一个记录网络安全的博客</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">8</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://qm.qq.com/q/QNgesnj1aU"><i class="fab fa-qq"></i><span>Kenny's Blog 群</span></a><a id="card-info-tool-btn" href="/tools/url-extractor/"><i class="fas fa-link"></i><span>IP域名提取工具</span></a><a id="card-info-pass-btn" href="/tools/password-dict/"><i class="fas fa-key"></i><span>密码字典生成</span></a><a id="card-info-av-btn" href="/tools/av-detector/"><i class="fas fa-shield-virus"></i><span>杀软识别</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/kenny25526" target="_blank" title="GitHub"><i class="fab fa-github" style="color: #9bd1ff;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">一个记录网络安全的博客 欢迎加群前来交流</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/02/09/suidao/" title="内网隧道搭建"><img src="/img/covers/shinchan-cover-05.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="内网隧道搭建"/></a><div class="content"><a class="title" href="/2026/02/09/suidao/" title="内网隧道搭建">内网隧道搭建</a><time datetime="2026-02-09T06:34:08.266Z" title="发表于 2026-02-09 14:34:08">2026-02-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/02/09/web1/" title="web waf绕过"><img src="/img/covers/shinchan-cover-07.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="web waf绕过"/></a><div class="content"><a class="title" href="/2026/02/09/web1/" title="web waf绕过">web waf绕过</a><time datetime="2026-02-09T03:10:09.080Z" title="发表于 2026-02-09 11:10:09">2026-02-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/02/08/neiwang/" title="内网凭证窃取"><img src="/img/covers/shinchan-cover-04.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="内网凭证窃取"/></a><div class="content"><a class="title" href="/2026/02/08/neiwang/" title="内网凭证窃取">内网凭证窃取</a><time datetime="2026-02-08T07:42:30.210Z" title="发表于 2026-02-08 15:42:30">2026-02-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/02/08/weichi1/" title="win&amp;linux权限维持"><img src="/img/covers/shinchan-cover-08.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="win&amp;linux权限维持"/></a><div class="content"><a class="title" href="/2026/02/08/weichi1/" title="win&amp;linux权限维持">win&amp;linux权限维持</a><time datetime="2026-02-08T04:13:12.922Z" title="发表于 2026-02-08 12:13:12">2026-02-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/02/06/tiquan1/" title="pkexec提权"><img src="/img/covers/shinchan-cover-06.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="pkexec提权"/></a><div class="content"><a class="title" href="/2026/02/06/tiquan1/" title="pkexec提权">pkexec提权</a><time datetime="2026-02-06T09:45:05.303Z" title="发表于 2026-02-06 17:45:05">2026-02-06</time></div></div></div></div><div class="card-widget card-archives">
+    <div class="item-headline">
+      <i class="fas fa-archive"></i>
+      <span>归档</span>
+      
+    </div>
+  
+    <ul class="card-archive-list">
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2026/02/">
+            <span class="card-archive-list-date">
+              二月 2026
+            </span>
+            <span class="card-archive-list-count">8</span>
+          </a>
+        </li>
+      
+    </ul>
+  </div><div class="card-widget card-webinfo"><div class="item-headline"><i class="fas fa-chart-line"></i><span>网站信息</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">文章数目 :</div><div class="item-count">8</div></div><div class="webinfo-item"><div class="item-name">本站访客数 :</div><div class="item-count" id="busuanzi_value_site_uv"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">本站总浏览量 :</div><div class="item-count" id="busuanzi_value_site_pv"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">最后更新时间 :</div><div class="item-count" id="last-push-date" data-lastPushDate="2026-02-11T06:29:37.086Z"><i class="fa-solid fa-spinner fa-spin"></i></div></div></div></div></div></div></main><footer id="footer" style="background-image: url(/img/shinchan-crayon-bg.svg);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div><script id="click-show-text" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/dist/click-show-text.min.js" data-mobile="false" data-text="Nohara,Crayon,Action,Shinchan" data-fontsize="15px" data-random="false" async="async"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

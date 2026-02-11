@@ -210,6 +210,352 @@ code,
   background: linear-gradient(180deg, rgba(137, 213, 255, 0.12), rgba(255, 94, 126, 0.15));
 }
 
+#card-info-btn,
+#card-info-tool-btn,
+#card-info-pass-btn,
+#card-info-av-btn {
+  display: block;
+  border: 2px solid #2f2a3b;
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-weight: 700;
+  color: #fff !important;
+  text-decoration: none;
+  box-shadow: 0 5px 0 rgba(47, 42, 59, 0.22);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+#card-info-btn {
+  background: linear-gradient(180deg, #ff6e8a, #ff5e7e);
+}
+
+#card-info-tool-btn {
+  margin-top: 10px;
+  background: linear-gradient(180deg, #5f8bff, #4f7bff);
+}
+
+#card-info-pass-btn {
+  margin-top: 10px;
+  background: linear-gradient(180deg, #62c897, #55c08a);
+}
+
+#card-info-av-btn {
+  margin-top: 10px;
+  background: linear-gradient(180deg, #7ad0ff, #4f7bff);
+}
+
+#card-info-btn i,
+#card-info-tool-btn i,
+#card-info-pass-btn i,
+#card-info-av-btn i {
+  margin-right: 8px;
+}
+
+#card-info-btn:hover,
+#card-info-tool-btn:hover,
+#card-info-pass-btn:hover,
+#card-info-av-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 0 rgba(47, 42, 59, 0.28);
+  filter: brightness(1.03);
+}
+
+.ipx-tool {
+  --ipx-ink: #2f2a3b;
+  --ipx-pink: #ff5e7e;
+  --ipx-blue: #4f7bff;
+  --ipx-yellow: #ffe665;
+  --ipx-bg: rgba(255, 255, 255, 0.9);
+  --ipx-line: #2f2a3b;
+}
+
+.ipx-tool .ipx-shell {
+  border: 3px dashed var(--ipx-line);
+  border-radius: 22px;
+  padding: 18px;
+  background: var(--ipx-bg);
+  box-shadow: 0 10px 0 rgba(79, 123, 255, 0.25), 0 14px 24px rgba(47, 42, 59, 0.12);
+}
+
+.ipx-tool .ipx-title {
+  margin: 0 0 12px 0;
+  font-family: "ZCOOL KuaiLe", "Baloo 2", "Noto Sans SC", cursive;
+  font-size: 1.35rem;
+  color: var(--ipx-ink);
+}
+
+.ipx-tool .ipx-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ipx-tool .ipx-btn {
+  border: 2px solid var(--ipx-line);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(180deg, #5f8bff, #4f7bff);
+}
+
+.ipx-tool .ipx-btn:hover {
+  transform: translateY(-1px);
+}
+
+.ipx-tool .ipx-btn.alt {
+  background: linear-gradient(180deg, #ff6e8a, #ff5e7e);
+}
+
+.ipx-tool .ipx-btn.warn {
+  color: #2f2a3b;
+  background: linear-gradient(180deg, #fff0a5, #ffe665);
+}
+
+.ipx-tool .ipx-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 10px 0 14px 0;
+}
+
+.ipx-tool .ipx-checks label {
+  font-weight: 600;
+}
+
+.ipx-tool textarea {
+  width: 100%;
+  border: 2px dashed #4f7bff;
+  border-radius: 14px;
+  padding: 12px;
+  box-sizing: border-box;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  color: #2f2a3b;
+  background: #f8fcff;
+}
+
+.ipx-tool textarea:focus {
+  outline: none;
+  border-color: #ff5e7e;
+  box-shadow: 0 0 0 3px rgba(255, 94, 126, 0.18);
+}
+
+.ipx-tool .ipx-meta {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0 10px 0;
+  color: #556089;
+  font-weight: 700;
+}
+
+.ipx-tool .ipx-note {
+  margin-top: 10px;
+  color: #556089;
+  font-size: 0.92rem;
+}
+
+.pwd-tool {
+  --pwd-ink: #2f2a3b;
+  --pwd-bg: rgba(255, 255, 255, 0.9);
+  --pwd-line: #2f2a3b;
+}
+
+.pwd-tool .pwd-shell {
+  border: 3px dashed var(--pwd-line);
+  border-radius: 22px;
+  padding: 18px;
+  background: var(--pwd-bg);
+  box-shadow: 0 10px 0 rgba(85, 192, 138, 0.25), 0 14px 24px rgba(47, 42, 59, 0.12);
+}
+
+.pwd-tool .pwd-title {
+  margin: 0 0 12px 0;
+  font-family: "ZCOOL KuaiLe", "Baloo 2", "Noto Sans SC", cursive;
+  font-size: 1.35rem;
+  color: var(--pwd-ink);
+}
+
+.pwd-tool .pwd-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.pwd-tool .pwd-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.pwd-tool .pwd-item input[type="text"],
+.pwd-tool .pwd-item input[type="number"] {
+  flex: 1;
+  min-width: 0;
+  border: 2px dashed #4f7bff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+}
+
+.pwd-tool .pwd-item input:focus {
+  outline: none;
+  border-color: #ff5e7e;
+  box-shadow: 0 0 0 3px rgba(255, 94, 126, 0.15);
+}
+
+.pwd-tool .pwd-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.pwd-tool .pwd-btn {
+  border: 2px solid #2f2a3b;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(180deg, #62c897, #55c08a);
+}
+
+.pwd-tool .pwd-btn.alt {
+  background: linear-gradient(180deg, #5f8bff, #4f7bff);
+}
+
+.pwd-tool .pwd-btn.warn {
+  color: #2f2a3b;
+  background: linear-gradient(180deg, #fff0a5, #ffe665);
+}
+
+.pwd-tool .pwd-meta {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0 10px 0;
+  color: #556089;
+  font-weight: 700;
+}
+
+.pwd-tool textarea {
+  width: 100%;
+  border: 2px dashed #55c08a;
+  border-radius: 14px;
+  padding: 12px;
+  box-sizing: border-box;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  color: #2f2a3b;
+  background: #f8fcff;
+}
+
+.pwd-tool textarea:focus {
+  outline: none;
+  border-color: #4f7bff;
+}
+
+.pwd-tool .pwd-note {
+  margin-top: 10px;
+  color: #556089;
+  font-size: 0.92rem;
+}
+
+@media (max-width: 768px) {
+  .pwd-tool .pwd-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.av-tool .av-shell {
+  border: 3px dashed #2f2a3b;
+  border-radius: 22px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 0 rgba(79, 123, 255, 0.25), 0 14px 24px rgba(47, 42, 59, 0.12);
+}
+
+.av-tool .av-title {
+  margin: 0 0 12px 0;
+  font-family: "ZCOOL KuaiLe", "Baloo 2", "Noto Sans SC", cursive;
+  font-size: 1.35rem;
+  color: #2f2a3b;
+}
+
+.av-tool .av-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.av-tool .av-btn {
+  border: 2px solid #2f2a3b;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(180deg, #5f8bff, #4f7bff);
+}
+
+.av-tool .av-btn.alt {
+  background: linear-gradient(180deg, #62c897, #55c08a);
+}
+
+.av-tool .av-btn.warn {
+  color: #2f2a3b;
+  background: linear-gradient(180deg, #fff0a5, #ffe665);
+}
+
+.av-tool textarea {
+  width: 100%;
+  border: 2px dashed #4f7bff;
+  border-radius: 14px;
+  padding: 12px;
+  box-sizing: border-box;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  color: #2f2a3b;
+  background: #f8fcff;
+}
+
+.av-tool table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  border: 2px dashed #2f2a3b;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.av-tool th,
+.av-tool td {
+  border: 1px dashed #83b7ff;
+  padding: 8px;
+  text-align: left;
+}
+
+.av-tool th {
+  background: #dff4ff;
+}
+
+.av-tool .av-meta {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0 10px 0;
+  color: #556089;
+  font-weight: 700;
+}
+
+.av-tool .av-note {
+  margin-top: 10px;
+  color: #556089;
+  font-size: 0.92rem;
+}
+
 ::selection {
   color: #2f2a3b;
   background: #ffe665;

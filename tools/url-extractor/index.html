@@ -1,0 +1,314 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>IP/域名/URL 提取工具 | Kenny 的网络安全博客</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="7ad0ff"><meta name="description" content="IP&#x2F;域名&#x2F;URL 提取工具            提取域名       提取 URL       提取 BaseURL       提取 IP       一键 FOFA       清空                   去除 www 前缀        自动去重        按字母排序                       输入字符：0       结果数量：0">
+<meta property="og:type" content="website">
+<meta property="og:title" content="IP&#x2F;域名&#x2F;URL 提取工具">
+<meta property="og:url" content="https://www.52jl.top/tools/url-extractor/index.html">
+<meta property="og:site_name" content="Kenny 的网络安全博客">
+<meta property="og:description" content="IP&#x2F;域名&#x2F;URL 提取工具            提取域名       提取 URL       提取 BaseURL       提取 IP       一键 FOFA       清空                   去除 www 前缀        自动去重        按字母排序                       输入字符：0       结果数量：0">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/avatar.jpg">
+<meta property="article:published_time" content="2026-02-11T06:06:27.157Z">
+<meta property="article:modified_time" content="2026-02-11T06:06:27.157Z">
+<meta property="article:author" content="Kenny">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/avatar.jpg"><script type="application/ld+json"></script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/tools/url-extractor/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'IP/域名/URL 提取工具',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'page'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Patrick+Hand&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div class="bg-animation" id="web_bg" style="background-image: url(/img/shinchan-crayon-bg.svg);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">8</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div></div></div></div><div class="page" id="body-wrap"><header class="not-home-page" id="page-header" style="background-image: url(/img/shinchan-hero.svg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Kenny 的网络安全博客</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="page-site-info"><h1 id="site-title">IP/域名/URL 提取工具</h1></div></header><main class="layout" id="content-inner"><div id="page"><div class="container" id="article-container">
+<div class="ipx-tool">
+  <div class="ipx-shell">
+    <h2 class="ipx-title">IP/域名/URL 提取工具</h2>
+    <div class="ipx-row">
+      <button class="ipx-btn" data-action="domain">提取域名</button>
+      <button class="ipx-btn" data-action="url">提取 URL</button>
+      <button class="ipx-btn" data-action="base">提取 BaseURL</button>
+      <button class="ipx-btn" data-action="ip">提取 IP</button>
+      <button class="ipx-btn alt" id="ipx-fofa">一键 FOFA</button>
+      <button class="ipx-btn warn" id="ipx-clear">清空</button>
+    </div>
+
+    <div class="ipx-checks">
+      <label><input type="checkbox" id="ipx-remove-www" checked> 去除 www 前缀</label>
+      <label><input type="checkbox" id="ipx-dedup" checked> 自动去重</label>
+      <label><input type="checkbox" id="ipx-sort"> 按字母排序</label>
+    </div>
+
+    <textarea id="ipx-input" rows="8" placeholder="请粘贴包含 URL、域名或 IP 的文本..."></textarea>
+    <div class="ipx-meta">
+      <span>输入字符：<b id="ipx-char-count">0</b></span>
+      <span>结果数量：<b id="ipx-result-count">0</b></span>
+    </div>
+
+    <div class="ipx-row">
+      <button class="ipx-btn alt" id="ipx-copy">复制结果</button>
+    </div>
+    <textarea id="ipx-output" rows="10" readonly placeholder="提取结果会显示在这里"></textarea>
+    <div class="ipx-note">提示：粘贴后会自动提取域名。FOFA 会使用结果第一条（域名优先，其次 IP）。</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const input = $("#ipx-input");
+  const output = $("#ipx-output");
+  const charCount = $("#ipx-char-count");
+  const resultCount = $("#ipx-result-count");
+  const removeWww = $("#ipx-remove-www");
+  const dedup = $("#ipx-dedup");
+  const sort = $("#ipx-sort");
+
+  const urlRegex = /\b(https?:\/\/|www\.)[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]/g;
+  const ipRegex = /\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/g;
+  const bareDomainRegex = /(?<!www\.)(?<!http:\/\/)(?<!https:\/\/)[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,}){1,}(?!\.[a-zA-Z])/g;
+
+  const normalize = (arr) => {
+    let r = arr.filter(Boolean);
+    if (dedup.checked) r = [...new Set(r)];
+    if (sort.checked) r = r.sort((a, b) => a.localeCompare(b));
+    return r;
+  };
+
+  const extractUrls = (text) => text.match(urlRegex) || [];
+
+  const extractDomains = (text) => {
+    const urls = extractUrls(text);
+    const domains = [];
+
+    urls.forEach((url) => {
+      let domain = "";
+      try {
+        domain = new URL(url).hostname;
+      } catch {
+        let processed = url;
+        if (!processed.startsWith("http")) processed = "http://" + processed;
+        try {
+          domain = new URL(processed).hostname;
+        } catch {
+          domain = url.replace(/^www\./, "").split("/")[0].split(":")[0];
+        }
+      }
+      if (/^\d+\.\d+\.\d+\.\d+$/.test(domain)) return;
+      if (removeWww.checked) domain = domain.replace(/^www\./, "");
+      domains.push(domain);
+    });
+
+    (text.match(bareDomainRegex) || []).forEach((d) => {
+      if (!/^\d+\.\d+\.\d+\.\d+$/.test(d)) {
+        domains.push(removeWww.checked ? d.replace(/^www\./, "") : d);
+      }
+    });
+
+    return normalize(domains);
+  };
+
+  const extractBaseUrls = (text) => {
+    const urls = extractUrls(text);
+    const baseUrls = [];
+    urls.forEach((url) => {
+      try {
+        const u = new URL(url);
+        let base = `${u.protocol}//${u.hostname}`;
+        if (u.port && !["80", "443"].includes(u.port)) base += `:${u.port}`;
+        baseUrls.push(base);
+      } catch {
+        let base = url.replace(/^www\./, "").split("/")[0];
+        const i = base.indexOf(":");
+        if (i > 0) {
+          const port = base.substring(i + 1);
+          base = ["80", "443"].includes(port) ? base.substring(0, i) : base;
+        }
+        baseUrls.push(`http://${base}`);
+      }
+    });
+    return normalize(baseUrls);
+  };
+
+  const extractIps = (text) => normalize(text.match(ipRegex) || []);
+
+  const show = (arr) => {
+    output.value = arr.length ? arr.join("\n") : "未找到匹配结果";
+    resultCount.textContent = arr.length;
+  };
+
+  const updateChar = () => {
+    charCount.textContent = input.value.length;
+  };
+
+  const run = (type) => {
+    const text = input.value.trim();
+    if (!text) return;
+    if (type === "domain") show(extractDomains(text));
+    if (type === "url") show(normalize(extractUrls(text)));
+    if (type === "base") show(extractBaseUrls(text));
+    if (type === "ip") show(extractIps(text));
+  };
+
+  document.querySelectorAll(".ipx-btn[data-action]").forEach((btn) => {
+    btn.addEventListener("click", () => run(btn.dataset.action));
+  });
+
+  $("#ipx-copy").addEventListener("click", async () => {
+    const text = output.value;
+    if (!text || text === "未找到匹配结果") return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      output.select();
+      document.execCommand("copy");
+    }
+  });
+
+  $("#ipx-clear").addEventListener("click", () => {
+    input.value = "";
+    output.value = "";
+    resultCount.textContent = "0";
+    updateChar();
+  });
+
+  $("#ipx-fofa").addEventListener("click", () => {
+    const domains = extractDomains(input.value);
+    const ips = extractIps(input.value);
+    const target = domains[0] || ips[0];
+    if (!target) return;
+    const q = /^\d+\.\d+\.\d+\.\d+$/.test(target) ? `ip="${target}"` : `domain="${target}"`;
+    const qbase64 = btoa(unescape(encodeURIComponent(q)));
+    window.open(`https://fofa.info/result?qbase64=${qbase64}`, "_blank");
+  });
+
+  input.addEventListener("input", updateChar);
+  input.addEventListener("paste", () => setTimeout(() => run("domain"), 80));
+  output.value = "请输入文本并选择提取类型";
+  updateChar();
+})();
+</script>
+
+</div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Kenny</div><div class="author-info-description">一个记录网络安全的博客</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">8</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://qm.qq.com/q/QNgesnj1aU"><i class="fab fa-qq"></i><span>Kenny's Blog 群</span></a><a id="card-info-tool-btn" href="/tools/url-extractor/"><i class="fas fa-link"></i><span>IP域名提取工具</span></a><a id="card-info-pass-btn" href="/tools/password-dict/"><i class="fas fa-key"></i><span>密码字典生成</span></a><a id="card-info-av-btn" href="/tools/av-detector/"><i class="fas fa-shield-virus"></i><span>杀软识别</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/kenny25526" target="_blank" title="GitHub"><i class="fab fa-github" style="color: #9bd1ff;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">一个记录网络安全的博客 欢迎加群前来交流</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/02/09/suidao/" title="内网隧道搭建"><img src="/img/covers/shinchan-cover-05.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="内网隧道搭建"/></a><div class="content"><a class="title" href="/2026/02/09/suidao/" title="内网隧道搭建">内网隧道搭建</a><time datetime="2026-02-09T06:34:08.266Z" title="发表于 2026-02-09 14:34:08">2026-02-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/02/09/web1/" title="web waf绕过"><img src="/img/covers/shinchan-cover-07.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="web waf绕过"/></a><div class="content"><a class="title" href="/2026/02/09/web1/" title="web waf绕过">web waf绕过</a><time datetime="2026-02-09T03:10:09.080Z" title="发表于 2026-02-09 11:10:09">2026-02-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/02/08/neiwang/" title="内网凭证窃取"><img src="/img/covers/shinchan-cover-04.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="内网凭证窃取"/></a><div class="content"><a class="title" href="/2026/02/08/neiwang/" title="内网凭证窃取">内网凭证窃取</a><time datetime="2026-02-08T07:42:30.210Z" title="发表于 2026-02-08 15:42:30">2026-02-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/02/08/weichi1/" title="win&amp;linux权限维持"><img src="/img/covers/shinchan-cover-08.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="win&amp;linux权限维持"/></a><div class="content"><a class="title" href="/2026/02/08/weichi1/" title="win&amp;linux权限维持">win&amp;linux权限维持</a><time datetime="2026-02-08T04:13:12.922Z" title="发表于 2026-02-08 12:13:12">2026-02-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/02/06/tiquan1/" title="pkexec提权"><img src="/img/covers/shinchan-cover-06.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="pkexec提权"/></a><div class="content"><a class="title" href="/2026/02/06/tiquan1/" title="pkexec提权">pkexec提权</a><time datetime="2026-02-06T09:45:05.303Z" title="发表于 2026-02-06 17:45:05">2026-02-06</time></div></div></div></div><div class="card-widget card-archives">
+    <div class="item-headline">
+      <i class="fas fa-archive"></i>
+      <span>归档</span>
+      
+    </div>
+  
+    <ul class="card-archive-list">
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2026/02/">
+            <span class="card-archive-list-date">
+              二月 2026
+            </span>
+            <span class="card-archive-list-count">8</span>
+          </a>
+        </li>
+      
+    </ul>
+  </div><div class="card-widget card-webinfo"><div class="item-headline"><i class="fas fa-chart-line"></i><span>网站信息</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">文章数目 :</div><div class="item-count">8</div></div><div class="webinfo-item"><div class="item-name">本站访客数 :</div><div class="item-count" id="busuanzi_value_site_uv"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">本站总浏览量 :</div><div class="item-count" id="busuanzi_value_site_pv"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">最后更新时间 :</div><div class="item-count" id="last-push-date" data-lastPushDate="2026-02-11T06:29:37.086Z"><i class="fa-solid fa-spinner fa-spin"></i></div></div></div></div></div></div></main><footer id="footer" style="background-image: url(/img/shinchan-crayon-bg.svg);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div><script id="click-show-text" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/dist/click-show-text.min.js" data-mobile="false" data-text="Nohara,Crayon,Action,Shinchan" data-fontsize="15px" data-random="false" async="async"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
