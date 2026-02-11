@@ -1,0 +1,240 @@
+:root {
+  --crayon-sky: #89d5ff;
+  --crayon-sky-soft: #dff4ff;
+  --crayon-sun: #ffd84d;
+  --crayon-red: #ff5e7e;
+  --crayon-blue: #4f7bff;
+  --crayon-green: #55c08a;
+  --crayon-purple: #8c6bff;
+  --crayon-ink: #2f2a3b;
+  --crayon-card: rgba(255, 255, 255, 0.9);
+  --crayon-line: #2f2a3b;
+}
+
+body {
+  font-family: "Baloo 2", "ZCOOL KuaiLe", "Noto Sans SC", cursive;
+  color: var(--crayon-ink);
+  background-color: #eaf8ff;
+  background-image: url('/img/shinchan-crayon-bg.svg');
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+}
+
+#web_bg {
+  background: transparent;
+}
+
+#page-header::before {
+  background: linear-gradient(135deg, rgba(137, 213, 255, 0.35), rgba(255, 216, 77, 0.24));
+}
+
+#site-name,
+#site-title {
+  font-family: "ZCOOL KuaiLe", "Baloo 2", "Noto Sans SC", cursive;
+  letter-spacing: 0.06em;
+  color: #fff !important;
+  text-shadow:
+    -2px -2px 0 #ff5e7e,
+    2px -2px 0 #4f7bff,
+    -2px 2px 0 #55c08a,
+    2px 2px 0 #ffd84d,
+    0 6px 12px rgba(47, 42, 59, 0.25);
+}
+
+#site-subtitle {
+  font-family: "Patrick Hand", "ZCOOL KuaiLe", cursive;
+  letter-spacing: 0.12em;
+  color: #fff7cf !important;
+  text-shadow: 0 2px 0 rgba(47, 42, 59, 0.45);
+}
+
+#nav a,
+#page-header #nav .site-page {
+  color: #ffffff;
+  font-family: "Baloo 2", "Noto Sans SC", sans-serif;
+  font-weight: 700;
+}
+
+#nav .site-page:hover {
+  color: #ffe665 !important;
+}
+
+#recent-posts > .recent-post-item,
+#aside-content .card-widget,
+div#post,
+div#archive,
+div#page {
+  border: 3px dashed var(--crayon-line);
+  border-radius: 28px;
+  background: var(--crayon-card) !important;
+  box-shadow: 0 10px 0 rgba(79, 123, 255, 0.28), 0 16px 28px rgba(47, 42, 59, 0.12);
+}
+
+#recent-posts > .recent-post-item {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#recent-posts > .recent-post-item:nth-child(odd) {
+  transform: rotate(-0.7deg);
+}
+
+#recent-posts > .recent-post-item:nth-child(even) {
+  transform: rotate(0.7deg);
+}
+
+#recent-posts > .recent-post-item:hover,
+#aside-content .card-widget:hover {
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 0 12px 0 rgba(255, 94, 126, 0.35), 0 20px 30px rgba(47, 42, 59, 0.2);
+}
+
+.card-widget .item-headline,
+#post-info,
+#archive .article-sort-title {
+  font-family: "ZCOOL KuaiLe", "Baloo 2", cursive;
+  color: #354172;
+}
+
+a {
+  color: var(--crayon-blue);
+  text-decoration-thickness: 2px;
+}
+
+a:hover {
+  color: var(--crayon-red);
+}
+
+blockquote {
+  border-left: 6px solid var(--crayon-red);
+  background: #fff4b8;
+  border-radius: 12px;
+}
+
+pre,
+code,
+.highlight {
+  font-family: "JetBrains Mono", "Fira Code", monospace !important;
+}
+
+#article-container {
+  font-size: 1.05rem;
+  line-height: 1.9;
+}
+
+#article-container p {
+  color: #312d3f;
+}
+
+#article-container h1,
+#article-container h2,
+#article-container h3 {
+  font-family: "ZCOOL KuaiLe", "Baloo 2", "Noto Sans SC", cursive;
+  color: #2f2a3b;
+}
+
+#article-container h1 {
+  border-bottom: 4px wavy #ff5e7e;
+  padding-bottom: 0.4rem;
+}
+
+#article-container h2 {
+  border-left: 7px solid #4f7bff;
+  padding-left: 0.7rem;
+}
+
+#article-container h3 {
+  border-left: 6px solid #55c08a;
+  padding-left: 0.6rem;
+}
+
+#article-container code {
+  background: #eef4ff;
+  color: #2f2a3b;
+  border: 1px dashed #4f7bff;
+}
+
+#article-container pre {
+  border: 2px dashed #2f2a3b;
+  border-radius: 16px;
+}
+
+#article-container img {
+  border: 4px solid #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 8px 0 rgba(85, 192, 138, 0.35), 0 14px 24px rgba(47, 42, 59, 0.15);
+  transition: transform 0.2s ease;
+}
+
+#article-container img:hover {
+  transform: translateY(-4px) rotate(-0.5deg);
+}
+
+#article-container table {
+  border: 2px dashed #2f2a3b;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#article-container th {
+  background: #c8edff;
+  color: #2f2a3b;
+}
+
+#article-container tr:nth-child(even) td {
+  background: #f4fbff;
+}
+
+#pagination .page-number.current,
+#pagination .extend:hover,
+#pagination .page-number:hover {
+  border-color: #ff5e7e !important;
+  background: #ffe9ef;
+  box-shadow: 0 4px 0 rgba(255, 94, 126, 0.35);
+}
+
+#rightside > div > button,
+#rightside > div > a {
+  border: 2px solid #2f2a3b;
+  background: linear-gradient(180deg, #fff7ca, #ffe665);
+  color: #2f2a3b;
+  border-radius: 12px;
+}
+
+#rightside > div > button:hover,
+#rightside > div > a:hover {
+  transform: translateY(-2px);
+}
+
+#footer {
+  background: linear-gradient(180deg, rgba(137, 213, 255, 0.12), rgba(255, 94, 126, 0.15));
+}
+
+::selection {
+  color: #2f2a3b;
+  background: #ffe665;
+}
+
+@media (max-width: 768px) {
+  #site-title {
+    font-size: 1.8rem !important;
+  }
+
+  #site-subtitle {
+    letter-spacing: 0.08em;
+    font-size: 0.9rem !important;
+  }
+
+  #recent-posts > .recent-post-item:nth-child(odd),
+  #recent-posts > .recent-post-item:nth-child(even) {
+    transform: none;
+  }
+
+  #recent-posts > .recent-post-item,
+  #aside-content .card-widget,
+  div#post,
+  div#archive,
+  div#page {
+    border-radius: 20px;
+  }
+}
