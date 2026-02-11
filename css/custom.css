@@ -258,7 +258,8 @@ code,
 #card-info-btn,
 #card-info-tool-btn,
 #card-info-pass-btn,
-#card-info-av-btn {
+#card-info-av-btn,
+#card-info-shell-btn {
   display: block;
   border: 2px solid #2f2a3b;
   border-radius: 14px;
@@ -289,17 +290,24 @@ code,
   background: linear-gradient(180deg, #7ad0ff, #4f7bff);
 }
 
+#card-info-shell-btn {
+  margin-top: 10px;
+  background: linear-gradient(180deg, #ffb86b, #e06711);
+}
+
 #card-info-btn i,
 #card-info-tool-btn i,
 #card-info-pass-btn i,
-#card-info-av-btn i {
+#card-info-av-btn i,
+#card-info-shell-btn i {
   margin-right: 8px;
 }
 
 #card-info-btn:hover,
 #card-info-tool-btn:hover,
 #card-info-pass-btn:hover,
-#card-info-av-btn:hover {
+#card-info-av-btn:hover,
+#card-info-shell-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 7px 0 rgba(47, 42, 59, 0.28);
   filter: brightness(1.03);
@@ -599,6 +607,255 @@ code,
   margin-top: 10px;
   color: #556089;
   font-size: 0.92rem;
+}
+
+.shg-tool .shg-shell {
+  border: 3px dashed #2f2a3b;
+  border-radius: 22px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 0 rgba(224, 103, 17, 0.22), 0 14px 24px rgba(47, 42, 59, 0.12);
+}
+
+.shg-tool .shg-title {
+  margin: 0 0 12px 0;
+  font-family: "ZCOOL KuaiLe", "Baloo 2", "Noto Sans SC", cursive;
+  font-size: 1.35rem;
+  color: #2f2a3b;
+}
+
+.shg-tool .shg-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.shg-tool .shg-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.shg-tool .shg-item input,
+.shg-tool .shg-item select {
+  flex: 1;
+  min-width: 0;
+  border: 2px dashed #4f7bff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  background: #fff;
+}
+
+.shg-tool .shg-item input:focus,
+.shg-tool .shg-item select:focus {
+  outline: none;
+  border-color: #ff5e7e;
+  box-shadow: 0 0 0 3px rgba(255, 94, 126, 0.15);
+}
+
+.shg-tool .shg-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.shg-tool .shg-btn {
+  border: 2px solid #2f2a3b;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(180deg, #5f8bff, #4f7bff);
+}
+
+.shg-tool .shg-btn.alt {
+  background: linear-gradient(180deg, #62c897, #55c08a);
+}
+
+.shg-tool .shg-btn.warn {
+  color: #2f2a3b;
+  background: linear-gradient(180deg, #fff0a5, #ffe665);
+}
+
+.shg-tool .shg-meta {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0 10px 0;
+  color: #556089;
+  font-weight: 700;
+}
+
+.shg-tool textarea {
+  width: 100%;
+  border: 2px dashed #e06711;
+  border-radius: 14px;
+  padding: 12px;
+  box-sizing: border-box;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  color: #2f2a3b;
+  background: #f8fcff;
+}
+
+.shg-tool .shg-note {
+  margin-top: 10px;
+  color: #556089;
+  font-size: 0.92rem;
+}
+
+@media (max-width: 768px) {
+  .shg-tool .shg-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.jce-tool .jce-shell {
+  border: 2px solid #dbe8f6;
+  border-radius: 10px;
+  background: #f8fbff;
+  padding: 16px;
+}
+
+.jce-tool .jce-top {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.jce-tool .jce-badge {
+  background: #dfeeff;
+  color: #3b82f6;
+  border-radius: 4px;
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.jce-tool .jce-lang {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.jce-tool .jce-lang label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.jce-tool .jce-lang input[type="radio"] {
+  width: 22px;
+  height: 22px;
+  accent-color: #21a559;
+}
+
+.jce-tool .jce-encode-wrap {
+  display: inline-flex;
+  border: 2px solid #21a559;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-left: auto;
+}
+
+.jce-tool .jce-encode-label {
+  background: #21a559;
+  color: #fff;
+  padding: 8px 18px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+}
+
+.jce-tool .jce-encode-wrap select {
+  border: 0;
+  border-left: 1px solid #d8dee7;
+  padding: 8px 14px;
+  min-width: 220px;
+  font-size: 1.1rem;
+  background: #fff;
+  outline: none;
+}
+
+.jce-tool .jce-copy-btn {
+  margin-left: 10px;
+  border: 2px dashed #4f9aff;
+  color: #3b82f6;
+  background: #f8fcff;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.jce-tool .jce-copy-btn:hover {
+  background: #eef6ff;
+}
+
+.jce-tool .jce-panel {
+  border: 2px solid #b9d8ff;
+  background: #dfe9f5;
+  border-radius: 6px;
+  padding: 14px;
+}
+
+.jce-tool .jce-block {
+  margin-bottom: 14px;
+}
+
+.jce-tool .jce-block:last-child {
+  margin-bottom: 0;
+}
+
+.jce-tool .jce-block h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.05rem;
+  color: #27364a;
+  font-family: "Baloo 2", "Noto Sans SC", sans-serif;
+}
+
+.jce-tool .jce-block textarea {
+  width: 100%;
+  border: 2px solid #cfd8e3;
+  border-radius: 6px;
+  padding: 14px;
+  box-sizing: border-box;
+  font-size: 1.05rem;
+  color: #27364a;
+  background: #fff;
+  resize: vertical;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+}
+
+@media (max-width: 960px) {
+  .jce-tool .jce-encode-wrap {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .jce-tool .jce-badge {
+    font-size: 1rem;
+    padding: 7px 12px;
+  }
+
+  .jce-tool .jce-lang label {
+    font-size: 1rem;
+  }
+
+  .jce-tool .jce-encode-wrap select {
+    min-width: 180px;
+  }
 }
 
 ::selection {
