@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="胖嘟嘟左衛門">
+  <defs>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5c4c0"/>
+      <stop offset="100%" stop-color="#ecb2af"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M52 218 L188 218 L170 168 L70 168 Z" fill="#7f5dc6"/>
+
+  <ellipse cx="120" cy="134" rx="78" ry="76" fill="url(#skin)" stroke="#1e1b2a" stroke-width="2.6"/>
+  <ellipse cx="120" cy="64" rx="74" ry="52" fill="url(#skin)" stroke="#1e1b2a" stroke-width="2.6"/>
+
+  <path d="M54 48 Q72 18 94 20 Q80 40 70 62 Z" fill="url(#skin)" stroke="#1e1b2a" stroke-width="2.2"/>
+  <path d="M186 48 Q168 18 146 20 Q160 40 170 62 Z" fill="url(#skin)" stroke="#1e1b2a" stroke-width="2.2"/>
+
+  <path d="M62 48 L108 58" stroke="#111" stroke-width="9" stroke-linecap="round"/>
+  <path d="M178 50 L134 58" stroke="#111" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="78" cy="72" r="4.5" fill="#111"/>
+  <circle cx="162" cy="72" r="7" fill="#111"/>
+
+  <path d="M74 118
+           C88 92, 114 84, 126 94
+           C142 106, 156 100, 170 90
+           C172 100, 166 120, 152 132
+           C136 146, 108 144, 90 136
+           C78 130, 72 126, 74 118 Z"
+        fill="#f3c2bf" stroke="#1e1b2a" stroke-width="2.4"/>
+
+  <ellipse cx="102" cy="116" rx="19" ry="16" fill="#efbbb9" stroke="#1e1b2a" stroke-width="2.2"/>
+  <ellipse cx="142" cy="120" rx="16" ry="14" fill="#efbbb9" stroke="#1e1b2a" stroke-width="2.2"/>
+  <ellipse cx="102" cy="116" rx="8" ry="7" fill="#8d6057"/>
+  <ellipse cx="142" cy="120" rx="6.8" ry="6.2" fill="#8d6057"/>
+
+  <path d="M100 150 Q120 138 142 146" fill="none" stroke="#1e1b2a" stroke-width="2.6" stroke-linecap="round"/>
+
+  <path d="M146 152 Q178 150 184 174 Q164 182 136 170 Z" fill="url(#skin)" stroke="#1e1b2a" stroke-width="2.2"/>
+  <path d="M138 154 Q148 140 166 146 Q152 158 144 170 Z" fill="#f7e9c1" stroke="#1e1b2a" stroke-width="1.8"/>
+</svg>
