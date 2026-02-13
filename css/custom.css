@@ -216,6 +216,23 @@ code,
   background: #f8fbff;
 }
 
+/* Remove post-to-post cover images (legacy shinchan covers) */
+#pagination.pagination-post .pagination-related {
+  background: linear-gradient(135deg, #111827, #1f2937);
+}
+
+#pagination.pagination-post .pagination-related .cover {
+  display: none !important;
+}
+
+#pagination.pagination-post .pagination-related .info .info-item-1 {
+  color: #d1d5db;
+}
+
+#pagination.pagination-post .pagination-related .info .info-item-2 {
+  color: #f9fafb;
+}
+
 #footer {
   background: transparent;
   border-top: 1px solid var(--line);
