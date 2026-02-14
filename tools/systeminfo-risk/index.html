@@ -6,8 +6,8 @@
 <meta property="og:description" content="Windows systeminfo 补丁风险分析             开始分析       复制结果       清空                       识别补丁：0       命中风险：0                                      漏洞编号           风险等级           补丁状态           风险说明">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://www.52jl.top/img/avatar.jpg">
-<meta property="article:published_time" content="2026-02-14T14:39:17.557Z">
-<meta property="article:modified_time" content="2026-02-14T14:39:17.557Z">
+<meta property="article:published_time" content="2026-02-14T14:54:16.818Z">
+<meta property="article:modified_time" content="2026-02-14T14:54:16.818Z">
 <meta property="article:author" content="Kenny">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://www.52jl.top/img/avatar.jpg"><script type="application/ld+json"></script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/tools/systeminfo-risk/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
@@ -179,7 +179,7 @@
   const riskCount = $("#sysi-risk-count");
   const result = $("#sysi-result");
 
-  const rules = [
+  const legacyRules = [
     {
       id: "MS08-067",
       cve: "CVE-2008-4250",
@@ -236,6 +236,25 @@
     }
   ];
 
+  const modernRules = [
+    {
+      id: "PRINTNIGHTMARE",
+      cve: "CVE-2021-34527",
+      level: "high",
+      title: "Print Spooler 远程代码执行",
+      patchAny: ["KB5004947", "KB5005030", "KB5005568", "KB5006672"],
+      affected: [/windows server 2012/i, /windows server 2016/i, /windows server 2019/i, /windows server 2022/i, /windows 10/i, /windows 11/i]
+    },
+    {
+      id: "ZEROLOGON",
+      cve: "CVE-2020-1472",
+      level: "high",
+      title: "Netlogon 提权（域环境风险）",
+      patchAny: ["KB4571723", "KB4571748", "KB4577069", "KB4577015"],
+      affected: [/windows server 2008/i, /windows server 2012/i, /windows server 2016/i, /windows server 2019/i, /windows server 2022/i]
+    }
+  ];
+
   const eolRules = [
     { id: "EOL-WXP", level: "high", title: "Windows XP 已停止支持", affected: [/windows xp/i] },
     { id: "EOL-2003", level: "high", title: "Windows Server 2003 已停止支持", affected: [/windows server 2003/i] },
@@ -243,7 +262,8 @@
     { id: "EOL-WIN7", level: "medium", title: "Windows 7 已停止常规支持", affected: [/windows 7/i] }
   ];
 
-  const levelText = { critical: "高危", high: "高", medium: "中" };
+  const levelText = { critical: "高危", high: "高", medium: "中", low: "低" };
+  const levelRank = { critical: 4, high: 3, medium: 2, low: 1 };
 
   const firstMatch = (text, regList) => {
     for (const reg of regList) {
@@ -253,7 +273,18 @@
     return "";
   };
 
-  const parseSystemInfo = (text) => {
+  const normalizeText = (text) => String(text || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\u3000/g, " ");
+
+  const parseIntSafe = (s) => {
+    if (!s) return null;
+    const n = Number(String(s).replace(/[^\d]/g, ""));
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const parseSystemInfo = (rawText) => {
+    const text = normalizeText(rawText);
     const osName = firstMatch(text, [
       /OS Name:\s*(.+)/i,
       /OS 名称:\s*(.+)/i
@@ -266,11 +297,33 @@
       /System Type:\s*(.+)/i,
       /系统类型:\s*(.+)/i
     ]);
+
+    const hotfixCountText = firstMatch(text, [
+      /Hotfix\(s\):\s*(\d+)\s*Hotfix\(s\)\s*Installed/i,
+      /Hotfix\(s\):\s*(\d+)/i,
+      /热修复[^:：]*[:：]\s*(\d+)/i,
+      /补丁[^:：]*[:：]\s*(\d+)/i
+    ]);
+
+    const hotfixCount = parseIntSafe(hotfixCountText);
     const kbList = [...new Set((text.match(/\bKB\d{5,8}\b/gi) || []).map((x) => x.toUpperCase()))];
-    return { osName, osVersion, systemType, kbList, osLower: (osName + " " + osVersion).toLowerCase() };
+    const osLower = (osName + " " + osVersion).toLowerCase();
+    const modern = /(windows server 2016|windows server 2019|windows server 2022|windows 10|windows 11)/i.test(osLower);
+
+    return {
+      osName,
+      osVersion,
+      systemType,
+      kbList,
+      hotfixCount,
+      osLower,
+      modern
+    };
   };
 
   const asPatched = (kbSet, patchAny) => patchAny.some((kb) => kbSet.has(kb));
+
+  const sortHits = (hits) => hits.sort((a, b) => (levelRank[b.level] || 0) - (levelRank[a.level] || 0));
 
   const renderRows = (rows) => {
     result.innerHTML = "";
@@ -298,6 +351,7 @@
     lines.push(`系统名称: ${parsed.osName || "未识别"}`);
     lines.push(`系统版本: ${parsed.osVersion || "未识别"}`);
     lines.push(`系统类型: ${parsed.systemType || "未识别"}`);
+    lines.push(`Hotfix 计数: ${parsed.hotfixCount === null ? "未识别" : parsed.hotfixCount}`);
     lines.push(`识别到补丁数量: ${parsed.kbList.length}`);
     lines.push(`命中风险数量: ${rows.length}`);
     lines.push("");
@@ -314,9 +368,9 @@
     });
     lines.push("");
     lines.push("建议:");
-    lines.push("1. 优先修复高危项（critical/high），并确认是否已禁用 SMBv1。");
-    lines.push("2. 对 EOL 系统执行隔离、最小暴露面、替换升级。");
-    lines.push("3. 结合域控、端口暴露和资产分区评估横向移动风险。");
+    lines.push("1. 优先修复高危项（critical/high），并确认是否关闭或限制 SMBv1。");
+    lines.push("2. 对 0 补丁或补丁极少的系统，先排除输出不完整，再执行 WSUS/离线补丁核查。");
+    lines.push("3. 结合资产暴露面（445/3389/打印服务/域控角色）评估可利用风险。");
     return lines.join("\n");
   };
 
@@ -326,14 +380,28 @@
 
     const parsed = parseSystemInfo(text);
     const kbSet = new Set(parsed.kbList);
-    const hits = [];
+    const hitMap = new Map();
 
-    rules.forEach((rule) => {
+    const addHit = (item) => {
+      if (!item || !item.id) return;
+      if (!hitMap.has(item.id)) hitMap.set(item.id, item);
+    };
+
+    if (!parsed.osName) {
+      addHit({
+        id: "PARSE-OS",
+        cve: "",
+        level: "medium",
+        patchStatus: "系统字段未识别",
+        desc: "未解析到 OS Name/OS 名称，建议粘贴完整 systeminfo 原始输出。"
+      });
+    }
+
+    legacyRules.forEach((rule) => {
       const affected = rule.affected.some((reg) => reg.test(parsed.osLower));
       if (!affected) return;
-      const patched = asPatched(kbSet, rule.patchAny);
-      if (patched) return;
-      hits.push({
+      if (asPatched(kbSet, rule.patchAny)) return;
+      addHit({
         id: rule.id,
         cve: rule.cve,
         level: rule.level,
@@ -342,10 +410,23 @@
       });
     });
 
+    modernRules.forEach((rule) => {
+      const affected = rule.affected.some((reg) => reg.test(parsed.osLower));
+      if (!affected) return;
+      if (asPatched(kbSet, rule.patchAny)) return;
+      addHit({
+        id: rule.id,
+        cve: rule.cve,
+        level: rule.level,
+        patchStatus: `未发现 ${rule.patchAny.join("/")}`,
+        desc: `${rule.title}，建议尽快核查是否已安装相应累计更新。`
+      });
+    });
+
     eolRules.forEach((rule) => {
       const matched = rule.affected.some((reg) => reg.test(parsed.osLower));
       if (!matched) return;
-      hits.push({
+      addHit({
         id: rule.id,
         cve: "",
         level: rule.level,
@@ -354,6 +435,37 @@
       });
     });
 
+    if (parsed.hotfixCount === 0 || parsed.kbList.length === 0) {
+      addHit({
+        id: "PATCH-EMPTY",
+        cve: "",
+        level: "critical",
+        patchStatus: "补丁清单为空或为 0",
+        desc: "该主机处于明显高风险状态（或输出不完整），应优先复核补丁基线。"
+      });
+    }
+
+    if (parsed.modern && parsed.kbList.length > 0 && parsed.kbList.length < 5) {
+      addHit({
+        id: "PATCH-LOW",
+        cve: "",
+        level: "high",
+        patchStatus: `补丁数量偏少（${parsed.kbList.length}）`,
+        desc: "现代系统补丁数量异常偏少，存在关键安全更新缺失风险。"
+      });
+    }
+
+    if (/windows server 2019/i.test(parsed.osLower) && (parsed.hotfixCount === 0 || parsed.kbList.length === 0)) {
+      addHit({
+        id: "WIN2019-BASELINE",
+        cve: "CVE-2020-1472/CVE-2021-34527",
+        level: "critical",
+        patchStatus: "疑似未完成基线补丁",
+        desc: "Server 2019 在无补丁基线下常见高危利用面包括 Netlogon 与打印服务链路。"
+      });
+    }
+
+    const hits = sortHits([...hitMap.values()]);
     kbCount.textContent = String(parsed.kbList.length);
     riskCount.textContent = String(hits.length);
     renderRows(hits);
