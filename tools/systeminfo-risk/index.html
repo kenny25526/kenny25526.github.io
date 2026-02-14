@@ -1,0 +1,422 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Windows systeminfo 补丁风险分析 | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="Windows systeminfo 补丁风险分析             开始分析       复制结果       清空                       识别补丁：0       命中风险：0                                      漏洞编号           风险等级           补丁状态           风险说明">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Windows systeminfo 补丁风险分析">
+<meta property="og:url" content="https://www.52jl.top/tools/systeminfo-risk/index.html">
+<meta property="og:site_name" content="kenny&#39;s blog">
+<meta property="og:description" content="Windows systeminfo 补丁风险分析             开始分析       复制结果       清空                       识别补丁：0       命中风险：0                                      漏洞编号           风险等级           补丁状态           风险说明">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/avatar.jpg">
+<meta property="article:published_time" content="2026-02-14T14:39:17.557Z">
+<meta property="article:modified_time" content="2026-02-14T14:39:17.557Z">
+<meta property="article:author" content="Kenny">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/avatar.jpg"><script type="application/ld+json"></script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/tools/systeminfo-risk/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: false,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Windows systeminfo 补丁风险分析',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'page'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css?v=20260214a"><meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<script>
+(() => {
+  try {
+    if (window.top !== window.self) {
+      window.top.location = window.self.location.href;
+      return;
+    }
+
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal && window.location.protocol === 'http:') {
+      window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+})();
+</script>
+</head><body><div class="bg-animation" id="web_bg" style="background-color: #f6f7f9;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">11</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">31</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/systeminfo-risk/"><i class="fa-fw fas fa-shield-halved"></i><span> systeminfo 补丁风险分析</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div></div></div><div class="page" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">kenny's blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/systeminfo-risk/"><i class="fa-fw fas fa-shield-halved"></i><span> systeminfo 补丁风险分析</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><h1 class="title-seo">Windows systeminfo 补丁风险分析</h1></header><main class="layout hide-aside" id="content-inner"><div id="page"><div class="page-title">Windows systeminfo 补丁风险分析</div><div class="container" id="article-container">
+<div class="sysi-tool">
+  <div class="sysi-shell">
+    <h2 class="sysi-title">Windows systeminfo 补丁风险分析</h2>
+
+    <div class="sysi-row">
+      <button class="sysi-btn" id="sysi-analyze">开始分析</button>
+      <button class="sysi-btn alt" id="sysi-copy">复制结果</button>
+      <button class="sysi-btn warn" id="sysi-clear">清空</button>
+    </div>
+
+    <textarea id="sysi-input" rows="11" placeholder="请粘贴 systeminfo 完整输出（中英文都可）..."></textarea>
+    <div class="sysi-meta">
+      <span>识别补丁：<b id="sysi-kb-count">0</b></span>
+      <span>命中风险：<b id="sysi-risk-count">0</b></span>
+    </div>
+
+    <table class="sysi-table">
+      <thead>
+        <tr>
+          <th>漏洞编号</th>
+          <th>风险等级</th>
+          <th>补丁状态</th>
+          <th>风险说明</th>
+        </tr>
+      </thead>
+      <tbody id="sysi-result"></tbody>
+    </table>
+
+    <textarea id="sysi-output" rows="10" readonly placeholder="分析结果会显示在这里"></textarea>
+    <div class="sysi-note">提示：该工具用于快速筛查，不替代专业漏洞扫描。建议结合 Nessus/OpenVAS/WSUS 报告复核。</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const input = $("#sysi-input");
+  const output = $("#sysi-output");
+  const kbCount = $("#sysi-kb-count");
+  const riskCount = $("#sysi-risk-count");
+  const result = $("#sysi-result");
+
+  const rules = [
+    {
+      id: "MS08-067",
+      cve: "CVE-2008-4250",
+      level: "critical",
+      title: "Server Service 远程代码执行",
+      patchAny: ["KB958644"],
+      affected: [/windows xp/i, /windows server 2003/i, /windows vista/i, /windows server 2008/i]
+    },
+    {
+      id: "MS12-020",
+      cve: "CVE-2012-0002",
+      level: "high",
+      title: "RDP 远程漏洞",
+      patchAny: ["KB2621440"],
+      affected: [/windows xp/i, /windows vista/i, /windows 7/i, /windows server 2003/i, /windows server 2008/i]
+    },
+    {
+      id: "MS14-068",
+      cve: "CVE-2014-6324",
+      level: "high",
+      title: "Kerberos 权限提升",
+      patchAny: ["KB3011780"],
+      affected: [/windows server 2003/i, /windows server 2008/i, /windows server 2012/i]
+    },
+    {
+      id: "MS15-051",
+      cve: "CVE-2015-1701",
+      level: "high",
+      title: "Win32k 本地提权",
+      patchAny: ["KB3045171", "KB3045685", "KB3045999"],
+      affected: [/windows 7/i, /windows 8/i, /windows server 2008/i, /windows server 2012/i]
+    },
+    {
+      id: "MS16-032",
+      cve: "CVE-2016-0099",
+      level: "high",
+      title: "Secondary Logon 本地提权",
+      patchAny: ["KB3143141", "KB3143145", "KB3143118", "KB3143128", "KB3143131"],
+      affected: [/windows 7/i, /windows 8/i, /windows 10/i, /windows server 2008/i, /windows server 2012/i]
+    },
+    {
+      id: "MS17-010",
+      cve: "CVE-2017-0143/0144/0145/0146/0147/0148",
+      level: "critical",
+      title: "SMBv1 远程代码执行",
+      patchAny: [
+        "KB4013389", "KB4012598", "KB4012212", "KB4012213", "KB4012214",
+        "KB4012215", "KB4012216", "KB4012217", "KB4012606", "KB4013198", "KB4013429"
+      ],
+      affected: [
+        /windows xp/i, /windows 7/i, /windows 8/i, /windows 8\.1/i, /windows 10/i,
+        /windows server 2003/i, /windows server 2008/i, /windows server 2012/i, /windows server 2016/i
+      ]
+    }
+  ];
+
+  const eolRules = [
+    { id: "EOL-WXP", level: "high", title: "Windows XP 已停止支持", affected: [/windows xp/i] },
+    { id: "EOL-2003", level: "high", title: "Windows Server 2003 已停止支持", affected: [/windows server 2003/i] },
+    { id: "EOL-2008", level: "high", title: "Windows Server 2008/R2 已停止支持", affected: [/windows server 2008/i] },
+    { id: "EOL-WIN7", level: "medium", title: "Windows 7 已停止常规支持", affected: [/windows 7/i] }
+  ];
+
+  const levelText = { critical: "高危", high: "高", medium: "中" };
+
+  const firstMatch = (text, regList) => {
+    for (const reg of regList) {
+      const m = text.match(reg);
+      if (m && m[1]) return m[1].trim();
+    }
+    return "";
+  };
+
+  const parseSystemInfo = (text) => {
+    const osName = firstMatch(text, [
+      /OS Name:\s*(.+)/i,
+      /OS 名称:\s*(.+)/i
+    ]);
+    const osVersion = firstMatch(text, [
+      /OS Version:\s*(.+)/i,
+      /OS 版本:\s*(.+)/i
+    ]);
+    const systemType = firstMatch(text, [
+      /System Type:\s*(.+)/i,
+      /系统类型:\s*(.+)/i
+    ]);
+    const kbList = [...new Set((text.match(/\bKB\d{5,8}\b/gi) || []).map((x) => x.toUpperCase()))];
+    return { osName, osVersion, systemType, kbList, osLower: (osName + " " + osVersion).toLowerCase() };
+  };
+
+  const asPatched = (kbSet, patchAny) => patchAny.some((kb) => kbSet.has(kb));
+
+  const renderRows = (rows) => {
+    result.innerHTML = "";
+    if (!rows.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = "<td>未命中</td><td>-</td><td>-</td><td>未发现规则库中的高风险补丁缺失项</td>";
+      result.appendChild(tr);
+      return;
+    }
+    rows.forEach((row) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${row.id}<br><small>${row.cve || "-"}</small></td>
+        <td>${levelText[row.level] || row.level}</td>
+        <td>${row.patchStatus}</td>
+        <td>${row.desc}</td>
+      `;
+      result.appendChild(tr);
+    });
+  };
+
+  const buildSummary = (parsed, rows) => {
+    const lines = [];
+    lines.push("=== systeminfo 补丁风险分析结果 ===");
+    lines.push(`系统名称: ${parsed.osName || "未识别"}`);
+    lines.push(`系统版本: ${parsed.osVersion || "未识别"}`);
+    lines.push(`系统类型: ${parsed.systemType || "未识别"}`);
+    lines.push(`识别到补丁数量: ${parsed.kbList.length}`);
+    lines.push(`命中风险数量: ${rows.length}`);
+    lines.push("");
+    if (!rows.length) {
+      lines.push("未命中当前规则库中的高风险补丁缺失项。");
+      lines.push("建议继续使用专业扫描器和补丁基线做深度核查。");
+      return lines.join("\n");
+    }
+    lines.push("命中风险项:");
+    rows.forEach((row, idx) => {
+      lines.push(`${idx + 1}. ${row.id} (${row.cve || "-"}) [${levelText[row.level] || row.level}]`);
+      lines.push(`   - ${row.desc}`);
+      lines.push(`   - 补丁状态: ${row.patchStatus}`);
+    });
+    lines.push("");
+    lines.push("建议:");
+    lines.push("1. 优先修复高危项（critical/high），并确认是否已禁用 SMBv1。");
+    lines.push("2. 对 EOL 系统执行隔离、最小暴露面、替换升级。");
+    lines.push("3. 结合域控、端口暴露和资产分区评估横向移动风险。");
+    return lines.join("\n");
+  };
+
+  const analyze = () => {
+    const text = input.value.trim();
+    if (!text) return;
+
+    const parsed = parseSystemInfo(text);
+    const kbSet = new Set(parsed.kbList);
+    const hits = [];
+
+    rules.forEach((rule) => {
+      const affected = rule.affected.some((reg) => reg.test(parsed.osLower));
+      if (!affected) return;
+      const patched = asPatched(kbSet, rule.patchAny);
+      if (patched) return;
+      hits.push({
+        id: rule.id,
+        cve: rule.cve,
+        level: rule.level,
+        patchStatus: `未发现 ${rule.patchAny.join("/")}`,
+        desc: `${rule.title}，存在被已知利用链命中的风险。`
+      });
+    });
+
+    eolRules.forEach((rule) => {
+      const matched = rule.affected.some((reg) => reg.test(parsed.osLower));
+      if (!matched) return;
+      hits.push({
+        id: rule.id,
+        cve: "",
+        level: rule.level,
+        patchStatus: "系统已 EOL",
+        desc: `${rule.title}，建议升级或隔离。`
+      });
+    });
+
+    kbCount.textContent = String(parsed.kbList.length);
+    riskCount.textContent = String(hits.length);
+    renderRows(hits);
+    output.value = buildSummary(parsed, hits);
+  };
+
+  const copyResult = async () => {
+    const text = output.value.trim();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      output.select();
+      document.execCommand("copy");
+    }
+  };
+
+  $("#sysi-analyze").addEventListener("click", analyze);
+  $("#sysi-copy").addEventListener("click", copyResult);
+  $("#sysi-clear").addEventListener("click", () => {
+    input.value = "";
+    output.value = "";
+    kbCount.textContent = "0";
+    riskCount.textContent = "0";
+    result.innerHTML = "";
+  });
+})();
+</script>
+
+</div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://yyyxxx.cc" target="_blank" rel="noopener noreferrer">友情链接：映雪安全</a><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div><script>
+(() => {
+  const imageSelectors = "#article-container img, #recent-posts img, .article-sort-item-img img";
+  const addFallback = (img) => {
+    if (!img || img.dataset.ipFallbackBound === "1") return;
+    img.dataset.ipFallbackBound = "1";
+    img.addEventListener("error", () => {
+      const original = img.getAttribute("src") || "";
+      if (!original) return;
+      if (img.dataset.ipFallbackDone === "1") return;
+      img.dataset.ipFallbackDone = "1";
+      if (/\.webp(\?.*)?$/i.test(original)) {
+        img.onerror = () => {
+          img.onerror = null;
+          img.src = original.replace(/\.webp(\?.*)?$/i, ".jpg$1");
+          img.onerror = () => {
+            img.onerror = null;
+            img.src = "/img/404.jpg";
+          };
+        };
+        img.src = original.replace(/\.webp(\?.*)?$/i, ".png$1");
+        return;
+      }
+      img.onerror = null;
+      img.src = "/img/404.jpg";
+    });
+  };
+  const bindAll = () => document.querySelectorAll(imageSelectors).forEach(addFallback);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindAll);
+  } else {
+    bindAll();
+  }
+  document.addEventListener("pjax:complete", bindAll);
+})();
+</script>
+</div></body></html>

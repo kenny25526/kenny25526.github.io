@@ -71,10 +71,8 @@ body {
   color: var(--muted) !important;
 }
 
-#recent-posts > .recent-post-item,
 #post,
 #page,
-#archive,
 #aside-content .card-widget {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.9)) !important;
   border: 1px solid var(--line);
@@ -82,14 +80,102 @@ body {
   box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06);
 }
 
-#recent-posts > .recent-post-item {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+#recent-posts.recent-posts {
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
-#recent-posts > .recent-post-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.1);
-  border-color: var(--line-strong);
+#recent-posts .recent-post-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+#recent-posts .recent-post-item {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(252, 253, 255, 0.95));
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+}
+
+#recent-posts .recent-post-item:hover {
+  transform: translateY(-3px);
+  border-color: rgba(37, 99, 235, 0.32);
+  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.14);
+}
+
+#recent-posts .post_cover {
+  margin: 0 !important;
+}
+
+#recent-posts .post_cover a {
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+#recent-posts .post_cover .post-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.45s ease;
+}
+
+#recent-posts .recent-post-item:hover .post_cover .post-bg {
+  transform: scale(1.06);
+}
+
+#recent-posts .recent-post-info {
+  padding: 14px 16px 16px !important;
+}
+
+#recent-posts .recent-post-info .article-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 1.04rem;
+  line-height: 1.5;
+  color: var(--text) !important;
+}
+
+#recent-posts .recent-post-info .content {
+  margin-top: 8px;
+  color: #4b5563;
+  font-size: 0.93rem;
+  line-height: 1.75;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+#recent-posts .article-meta-wrap {
+  margin-top: 8px;
+  font-size: 0.84rem;
+}
+
+#archive {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+#archive .article-sort {
+  margin-top: 0;
+}
+
+#archive .article-sort-item {
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
 #article-container {
@@ -430,7 +516,8 @@ code,
 .pwd-tool .pwd-shell,
 .av-tool .av-shell,
 .shg-tool .shg-shell,
-.jce-tool .jce-shell {
+.jce-tool .jce-shell,
+.sysi-tool .sysi-shell {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--surface-strong);
@@ -441,7 +528,8 @@ code,
 .ipx-tool .ipx-title,
 .pwd-tool .pwd-title,
 .av-tool .av-title,
-.shg-tool .shg-title {
+.shg-tool .shg-title,
+.sysi-tool .sysi-title {
   margin: 0 0 12px;
   font-size: 1.22rem;
   font-family: "Noto Serif SC", "Noto Sans SC", serif;
@@ -451,7 +539,8 @@ code,
 .ipx-tool .ipx-row,
 .pwd-tool .pwd-row,
 .av-tool .av-row,
-.shg-tool .shg-row {
+.shg-tool .shg-row,
+.sysi-tool .sysi-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -462,6 +551,7 @@ code,
 .pwd-tool .pwd-btn,
 .av-tool .av-btn,
 .shg-tool .shg-btn,
+.sysi-tool .sysi-btn,
 .jce-tool .jce-copy-btn {
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
@@ -477,6 +567,7 @@ code,
 .pwd-tool .pwd-btn:hover,
 .av-tool .av-btn:hover,
 .shg-tool .shg-btn:hover,
+.sysi-tool .sysi-btn:hover,
 .jce-tool .jce-copy-btn:hover {
   border-color: rgba(37, 99, 235, 0.45);
   color: var(--accent);
@@ -486,7 +577,8 @@ code,
 .ipx-tool .ipx-btn.alt,
 .pwd-tool .pwd-btn.alt,
 .av-tool .av-btn.alt,
-.shg-tool .shg-btn.alt {
+.shg-tool .shg-btn.alt,
+.sysi-tool .sysi-btn.alt {
   border-color: rgba(37, 99, 235, 0.4);
   color: var(--accent);
 }
@@ -494,7 +586,8 @@ code,
 .ipx-tool .ipx-btn.warn,
 .pwd-tool .pwd-btn.warn,
 .av-tool .av-btn.warn,
-.shg-tool .shg-btn.warn {
+.shg-tool .shg-btn.warn,
+.sysi-tool .sysi-btn.warn {
   color: #b45309;
   border-color: rgba(245, 158, 11, 0.35);
   background: #fffbeb;
@@ -504,6 +597,7 @@ code,
 .pwd-tool textarea,
 .av-tool textarea,
 .shg-tool textarea,
+.sysi-tool textarea,
 .jce-tool textarea {
   width: 100%;
   border: 1px solid var(--line-strong);
@@ -518,6 +612,7 @@ code,
 .pwd-tool textarea:focus,
 .av-tool textarea:focus,
 .shg-tool textarea:focus,
+.sysi-tool textarea:focus,
 .jce-tool textarea:focus,
 .pwd-tool input:focus,
 .shg-tool input:focus,
@@ -573,7 +668,8 @@ code,
 .ipx-tool .ipx-meta,
 .pwd-tool .pwd-meta,
 .av-tool .av-meta,
-.shg-tool .shg-meta {
+.shg-tool .shg-meta,
+.sysi-tool .sysi-meta {
   display: flex;
   justify-content: space-between;
   margin: 8px 0 10px;
@@ -584,7 +680,8 @@ code,
 .ipx-tool .ipx-note,
 .pwd-tool .pwd-note,
 .av-tool .av-note,
-.shg-tool .shg-note {
+.shg-tool .shg-note,
+.sysi-tool .sysi-note {
   margin-top: 10px;
   color: var(--muted);
   font-size: 0.92rem;
@@ -607,6 +704,30 @@ code,
 
 .av-tool th {
   background: #f9fafb;
+}
+
+.sysi-tool .sysi-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.sysi-tool .sysi-table th,
+.sysi-tool .sysi-table td {
+  border: 1px solid var(--line);
+  padding: 8px;
+  vertical-align: top;
+}
+
+.sysi-tool .sysi-table th {
+  background: #f9fafb;
+}
+
+.sysi-tool .sysi-table td small {
+  color: var(--muted);
 }
 
 .jce-tool .jce-top {
@@ -690,6 +811,11 @@ code,
 @media (max-width: 768px) {
   #site-title {
     font-size: 1.52rem !important;
+  }
+
+  #recent-posts .recent-post-items {
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .pwd-tool .pwd-grid,
