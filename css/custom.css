@@ -730,6 +730,35 @@ code,
   color: var(--muted);
 }
 
+.sysi-tool .sysi-db-wrap {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin: 8px 0 10px;
+  background: #fcfdff;
+}
+
+.sysi-tool .sysi-db-wrap summary {
+  cursor: pointer;
+  user-select: none;
+  color: #374151;
+  font-weight: 600;
+}
+
+.sysi-tool .sysi-db-wrap[open] summary {
+  margin-bottom: 8px;
+}
+
+.sysi-tool .sysi-table th:nth-child(1),
+.sysi-tool .sysi-table td:nth-child(1) {
+  width: 170px;
+}
+
+.sysi-tool .sysi-table th:nth-child(2),
+.sysi-tool .sysi-table td:nth-child(2) {
+  width: 220px;
+}
+
 .jce-tool .jce-top {
   display: flex;
   align-items: center;

@@ -1,13 +1,13 @@
-<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Windows systeminfo 补丁风险分析 | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="Windows systeminfo 补丁风险分析             开始分析       复制结果       清空                       识别补丁：0       命中风险：0                                      漏洞编号           风险等级           补丁状态           风险说明">
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Windows systeminfo 补丁风险分析 | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="Windows systeminfo 补丁风险分析             开始分析       载入内置漏洞库       复制结果       清空                       高级：自定义漏洞库（支持你粘贴 MS&#x2F;CVE&#x2F;KB 列表）              可直接粘贴你发的那类大表；不填则使用内置规则库。                  识别补丁：0">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Windows systeminfo 补丁风险分析">
 <meta property="og:url" content="https://www.52jl.top/tools/systeminfo-risk/index.html">
 <meta property="og:site_name" content="kenny&#39;s blog">
-<meta property="og:description" content="Windows systeminfo 补丁风险分析             开始分析       复制结果       清空                       识别补丁：0       命中风险：0                                      漏洞编号           风险等级           补丁状态           风险说明">
+<meta property="og:description" content="Windows systeminfo 补丁风险分析             开始分析       载入内置漏洞库       复制结果       清空                       高级：自定义漏洞库（支持你粘贴 MS&#x2F;CVE&#x2F;KB 列表）              可直接粘贴你发的那类大表；不填则使用内置规则库。                  识别补丁：0">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://www.52jl.top/img/avatar.jpg">
-<meta property="article:published_time" content="2026-02-14T14:54:16.818Z">
-<meta property="article:modified_time" content="2026-02-14T14:54:16.818Z">
+<meta property="article:published_time" content="2026-02-14T15:01:53.364Z">
+<meta property="article:modified_time" content="2026-02-14T15:01:53.364Z">
 <meta property="article:author" content="Kenny">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://www.52jl.top/img/avatar.jpg"><script type="application/ld+json"></script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/tools/systeminfo-risk/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
@@ -143,11 +143,18 @@
 
     <div class="sysi-row">
       <button class="sysi-btn" id="sysi-analyze">开始分析</button>
+      <button class="sysi-btn alt" id="sysi-load-default">载入内置漏洞库</button>
       <button class="sysi-btn alt" id="sysi-copy">复制结果</button>
       <button class="sysi-btn warn" id="sysi-clear">清空</button>
     </div>
 
     <textarea id="sysi-input" rows="11" placeholder="请粘贴 systeminfo 完整输出（中英文都可）..."></textarea>
+    <details class="sysi-db-wrap">
+      <summary>高级：自定义漏洞库（支持你粘贴 MS/CVE/KB 列表）</summary>
+      <textarea id="sysi-db" rows="8" placeholder="每行至少包含：日期  漏洞编号  KB  影响产品  组件  严重性  说明（TAB 或多个空格分隔）"></textarea>
+      <div class="sysi-note">可直接粘贴你发的那类大表；不填则使用内置规则库。</div>
+    </details>
+
     <div class="sysi-meta">
       <span>识别补丁：<b id="sysi-kb-count">0</b></span>
       <span>命中风险：<b id="sysi-risk-count">0</b></span>
@@ -157,8 +164,9 @@
       <thead>
         <tr>
           <th>漏洞编号</th>
+          <th>缺失补丁</th>
+          <th>影响产品</th>
           <th>风险等级</th>
-          <th>补丁状态</th>
           <th>风险说明</th>
         </tr>
       </thead>
@@ -174,86 +182,42 @@
 (() => {
   const $ = (s) => document.querySelector(s);
   const input = $("#sysi-input");
+  const dbInput = $("#sysi-db");
   const output = $("#sysi-output");
   const kbCount = $("#sysi-kb-count");
   const riskCount = $("#sysi-risk-count");
   const result = $("#sysi-result");
 
-  const legacyRules = [
-    {
-      id: "MS08-067",
-      cve: "CVE-2008-4250",
-      level: "critical",
-      title: "Server Service 远程代码执行",
-      patchAny: ["KB958644"],
-      affected: [/windows xp/i, /windows server 2003/i, /windows vista/i, /windows server 2008/i]
-    },
-    {
-      id: "MS12-020",
-      cve: "CVE-2012-0002",
-      level: "high",
-      title: "RDP 远程漏洞",
-      patchAny: ["KB2621440"],
-      affected: [/windows xp/i, /windows vista/i, /windows 7/i, /windows server 2003/i, /windows server 2008/i]
-    },
-    {
-      id: "MS14-068",
-      cve: "CVE-2014-6324",
-      level: "high",
-      title: "Kerberos 权限提升",
-      patchAny: ["KB3011780"],
-      affected: [/windows server 2003/i, /windows server 2008/i, /windows server 2012/i]
-    },
-    {
-      id: "MS15-051",
-      cve: "CVE-2015-1701",
-      level: "high",
-      title: "Win32k 本地提权",
-      patchAny: ["KB3045171", "KB3045685", "KB3045999"],
-      affected: [/windows 7/i, /windows 8/i, /windows server 2008/i, /windows server 2012/i]
-    },
-    {
-      id: "MS16-032",
-      cve: "CVE-2016-0099",
-      level: "high",
-      title: "Secondary Logon 本地提权",
-      patchAny: ["KB3143141", "KB3143145", "KB3143118", "KB3143128", "KB3143131"],
-      affected: [/windows 7/i, /windows 8/i, /windows 10/i, /windows server 2008/i, /windows server 2012/i]
-    },
-    {
-      id: "MS17-010",
-      cve: "CVE-2017-0143/0144/0145/0146/0147/0148",
-      level: "critical",
-      title: "SMBv1 远程代码执行",
-      patchAny: [
-        "KB4013389", "KB4012598", "KB4012212", "KB4012213", "KB4012214",
-        "KB4012215", "KB4012216", "KB4012217", "KB4012606", "KB4013198", "KB4013429"
-      ],
-      affected: [
-        /windows xp/i, /windows 7/i, /windows 8/i, /windows 8\.1/i, /windows 10/i,
-        /windows server 2003/i, /windows server 2008/i, /windows server 2012/i, /windows server 2016/i
-      ]
-    }
-  ];
-
-  const modernRules = [
-    {
-      id: "PRINTNIGHTMARE",
-      cve: "CVE-2021-34527",
-      level: "high",
-      title: "Print Spooler 远程代码执行",
-      patchAny: ["KB5004947", "KB5005030", "KB5005568", "KB5006672"],
-      affected: [/windows server 2012/i, /windows server 2016/i, /windows server 2019/i, /windows server 2022/i, /windows 10/i, /windows 11/i]
-    },
-    {
-      id: "ZEROLOGON",
-      cve: "CVE-2020-1472",
-      level: "high",
-      title: "Netlogon 提权（域环境风险）",
-      patchAny: ["KB4571723", "KB4571748", "KB4577069", "KB4577015"],
-      affected: [/windows server 2008/i, /windows server 2012/i, /windows server 2016/i, /windows server 2019/i, /windows server 2022/i]
-    }
-  ];
+  const BUILTIN_DB = `
+2017-03-14	MS17-017	KB4013081	Win7/Win8	GDIPaletteObjectsLocalPrivilegeEscalation	Critical	本地权限提升
+2017-03-14	MS17-010	KB4013389	Win7/Win2008/Win2003/WinXP	WindowsKernelModeDrivers	Critical	内核模式驱动漏洞
+2016-09-13	MS16-111	KB3186973	Win10 10586/Win8.1	kernelapi	Critical	内核 API 漏洞
+2016-06-14	MS16-075	KB3164038	Win2003/Win2008/Win7/Win8/Win2012	HotPotato	Critical	HotPotato 漏洞
+2016-03-08	MS16-034	KB3143145	Win2008/Win7/Win8/Win10/Win2012	KernelDriver	Critical	内核驱动漏洞
+2016-03-08	MS16-032	KB3143141	Win2008/Win7/Win8/Win10/Win2012	SecondaryLogonHandle	Critical	二次登录句柄漏洞
+2016-02-09	MS16-016	KB3136041	Win2008/WinVista/Win7	WebDAV	Critical	WebDAV 漏洞
+2015-10-13	MS15-097	KB3089656	Win8.1/Win2012	RemoteCodeExecution	Critical	远程代码执行
+2015-07-14	MS15-076	KB3067505	Win2003/Win2008/Win7/Win8/Win2012	RPC	Critical	RPC 漏洞
+2015-06-09	MS15-051	KB3057191	Win2003/Win2008/Win7/Win8/Win2012	WindowsKernelModeDrivers	Critical	内核模式驱动漏洞
+2015-03-10	MS15-010	KB3036220	Win2003/Win2008/Win7/Win8	KernelDriver	Critical	内核驱动漏洞
+2014-08-12	MS14-068	KB3011780	Win2003/Win2008/Win2012/Win7/Win8	DomainPrivilegeEscalation	Critical	域权限提升
+2014-07-08	MS14-066	KB2992611	Win7/Win8/Win8.1/2008R2/2012/2012R2	Schannel	Critical	远程代码执行
+2014-05-13	MS14-040	KB2975684	Win2003/Win2008/Win2012/Win7/Win8	AFDDriver	Critical	AFD 驱动漏洞
+2013-07-09	MS13-053	KB2850851	WinXP/WinVista/Win2003/Win2008/Win7	win32k.sys	Critical	win32k.sys 漏洞
+2012-03-13	MS12-020	KB2671387	Win2003/Win2008/Win7/WinXP	RDP	Critical	RDP 漏洞
+2011-10-11	MS11-080	KB2592799	Win2003/WinXP	AFD.sys	Critical	AFD.sys 漏洞
+2010-10-12	MS10-092	KB2305420	Win2008/Win7	TaskScheduler	Critical	任务计划程序漏洞
+2010-02-09	MS10-015	KB977165	Win2003/Win2008/Win7/WinXP	KiTrap0D	Critical	KiTrap0D 漏洞
+2008-10-23	MS08-067	KB958644	Win2000/WinXP/Win2003/WinVista/Win2008	RemoteCodeExecution	Critical	远程代码执行
+2008-10-14	MS08-066	KB956803	Win2000/WinXP/Win2003	AFD.sys	Critical	远程代码执行
+2006-08-09	MS06-040	KB921883	Win2003/WinXP/Win2000	RemoteCodeExecution	Critical	远程代码执行
+2005-08-09	MS05-039	KB899588	Win2000/WinXP/Win2003	PnPService	Critical	远程代码执行
+2003-06-11	MS03-026	KB823980	WinNT/Win2000/WinXP/Win2003	BufferOverrunInRPCInterface	Critical	远程代码执行
+2020-09-08	CVE-2020-1472	KB4571723,KB4571748,KB4577015	Win2008/Win2012/Win2016/Win2019/Win2022	Netlogon	Critical	ZeroLogon 域控提权
+2021-07-06	CVE-2021-34527	KB5004947,KB5005030,KB5005568	Win2012/Win2016/Win2019/Win2022/Win10/Win11	PrintSpooler	Critical	PrintNightmare 远程代码执行
+2022-08-09	CVE-2022-34713	KB5016616,KB5016627,KB5016688	Win10/Win11/Win2016/Win2019/Win2022	HTTP.sys	Critical	远程代码执行
+2024-06-11	CVE-2024-30080	KB5039211,KB5039227,KB5039239	Win10/Win11/Win2016/Win2019/Win2022	ServerService	Critical	远程代码执行
+`.trim();
 
   const eolRules = [
     { id: "EOL-WXP", level: "high", title: "Windows XP 已停止支持", affected: [/windows xp/i] },
@@ -283,6 +247,30 @@
     return Number.isFinite(n) ? n : null;
   };
 
+  const normalizeLevel = (s) => {
+    const low = String(s || "").toLowerCase();
+    if (/critical|严重|高危/.test(low)) return "critical";
+    if (/important|high|高/.test(low)) return "high";
+    if (/medium|moderate|中/.test(low)) return "medium";
+    return "low";
+  };
+
+  const extractStrictKBs = (text) => [...new Set((String(text || "").match(/\bKB\d{5,8}\b/gi) || []).map((x) => x.toUpperCase()))];
+  const extractLooseKBs = (text) => {
+    const tokens = String(text || "").match(/\b(?:KB)?\d{6,8}\b/gi) || [];
+    const out = new Set();
+    tokens.forEach((raw) => {
+      const up = raw.toUpperCase();
+      if (up.startsWith("KB")) {
+        out.add(up);
+        return;
+      }
+      if (/^(19|20)\d{6}$/.test(up)) return;
+      out.add("KB" + up);
+    });
+    return [...out];
+  };
+
   const parseSystemInfo = (rawText) => {
     const text = normalizeText(rawText);
     const osName = firstMatch(text, [
@@ -306,7 +294,7 @@
     ]);
 
     const hotfixCount = parseIntSafe(hotfixCountText);
-    const kbList = [...new Set((text.match(/\bKB\d{5,8}\b/gi) || []).map((x) => x.toUpperCase()))];
+    const kbList = extractStrictKBs(text);
     const osLower = (osName + " " + osVersion).toLowerCase();
     const modern = /(windows server 2016|windows server 2019|windows server 2022|windows 10|windows 11)/i.test(osLower);
 
@@ -321,36 +309,149 @@
     };
   };
 
-  const asPatched = (kbSet, patchAny) => patchAny.some((kb) => kbSet.has(kb));
+  const splitDbColumns = (line) => {
+    let cols = line.split(/\t+/).map((x) => x.trim()).filter(Boolean);
+    if (cols.length < 4) cols = line.split(/\s{2,}/).map((x) => x.trim()).filter(Boolean);
+    return cols;
+  };
 
-  const sortHits = (hits) => hits.sort((a, b) => (levelRank[b.level] || 0) - (levelRank[a.level] || 0));
+  const parseDbLine = (line) => {
+    const raw = String(line || "").trim();
+    if (!raw || raw.startsWith("#")) return null;
+    const cols = splitDbColumns(raw);
+    if (cols.length < 2) return null;
+
+    const idIdx = cols.findIndex((c) => /^(MS\d{2}-\d{3}|CVE-\d{4}-\d{4,})$/i.test(c));
+    if (idIdx < 0) return null;
+
+    const id = cols[idIdx].toUpperCase();
+    const date = idIdx > 0 ? cols[0] : "";
+    const kbField = cols[idIdx + 1] || "";
+    const product = cols[idIdx + 2] || "";
+    const component = cols[idIdx + 3] || "";
+    const severity = cols[idIdx + 4] || "";
+    const impact = cols[idIdx + 5] || "";
+    const superseded = cols[idIdx + 6] || "";
+
+    return {
+      date,
+      id,
+      cve: id.startsWith("CVE-") ? id : "",
+      kbField,
+      product,
+      component,
+      severity,
+      level: normalizeLevel(severity),
+      impact,
+      superseded,
+      raw
+    };
+  };
+
+  const parseDbText = (text) => normalizeText(text).split("\n").map(parseDbLine).filter(Boolean);
+
+  const buildOsTags = (parsed) => {
+    const tags = new Set();
+    const full = `${parsed.osName} ${parsed.osVersion}`.toLowerCase();
+    if (/windows xp|winxp/.test(full)) tags.add("winxp");
+    if (/windows vista|winvista/.test(full)) tags.add("winvista");
+    if (/windows 7|win7/.test(full)) tags.add("win7");
+    if (/windows 8\.1|win8\.1/.test(full)) tags.add("win81");
+    if (/windows 8(?!\.)|win8(?!\.)/.test(full)) tags.add("win8");
+    if (/windows 10|win10/.test(full)) tags.add("win10");
+    if (/windows 11|win11/.test(full)) tags.add("win11");
+    if (/windows server 2003|server 2003/.test(full)) tags.add("win2003");
+    if (/windows server 2008 r2|server 2008 r2|2008r2/.test(full)) tags.add("win2008r2");
+    if (/windows server 2008|server 2008/.test(full)) tags.add("win2008");
+    if (/windows server 2012 r2|server 2012 r2|2012r2/.test(full)) tags.add("win2012r2");
+    if (/windows server 2012|server 2012/.test(full)) tags.add("win2012");
+    if (/windows server 2016|server 2016/.test(full)) tags.add("win2016");
+    if (/windows server 2019|server 2019/.test(full) || /build\s*17763/.test(full)) tags.add("win2019");
+    if (/windows server 2022|server 2022/.test(full)) tags.add("win2022");
+    if (/22h2/.test(full)) tags.add("22h2");
+    if (/21h2/.test(full)) tags.add("21h2");
+    return tags;
+  };
+
+  const matchAffectedProduct = (product, osTags) => {
+    const p = String(product || "").toLowerCase();
+    if (!p) return true;
+
+    const mapping = [
+      [/winxp|windows xp/, "winxp"],
+      [/winvista|vista/, "winvista"],
+      [/win7|windows 7/, "win7"],
+      [/win8\.1|windows 8\.1/, "win81"],
+      [/win8(?!\.)|windows 8(?!\.)/, "win8"],
+      [/win10|windows 10/, "win10"],
+      [/win11|windows 11/, "win11"],
+      [/win2003|server ?2003/, "win2003"],
+      [/win2008r2|server ?2008 ?r2|2008r2/, "win2008r2"],
+      [/win2008|server ?2008/, "win2008"],
+      [/win2012r2|server ?2012 ?r2|2012r2/, "win2012r2"],
+      [/win2012|server ?2012/, "win2012"],
+      [/win2016|server ?2016/, "win2016"],
+      [/win2019|server ?2019/, "win2019"],
+      [/win2022|server ?2022/, "win2022"]
+    ];
+
+    let hasKnown = false;
+    for (const [reg, tag] of mapping) {
+      if (reg.test(p)) {
+        hasKnown = true;
+        if (osTags.has(tag)) return true;
+      }
+    }
+
+    if (/windows 10 version 22h2|win10.*22h2/.test(p)) {
+      hasKnown = true;
+      if (osTags.has("win10") && osTags.has("22h2")) return true;
+    }
+
+    if (/windows 10 version 21h2|win10.*21h2/.test(p)) {
+      hasKnown = true;
+      if (osTags.has("win10") && osTags.has("21h2")) return true;
+    }
+
+    return !hasKnown ? false : false;
+  };
+
+  const sortHits = (hits) => hits.sort((a, b) => {
+    const lv = (levelRank[b.level] || 0) - (levelRank[a.level] || 0);
+    if (lv !== 0) return lv;
+    return String(b.date || "").localeCompare(String(a.date || ""));
+  });
 
   const renderRows = (rows) => {
     result.innerHTML = "";
     if (!rows.length) {
       const tr = document.createElement("tr");
-      tr.innerHTML = "<td>未命中</td><td>-</td><td>-</td><td>未发现规则库中的高风险补丁缺失项</td>";
+      tr.innerHTML = "<td>未命中</td><td>-</td><td>-</td><td>-</td><td>未发现规则库中的高风险补丁缺失项</td>";
       result.appendChild(tr);
       return;
     }
     rows.forEach((row) => {
       const tr = document.createElement("tr");
+      const kbText = row.missingKb || "-";
       tr.innerHTML = `
         <td>${row.id}<br><small>${row.cve || "-"}</small></td>
+        <td>${kbText}</td>
+        <td>${row.product || "-"}</td>
         <td>${levelText[row.level] || row.level}</td>
-        <td>${row.patchStatus}</td>
         <td>${row.desc}</td>
       `;
       result.appendChild(tr);
     });
   };
 
-  const buildSummary = (parsed, rows) => {
+  const buildSummary = (parsed, rows, stats) => {
     const lines = [];
     lines.push("=== systeminfo 补丁风险分析结果 ===");
     lines.push(`系统名称: ${parsed.osName || "未识别"}`);
     lines.push(`系统版本: ${parsed.osVersion || "未识别"}`);
     lines.push(`系统类型: ${parsed.systemType || "未识别"}`);
+    lines.push(`漏洞库记录数: ${stats.totalDbRows}`);
+    lines.push(`适配当前系统记录: ${stats.matchedRows}`);
     lines.push(`Hotfix 计数: ${parsed.hotfixCount === null ? "未识别" : parsed.hotfixCount}`);
     lines.push(`识别到补丁数量: ${parsed.kbList.length}`);
     lines.push(`命中风险数量: ${rows.length}`);
@@ -364,7 +465,7 @@
     rows.forEach((row, idx) => {
       lines.push(`${idx + 1}. ${row.id} (${row.cve || "-"}) [${levelText[row.level] || row.level}]`);
       lines.push(`   - ${row.desc}`);
-      lines.push(`   - 补丁状态: ${row.patchStatus}`);
+      lines.push(`   - 缺失补丁: ${row.missingKb || "漏洞库未提供明确 KB"}`);
     });
     lines.push("");
     lines.push("建议:");
@@ -381,6 +482,10 @@
     const parsed = parseSystemInfo(text);
     const kbSet = new Set(parsed.kbList);
     const hitMap = new Map();
+    const osTags = buildOsTags(parsed);
+    const dbText = dbInput.value.trim() || BUILTIN_DB;
+    const dbRows = parseDbText(dbText);
+    let matchedRows = 0;
 
     const addHit = (item) => {
       if (!item || !item.id) return;
@@ -397,29 +502,34 @@
       });
     }
 
-    legacyRules.forEach((rule) => {
-      const affected = rule.affected.some((reg) => reg.test(parsed.osLower));
-      if (!affected) return;
-      if (asPatched(kbSet, rule.patchAny)) return;
+    dbRows.forEach((row) => {
+      if (!matchAffectedProduct(row.product, osTags)) return;
+      matchedRows++;
+      const mappedKb = extractLooseKBs(`${row.kbField} ${row.superseded}`);
+      if (!mappedKb.length) {
+        if (row.level === "critical" || row.level === "high") {
+          addHit({
+            id: row.id,
+            cve: row.cve,
+            date: row.date,
+            product: row.product,
+            level: row.level,
+            missingKb: "",
+            desc: `${row.impact || "漏洞风险"}（漏洞库未提供明确 KB，需人工复核）`
+          });
+        }
+        return;
+      }
+      const patched = mappedKb.some((kb) => kbSet.has(kb));
+      if (patched) return;
       addHit({
-        id: rule.id,
-        cve: rule.cve,
-        level: rule.level,
-        patchStatus: `未发现 ${rule.patchAny.join("/")}`,
-        desc: `${rule.title}，存在被已知利用链命中的风险。`
-      });
-    });
-
-    modernRules.forEach((rule) => {
-      const affected = rule.affected.some((reg) => reg.test(parsed.osLower));
-      if (!affected) return;
-      if (asPatched(kbSet, rule.patchAny)) return;
-      addHit({
-        id: rule.id,
-        cve: rule.cve,
-        level: rule.level,
-        patchStatus: `未发现 ${rule.patchAny.join("/")}`,
-        desc: `${rule.title}，建议尽快核查是否已安装相应累计更新。`
+        id: row.id,
+        cve: row.cve,
+        date: row.date,
+        product: row.product,
+        level: row.level,
+        missingKb: mappedKb.join("/"),
+        desc: `${row.impact || row.component || "漏洞风险"}；影响组件：${row.component || "未知"}`
       });
     });
 
@@ -429,8 +539,10 @@
       addHit({
         id: rule.id,
         cve: "",
+        date: "",
+        product: parsed.osName || "-",
         level: rule.level,
-        patchStatus: "系统已 EOL",
+        missingKb: "",
         desc: `${rule.title}，建议升级或隔离。`
       });
     });
@@ -439,8 +551,10 @@
       addHit({
         id: "PATCH-EMPTY",
         cve: "",
+        date: "",
+        product: parsed.osName || "-",
         level: "critical",
-        patchStatus: "补丁清单为空或为 0",
+        missingKb: "系统补丁清单为空",
         desc: "该主机处于明显高风险状态（或输出不完整），应优先复核补丁基线。"
       });
     }
@@ -449,8 +563,10 @@
       addHit({
         id: "PATCH-LOW",
         cve: "",
+        date: "",
+        product: parsed.osName || "-",
         level: "high",
-        patchStatus: `补丁数量偏少（${parsed.kbList.length}）`,
+        missingKb: `补丁数量偏少（${parsed.kbList.length}）`,
         desc: "现代系统补丁数量异常偏少，存在关键安全更新缺失风险。"
       });
     }
@@ -459,17 +575,22 @@
       addHit({
         id: "WIN2019-BASELINE",
         cve: "CVE-2020-1472/CVE-2021-34527",
+        date: "",
+        product: "Windows Server 2019",
         level: "critical",
-        patchStatus: "疑似未完成基线补丁",
+        missingKb: "基线补丁缺失",
         desc: "Server 2019 在无补丁基线下常见高危利用面包括 Netlogon 与打印服务链路。"
       });
     }
 
-    const hits = sortHits([...hitMap.values()]);
+    const hits = sortHits([...hitMap.values()]).slice(0, 300);
     kbCount.textContent = String(parsed.kbList.length);
     riskCount.textContent = String(hits.length);
     renderRows(hits);
-    output.value = buildSummary(parsed, hits);
+    output.value = buildSummary(parsed, hits, {
+      totalDbRows: dbRows.length,
+      matchedRows
+    });
   };
 
   const copyResult = async () => {
@@ -484,6 +605,9 @@
   };
 
   $("#sysi-analyze").addEventListener("click", analyze);
+  $("#sysi-load-default").addEventListener("click", () => {
+    dbInput.value = BUILTIN_DB;
+  });
   $("#sysi-copy").addEventListener("click", copyResult);
   $("#sysi-clear").addEventListener("click", () => {
     input.value = "";
@@ -492,6 +616,8 @@
     riskCount.textContent = "0";
     result.innerHTML = "";
   });
+
+  if (!dbInput.value.trim()) dbInput.value = BUILTIN_DB;
 })();
 </script>
 
