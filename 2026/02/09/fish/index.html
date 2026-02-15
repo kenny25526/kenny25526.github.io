@@ -135,7 +135,23 @@
   isHighlightShrink: false,
   isToc: false,
   pageType: 'post'
-}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css?v=20260214a"><meta name="referrer" content="no-referrer">
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css?v=20260214a"><meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,max-snippet:0,max-image-preview:none,max-video-preview:0">
+<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
+<script>
+(() => {
+  try {
+    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
+    if (!isAutomation) return;
+    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
+    selectors.forEach((s) => {
+      document.querySelectorAll(s).forEach((el) => {
+        el.innerHTML = '<p>Content unavailable.</p>';
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+<meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>
 (() => {
@@ -150,22 +166,6 @@
     if (!isLocal && window.location.protocol === 'http:') {
       window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
     }
-  } catch (e) {}
-})();
-</script>
-<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,max-snippet:0,max-image-preview:none,max-video-preview:0">
-<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
-<script>
-(() => {
-  try {
-    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
-    if (!isAutomation) return;
-    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
-    selectors.forEach((s) => {
-      document.querySelectorAll(s).forEach((el) => {
-        el.innerHTML = '<p>Content unavailable.</p>';
-      });
-    });
   } catch (e) {}
 })();
 </script>
@@ -365,7 +365,7 @@
 <ul>
 <li>First Name：张三</li>
 <li>Last Name：员工</li>
-<li>Email：<a href="mailto:&#x7a;&#104;&#97;&#110;&#103;&#115;&#x61;&#x6e;&#64;&#116;&#x61;&#114;&#x67;&#101;&#116;&#x2d;&#x63;&#111;&#x6d;&#x70;&#x61;&#110;&#x79;&#x2e;&#x63;&#x6f;&#x6d;">zhangsan@target-company.com</a></li>
+<li>Email：<a href="mailto:&#x7a;&#x68;&#97;&#x6e;&#103;&#115;&#97;&#x6e;&#x40;&#116;&#x61;&#114;&#103;&#101;&#x74;&#x2d;&#x63;&#111;&#x6d;&#112;&#97;&#x6e;&#x79;&#x2e;&#x63;&#x6f;&#x6d;">zhangsan@target-company.com</a></li>
 <li>Position：技术部</li>
 </ul>
 <p><strong>批量导入</strong>（CSV 格式）：</p>
@@ -420,9 +420,9 @@
 <p><strong>使用 163 邮箱示例</strong>：</p>
 <ul>
 <li>Name：163 邮箱</li>
-<li>From：<a href="mailto:&#x79;&#111;&#x75;&#114;&#45;&#x65;&#109;&#x61;&#105;&#108;&#x40;&#49;&#x36;&#51;&#x2e;&#99;&#x6f;&#x6d;">your-email@163.com</a></li>
+<li>From：<a href="mailto:&#121;&#111;&#117;&#x72;&#45;&#x65;&#x6d;&#x61;&#105;&#x6c;&#x40;&#x31;&#54;&#x33;&#46;&#99;&#x6f;&#109;">your-email@163.com</a></li>
 <li>Host：smtp.163.com:25</li>
-<li>Username：<a href="mailto:&#121;&#x6f;&#117;&#114;&#45;&#101;&#109;&#x61;&#105;&#108;&#64;&#x31;&#54;&#x33;&#x2e;&#x63;&#x6f;&#x6d;">your-email@163.com</a></li>
+<li>Username：<a href="mailto:&#121;&#x6f;&#x75;&#114;&#45;&#x65;&#109;&#97;&#105;&#108;&#x40;&#49;&#x36;&#51;&#x2e;&#99;&#x6f;&#109;">your-email@163.com</a></li>
 <li>Password：邮箱授权码（不是登录密码）</li>
 </ul>
 <p><strong>获取 163 邮箱授权码</strong>：</p>
