@@ -625,6 +625,7 @@ code,
 
 .pwd-tool .pwd-item input[type="text"],
 .pwd-tool .pwd-item input[type="number"],
+.pwd-tool .pwd-item select,
 .shg-tool .shg-item input,
 .shg-tool .shg-item select {
   flex: 1;
@@ -656,6 +657,73 @@ code,
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.pwd-tool .pwd-safe-banner {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: var(--radius-md);
+  background: #f8fbff;
+  color: #1e3a8a;
+  font-size: 0.92rem;
+}
+
+.pwd-tool .pwd-panels {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.pwd-tool .pwd-panel {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  background: #fcfdff;
+  padding: 12px;
+}
+
+.pwd-tool .pwd-panel h3 {
+  margin: 0 0 10px;
+  font-size: 1.02rem;
+  color: #374151;
+}
+
+.pwd-tool .pwd-grid.pwd-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pwd-tool .pwd-grid.pwd-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pwd-tool .pwd-grid.pwd-grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.pwd-tool .pwd-span-2 {
+  grid-column: span 2;
+}
+
+.pwd-tool .pwd-list-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.pwd-tool .pwd-list-label {
+  display: block;
+  margin: 0 0 6px;
+  color: #374151;
+  font-size: 0.92rem;
+}
+
+.pwd-tool .pwd-list {
+  margin-bottom: 8px;
+}
+
+.pwd-tool section[hidden] {
+  display: none !important;
 }
 
 .jce-tool .jce-lang {
@@ -835,6 +903,11 @@ code,
   #article-container {
     font-size: 1rem;
   }
+
+  .pwd-tool .pwd-grid.pwd-grid-3,
+  .pwd-tool .pwd-grid.pwd-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
@@ -848,8 +921,13 @@ code,
   }
 
   .pwd-tool .pwd-grid,
-  .shg-tool .shg-grid {
+  .shg-tool .shg-grid,
+  .pwd-tool .pwd-list-grid {
     grid-template-columns: 1fr;
+  }
+
+  .pwd-tool .pwd-span-2 {
+    grid-column: span 1;
   }
 
   .jce-tool .jce-encode-wrap {
