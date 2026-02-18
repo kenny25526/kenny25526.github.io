@@ -1,0 +1,375 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>域渗透之权限维持 | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="PTT (Pass The Ticket - 票据传递攻击)PTT (Pass The Ticket) 是基于 Kerberos 协议的票据传递攻击技术，通过窃取或伪造 Kerberos 票据来实现权限维持和横向移动。 Kerberos 协议简介Kerberos 是一种网络认证协议，其设计目标是通过密钥系统为客户端&#x2F;服务器应用程序提供强大的认证服务。该认证过程具有以下特点：  不依赖于主">
+<meta property="og:type" content="article">
+<meta property="og:title" content="域渗透之权限维持">
+<meta property="og:url" content="https://www.52jl.top/2026/02/18/yuwc/index.html">
+<meta property="og:site_name" content="kenny&#39;s blog">
+<meta property="og:description" content="PTT (Pass The Ticket - 票据传递攻击)PTT (Pass The Ticket) 是基于 Kerberos 协议的票据传递攻击技术，通过窃取或伪造 Kerberos 票据来实现权限维持和横向移动。 Kerberos 协议简介Kerberos 是一种网络认证协议，其设计目标是通过密钥系统为客户端&#x2F;服务器应用程序提供强大的认证服务。该认证过程具有以下特点：  不依赖于主">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/covers/shinchan-cover-12.webp">
+<meta property="article:published_time" content="2026-02-18T06:08:33.000Z">
+<meta property="article:modified_time" content="2026-02-18T02:34:18.178Z">
+<meta property="article:author" content="Kenny">
+<meta property="article:tag" content="Kerberos">
+<meta property="article:tag" content="PTT">
+<meta property="article:tag" content="权限维持">
+<meta property="article:tag" content="票据攻击">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/covers/shinchan-cover-12.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "域渗透之权限维持",
+  "url": "https://www.52jl.top/2026/02/18/yuwc/",
+  "image": "https://www.52jl.top/img/covers/shinchan-cover-12.webp",
+  "datePublished": "2026-02-18T06:08:33.000Z",
+  "dateModified": "2026-02-18T02:34:18.178Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Kenny",
+      "url": "https://www.52jl.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/2026/02/18/yuwc/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: false,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '域渗透之权限维持',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css?v=20260214a"><meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,max-snippet:0,max-image-preview:none,max-video-preview:0">
+<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
+<script>
+(() => {
+  try {
+    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
+    if (!isAutomation) return;
+    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
+    selectors.forEach((s) => {
+      document.querySelectorAll(s).forEach((el) => {
+        el.innerHTML = '<p>Content unavailable.</p>';
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<script>
+(() => {
+  try {
+    if (window.top !== window.self) {
+      window.top.location = window.self.location.href;
+      return;
+    }
+
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal && window.location.protocol === 'http:') {
+      window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+})();
+</script>
+</head><body><div class="bg-animation" id="web_bg" style="background-color: #f6f7f9;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">13</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">36</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-handshake"></i><span> 友情链接</span></a></div><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/systeminfo-risk/"><i class="fa-fw fas fa-shield-halved"></i><span> systeminfo 补丁风险分析</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">kenny's blog</span></a><a class="nav-page-title" href="/"><span class="site-name">域渗透之权限维持</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-handshake"></i><span> 友情链接</span></a></div><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/systeminfo-risk/"><i class="fa-fw fas fa-shield-halved"></i><span> systeminfo 补丁风险分析</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav></header><main class="layout hide-aside" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">域渗透之权限维持</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-02-18T06:08:33.000Z" title="发表于 2026-02-18 14:08:33">2026-02-18</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-18T02:34:18.178Z" title="更新于 2026-02-18 10:34:18">2026-02-18</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/">红队攻防</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/%E5%9F%9F%E6%B8%97%E9%80%8F/">域渗透</a></span></div><div class="meta-secondline"></div></div></div><article class="container post-content" id="article-container"><h1 id="PTT-Pass-The-Ticket-票据传递攻击"><a href="#PTT-Pass-The-Ticket-票据传递攻击" class="headerlink" title="PTT (Pass The Ticket - 票据传递攻击)"></a>PTT (Pass The Ticket - 票据传递攻击)</h1><p>PTT (Pass The Ticket) 是基于 Kerberos 协议的票据传递攻击技术，通过窃取或伪造 Kerberos 票据来实现权限维持和横向移动。</p>
+<h2 id="Kerberos-协议简介"><a href="#Kerberos-协议简介" class="headerlink" title="Kerberos 协议简介"></a>Kerberos 协议简介</h2><p>Kerberos 是一种网络认证协议，其设计目标是通过密钥系统为客户端&#x2F;服务器应用程序提供强大的认证服务。该认证过程具有以下特点：</p>
+<ul>
+<li>不依赖于主机操作系统的认证</li>
+<li>无需基于主机地址的信任</li>
+<li>不要求网络上所有主机的物理安全</li>
+<li>假定网络上传送的数据包可以被任意读取、修改和插入</li>
+</ul>
+<h2 id="PTT-攻击方式"><a href="#PTT-攻击方式" class="headerlink" title="PTT 攻击方式"></a>PTT 攻击方式</h2><p>PTT 中最常见的三种攻击方式：</p>
+<ol>
+<li><strong>黄金票据 (Golden Ticket)</strong> - 伪造 TGT 票据</li>
+<li><strong>白银票据 (Silver Ticket)</strong> - 伪造 TGS 票据</li>
+<li><strong>MS14-068</strong> - 利用 KDC 漏洞提权</li>
+</ol>
+<h2 id="黄金票据-Golden-Ticket"><a href="#黄金票据-Golden-Ticket" class="headerlink" title="黄金票据 (Golden Ticket)"></a>黄金票据 (Golden Ticket)</h2><p>黄金票据是通过伪造 krbtgt 用户的 TGT 票据来实现域内权限维持的技术。krbtgt 是域控中用来管理和发放票据的特殊用户，拥有该用户的权限就可以伪造域内任意用户的票据。</p>
+<h3 id="攻击步骤"><a href="#攻击步骤" class="headerlink" title="攻击步骤"></a>攻击步骤</h3><p><strong>1. 获取域 SID</strong></p>
+<p>首先需要获取目标域用户的 SID：</p>
+<p><img src="/2026/02/18/yuwc/1.png" loading='lazy'></p>
+<p><strong>2. 获取 krbtgt 用户的 NTLM Hash</strong></p>
+<p>在域控上执行以下命令导出 krbtgt 的哈希：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mimikatz <span class="string">&quot;lsadump::dcsync /domain:0day.org /user:krbtgt&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/18/yuwc/2.png" loading='lazy'></p>
+<p><strong>3. 使用工具生成黄金票据</strong></p>
+<p>推荐使用插件：<a target="_blank" rel="noopener" href="https://github.com/d3ckx1/OLa">https://github.com/d3ckx1/OLa</a></p>
+<p><img src="/2026/02/18/yuwc/3.png" loading='lazy'></p>
+<p><strong>4. 注入票据</strong></p>
+<p>将生成的黄金票据注入到当前会话：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mimikatz <span class="string">&quot;kerberos::ptt golden.kirbi&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/18/yuwc/4.png" loading='lazy'></p>
+<h3 id="黄金票据的优势"><a href="#黄金票据的优势" class="headerlink" title="黄金票据的优势"></a>黄金票据的优势</h3><p>即使域控主机权限丢失或管理员密码被修改，依然可以使用边缘主机上的黄金票据模拟获得域内最高权限，实现持久化控制。</p>
+<p><strong>特点：</strong></p>
+<ul>
+<li>票据有效期长（默认 10 年）</li>
+<li>不依赖域控在线状态</li>
+<li>可访问域内所有资源</li>
+<li>难以被检测和清除</li>
+</ul>
+<hr>
+<h2 id="白银票据-Silver-Ticket"><a href="#白银票据-Silver-Ticket" class="headerlink" title="白银票据 (Silver Ticket)"></a>白银票据 (Silver Ticket)</h2><p>白银票据是通过伪造服务账户的 TGS (Ticket Granting Service) 票据来访问特定服务的攻击技术。与黄金票据不同，白银票据只能访问特定的服务，但更加隐蔽。</p>
+<h3 id="攻击步骤-1"><a href="#攻击步骤-1" class="headerlink" title="攻击步骤"></a>攻击步骤</h3><p><strong>1. 获取目标服务账户的 NTLM Hash</strong></p>
+<p>需要获取目标服务（如 CIFS、HTTP、MSSQL 等）对应账户的哈希值。</p>
+<p><strong>2. 生成白银票据</strong></p>
+<p>使用 Mimikatz 生成针对特定服务的票据：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mimikatz <span class="string">&quot;kerberos::golden /domain:0day.org /sid:S-1-5-21-xxx /target:server.0day.org /service:cifs /rc4:hash /user:administrator /ptt&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/18/yuwc/5.png" loading='lazy'></p>
+<p><strong>3. 验证票据</strong></p>
+<p>注入票据后即可访问目标服务：</p>
+<p><img src="/2026/02/18/yuwc/6.png" loading='lazy'></p>
+<h3 id="白银票据-vs-黄金票据"><a href="#白银票据-vs-黄金票据" class="headerlink" title="白银票据 vs 黄金票据"></a>白银票据 vs 黄金票据</h3><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>黄金票据</th>
+<th>白银票据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>伪造对象</td>
+<td>TGT (krbtgt)</td>
+<td>TGS (服务账户)</td>
+</tr>
+<tr>
+<td>访问范围</td>
+<td>域内所有资源</td>
+<td>特定服务</td>
+</tr>
+<tr>
+<td>所需权限</td>
+<td>域控权限</td>
+<td>服务账户哈希</td>
+</tr>
+<tr>
+<td>隐蔽性</td>
+<td>较低</td>
+<td>较高</td>
+</tr>
+<tr>
+<td>检测难度</td>
+<td>容易</td>
+<td>困难</td>
+</tr>
+</tbody></table>
+<p><strong>适用场景：</strong></p>
+<ul>
+<li>针对特定服务的持久化访问</li>
+<li>避免触发域控的检测机制</li>
+<li>在无法获取 krbtgt 哈希时的替代方案</li>
+</ul>
+<hr>
+<h2 id="MS14-068-漏洞利用"><a href="#MS14-068-漏洞利用" class="headerlink" title="MS14-068 漏洞利用"></a>MS14-068 漏洞利用</h2><p>MS14-068 是密钥分发中心 (KDC) 服务中的 Windows 漏洞，该漏洞允许经过身份验证的用户在其 Kerberos 票据 (TGT) 中插入任意 PAC (Privilege Attribute Certificate)。</p>
+<h3 id="漏洞原理"><a href="#漏洞原理" class="headerlink" title="漏洞原理"></a>漏洞原理</h3><p>该漏洞位于域控制器的 kdcsvc.dll 中，攻击者可以通过呈现具有篡改 PAC 的 Kerberos TGT 来获得域管理员权限的票据。</p>
+<h3 id="利用条件"><a href="#利用条件" class="headerlink" title="利用条件"></a>利用条件</h3><ul>
+<li>域内普通用户权限</li>
+<li>目标域控未打补丁 (KB3011780)</li>
+<li>知道用户的明文密码</li>
+<li>获取用户的 SID</li>
+</ul>
+<h3 id="攻击步骤-2"><a href="#攻击步骤-2" class="headerlink" title="攻击步骤"></a>攻击步骤</h3><p><strong>1. 清空当前票据</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">klist purge</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 使用 EXP 生成高权限票据</strong></p>
+<p>工具地址：<a target="_blank" rel="noopener" href="https://github.com/SecWiki/windows-kernel-exploits/tree/master/MS14-068">https://github.com/SecWiki/windows-kernel-exploits/tree/master/MS14-068</a></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">MS14-068.exe -u sqladmin@0day.org -s S-1-5-21-1812960810-2335050734-3517558805-1107 -d 192.168.3.142 -p admin!@#45</span><br></pre></td></tr></table></figure>
+
+<p><strong>参数说明：</strong></p>
+<ul>
+<li><code>-u</code>: 域用户名@域名</li>
+<li><code>-s</code>: 用户的 SID</li>
+<li><code>-d</code>: 域控 IP 地址</li>
+<li><code>-p</code>: 用户明文密码</li>
+</ul>
+<p><img src="/2026/02/18/yuwc/7.png" loading='lazy'></p>
+<p><strong>3. 注入生成的票据</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mimikatz <span class="string">&quot;kerberos::ptc TGT_sqladmin@0day.org.ccache&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/2026/02/18/yuwc/8.png" loading='lazy'></p>
+<p><strong>4. 验证权限提升</strong></p>
+<p>注入票据后，当前用户即可执行域管理员级别的操作：</p>
+<p><img src="/2026/02/18/yuwc/9.png" loading='lazy'></p>
+<hr>
+<h2 id="PTT-横向移动"><a href="#PTT-横向移动" class="headerlink" title="PTT 横向移动"></a>PTT 横向移动</h2><h3 id="票据导出与传递"><a href="#票据导出与传递" class="headerlink" title="票据导出与传递"></a>票据导出与传递</h3><p>将获取的高权限票据导出后，可以在其他低权限用户的主机上导入，直接执行高权限操作。</p>
+<p><strong>导入票据：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mimikatz <span class="string">&quot;kerberos::ptc TGT_sqladmin@0day.org.ccache&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>查看当前票据：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mimikatz <span class="string">&quot;kerberos::list&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>使用票据访问资源：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 访问域控的 C$ 共享</span></span><br><span class="line"><span class="built_in">dir</span> \\DC01.0day.org\c$</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用 PsExec 获取 Shell</span></span><br><span class="line">psexec.exe \\DC01.0day.org cmd</span><br></pre></td></tr></table></figure>
+
+<h3 id="票据传递的优势"><a href="#票据传递的优势" class="headerlink" title="票据传递的优势"></a>票据传递的优势</h3><ul>
+<li>无需明文密码或哈希值</li>
+<li>绕过多因素认证 (MFA)</li>
+<li>可在多台主机间复用</li>
+<li>隐蔽性强，难以检测</li>
+</ul>
+<hr>
+<h2 id="防御建议"><a href="#防御建议" class="headerlink" title="防御建议"></a>防御建议</h2><p><strong>针对黄金票据：</strong></p>
+<ol>
+<li>定期更换 krbtgt 账户密码（需更换两次）</li>
+<li>监控异常的 TGT 请求</li>
+<li>启用 PAC 验证</li>
+</ol>
+<p><strong>针对白银票据：</strong></p>
+<ol>
+<li>定期更换服务账户密码</li>
+<li>监控异常的服务票据请求</li>
+<li>限制服务账户权限</li>
+</ol>
+<p><strong>针对 MS14-068：</strong></p>
+<ol>
+<li>及时安装安全补丁 KB3011780</li>
+<li>升级到 Windows Server 2012 R2 及以上版本</li>
+</ol>
+<p><strong>通用防御措施：</strong></p>
+<ol>
+<li>部署 EDR 监控 Kerberos 异常行为</li>
+<li>启用 Windows Defender Credential Guard</li>
+<li>限制域管理员账户的使用范围</li>
+<li>定期审计域内高权限账户</li>
+<li>监控 Event ID 4768、4769、4770 等 Kerberos 相关日志</li>
+</ol>
+</article><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E6%9D%83%E9%99%90%E7%BB%B4%E6%8C%81/">权限维持</a><a class="post-meta__tags" href="/tags/Kerberos/">Kerberos</a><a class="post-meta__tags" href="/tags/%E7%A5%A8%E6%8D%AE%E6%94%BB%E5%87%BB/">票据攻击</a><a class="post-meta__tags" href="/tags/PTT/">PTT</a></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width no-desc" href="/2026/02/15/yu1/" title="域渗透之横向移动"><img class="cover" src="/img/covers/shinchan-cover-12.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">域渗透之横向移动</div></div></div></a></nav></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div><script>
+(() => {
+  const imageSelectors = "#article-container img, #recent-posts img, .article-sort-item-img img";
+  const addFallback = (img) => {
+    if (!img || img.dataset.ipFallbackBound === "1") return;
+    img.dataset.ipFallbackBound = "1";
+    img.addEventListener("error", () => {
+      const original = img.getAttribute("src") || "";
+      if (!original) return;
+      if (img.dataset.ipFallbackDone === "1") return;
+      img.dataset.ipFallbackDone = "1";
+      if (/\.webp(\?.*)?$/i.test(original)) {
+        img.onerror = () => {
+          img.onerror = null;
+          img.src = original.replace(/\.webp(\?.*)?$/i, ".jpg$1");
+          img.onerror = () => {
+            img.onerror = null;
+            img.src = "/img/404.jpg";
+          };
+        };
+        img.src = original.replace(/\.webp(\?.*)?$/i, ".png$1");
+        return;
+      }
+      img.onerror = null;
+      img.src = "/img/404.jpg";
+    });
+  };
+  const bindAll = () => document.querySelectorAll(imageSelectors).forEach(addFallback);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindAll);
+  } else {
+    bindAll();
+  }
+  document.addEventListener("pjax:complete", bindAll);
+})();
+</script>
+</div></body></html>
