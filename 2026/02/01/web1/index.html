@@ -114,7 +114,7 @@
     day: '天前',
     month: '个月前'
   },
-  copyright: undefined,
+  copyright: {"limitCount":80,"languages":{"author":"作者: Kenny","link":"链接: ","source":"来源: kenny's blog","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
   lightbox: 'null',
   Snackbar: undefined,
   infinitegrid: {
@@ -134,7 +134,22 @@
   isHighlightShrink: false,
   isToc: false,
   pageType: 'post'
-}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/css/custom.css?v=20260214a"><meta name="referrer" content="no-referrer">
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><meta name="robots" content="index,follow,noarchive,max-snippet:80,max-image-preview:none,max-video-preview:0"><link rel="stylesheet" href="/css/custom.css?v=20260214a"><meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
+<script>
+(() => {
+  try {
+    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
+    if (!isAutomation) return;
+    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
+    selectors.forEach((s) => {
+      document.querySelectorAll(s).forEach((el) => {
+        el.innerHTML = '<p>Content unavailable.</p>';
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+<meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>
 (() => {
@@ -149,22 +164,6 @@
     if (!isLocal && window.location.protocol === 'http:') {
       window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
     }
-  } catch (e) {}
-})();
-</script>
-<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex,max-snippet:0,max-image-preview:none,max-video-preview:0">
-<meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
-<script>
-(() => {
-  try {
-    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
-    if (!isAutomation) return;
-    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
-    selectors.forEach((s) => {
-      document.querySelectorAll(s).forEach((el) => {
-        el.innerHTML = '<p>Content unavailable.</p>';
-      });
-    });
   } catch (e) {}
 })();
 </script>
@@ -370,7 +369,7 @@
 <li><strong>持久化阶段</strong>：上传 Webshell 后，使用加密通信、内存马等技术维持访问</li>
 </ol>
 <p>记住：WAF 绕过是一个持续对抗的过程，需要不断学习新技术、新漏洞，保持对安全产品的敏感度。</p>
-</article><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/web%E5%AE%89%E5%85%A8/">web安全</a></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width no-desc" href="/2026/02/02/nw/" title="内网凭证窃取"><img class="cover" src="/img/covers/shinchan-cover-06.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">内网凭证窃取</div></div></div></a></nav></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div><script>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://www.52jl.top">Kenny</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.52jl.top/2026/02/01/web1/">https://www.52jl.top/2026/02/01/web1/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.52jl.top" target="_blank">kenny's blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/web%E5%AE%89%E5%85%A8/">web安全</a></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width no-desc" href="/2026/02/02/nw/" title="内网凭证窃取"><img class="cover" src="/img/covers/shinchan-cover-06.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">内网凭证窃取</div></div></div></a></nav></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div><script>
 (() => {
   const imageSelectors = "#article-container img, #recent-posts img, .article-sort-item-img img";
   const addFallback = (img) => {
@@ -406,4 +405,4 @@
   document.addEventListener("pjax:complete", bindAll);
 })();
 </script>
-</div></body></html>
+<script defer src="/js/anti-scrape.js?v=20260221a"></script></div></body></html>
