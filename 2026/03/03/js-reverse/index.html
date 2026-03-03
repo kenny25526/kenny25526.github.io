@@ -1,0 +1,255 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>记一次小程序挖掘：JS 逆向请求与响应 | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="这篇记录一次 EDU 小程序接口逆向过程，重点是把请求与响应的加解密链路完整还原出来。文中目标均已修复，仅用于授权测试场景下的技术复盘。  1. 问题现象抓包后发现请求与响应都不是明文，核心参数都做了加密处理，无法直接在 Burp 中复现业务接口。 2. 请求链路逆向2.1 定位加密入口反编译小程序并导入微信开发者工具后，全局搜索 requestData，定位到请求封装位置。这里同时出现了 req">
+<meta property="og:type" content="article">
+<meta property="og:title" content="记一次小程序挖掘：JS 逆向请求与响应">
+<meta property="og:url" content="https://www.52jl.top/2026/03/03/js-reverse/index.html">
+<meta property="og:site_name" content="kenny&#39;s blog">
+<meta property="og:description" content="这篇记录一次 EDU 小程序接口逆向过程，重点是把请求与响应的加解密链路完整还原出来。文中目标均已修复，仅用于授权测试场景下的技术复盘。  1. 问题现象抓包后发现请求与响应都不是明文，核心参数都做了加密处理，无法直接在 Burp 中复现业务接口。 2. 请求链路逆向2.1 定位加密入口反编译小程序并导入微信开发者工具后，全局搜索 requestData，定位到请求封装位置。这里同时出现了 req">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/covers/shinchan-cover-17.webp">
+<meta property="article:published_time" content="2026-03-03T09:30:00.000Z">
+<meta property="article:modified_time" content="2026-03-03T09:04:33.306Z">
+<meta property="article:author" content="Kenny">
+<meta property="article:tag" content="AES">
+<meta property="article:tag" content="JS逆向">
+<meta property="article:tag" content="SRC">
+<meta property="article:tag" content="小程序">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/covers/shinchan-cover-17.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "记一次小程序挖掘：JS 逆向请求与响应",
+  "url": "https://www.52jl.top/2026/03/03/js-reverse/",
+  "image": "https://www.52jl.top/img/covers/shinchan-cover-17.webp",
+  "datePublished": "2026-03-03T09:30:00.000Z",
+  "dateModified": "2026-03-03T09:04:33.306Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Kenny",
+      "url": "https://www.52jl.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/2026/03/03/js-reverse/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":80,"languages":{"author":"作者: Kenny","link":"链接: ","source":"来源: kenny's blog","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: false,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '记一次小程序挖掘：JS 逆向请求与响应',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><meta name="robots" content="index,follow,noarchive,max-snippet:80,max-image-preview:none,max-video-preview:0"><link rel="stylesheet" href="/css/custom.css?v=20260214a"><meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
+<script>
+(() => {
+  try {
+    const isAutomation = navigator.webdriver || /HeadlessChrome|PhantomJS|puppeteer|playwright/i.test(navigator.userAgent || '');
+    if (!isAutomation) return;
+    const selectors = ['#article-container', 'article', '.post-content', '.post-body'];
+    selectors.forEach((s) => {
+      document.querySelectorAll(s).forEach((el) => {
+        el.innerHTML = '<p>Content unavailable.</p>';
+      });
+    });
+  } catch (e) {}
+})();
+</script>
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<script>
+(() => {
+  try {
+    if (window.top !== window.self) {
+      window.top.location = window.self.location.href;
+      return;
+    }
+
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal && window.location.protocol === 'http:') {
+      window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+})();
+</script>
+</head><body><div class="bg-animation" id="web_bg" style="background-color: #f6f7f9;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">15</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">42</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-handshake"></i><span> 友情链接</span></a></div><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/systeminfo-risk/"><i class="fa-fw fas fa-shield-halved"></i><span> systeminfo 补丁风险分析</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">kenny's blog</span></a><a class="nav-page-title" href="/"><span class="site-name">记一次小程序挖掘：JS 逆向请求与响应</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-handshake"></i><span> 友情链接</span></a></div><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/systeminfo-risk/"><i class="fa-fw fas fa-shield-halved"></i><span> systeminfo 补丁风险分析</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav></header><main class="layout hide-aside" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">记一次小程序挖掘：JS 逆向请求与响应</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-03-03T09:30:00.000Z" title="发表于 2026-03-03 17:30:00">2026-03-03</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-03-03T09:04:33.306Z" title="更新于 2026-03-03 17:04:33">2026-03-03</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/">红队攻防</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BA%A2%E9%98%9F%E6%94%BB%E9%98%B2/web%E5%AE%89%E5%85%A8/">web安全</a></span></div><div class="meta-secondline"></div></div></div><article class="container post-content" id="article-container"><p>这篇记录一次 EDU 小程序接口逆向过程，重点是把请求与响应的加解密链路完整还原出来。<br>文中目标均已修复，仅用于授权测试场景下的技术复盘。</p>
+<p><img src="/2026/03/03/js-reverse/01.png" loading='lazy'></p>
+<h2 id="1-问题现象"><a href="#1-问题现象" class="headerlink" title="1. 问题现象"></a>1. 问题现象</h2><p>抓包后发现请求与响应都不是明文，核心参数都做了加密处理，无法直接在 Burp 中复现业务接口。</p>
+<h2 id="2-请求链路逆向"><a href="#2-请求链路逆向" class="headerlink" title="2. 请求链路逆向"></a>2. 请求链路逆向</h2><h3 id="2-1-定位加密入口"><a href="#2-1-定位加密入口" class="headerlink" title="2.1 定位加密入口"></a>2.1 定位加密入口</h3><p>反编译小程序并导入微信开发者工具后，全局搜索 <code>requestData</code>，定位到请求封装位置。<br>这里同时出现了 <code>requestData</code> 和 <code>iv</code> 的生成逻辑。</p>
+<p><img src="/2026/03/03/js-reverse/02.png" loading='lazy'></p>
+<h3 id="2-2-拆解-requestData-参数来源"><a href="#2-2-拆解-requestData-参数来源" class="headerlink" title="2.2 拆解 requestData 参数来源"></a>2.2 拆解 <code>requestData</code> 参数来源</h3><p>断点后可以看到：<code>requestData</code> 最终由 <code>t()</code> 函数处理，而 <code>t()</code> 之前有三个关键输入值。</p>
+<p>第一个参数 <code>c</code>：<br><code>JSON.stringify(c)</code> 多次观察后可确认是业务请求载荷，字段如 <code>class</code>、<code>page</code> 控制模块与分页。</p>
+<p><img src="/2026/03/03/js-reverse/03.png" loading='lazy'></p>
+<p>第二个参数 <code>u</code>：<br>向上跟踪可见由 <code>d()</code> 生成。</p>
+<p><img src="/2026/03/03/js-reverse/04.png" loading='lazy'></p>
+<p>进入 <code>d()</code> 后可确认其本质是随机字符串生成函数。</p>
+<p><img src="/2026/03/03/js-reverse/05.png" loading='lazy'></p>
+<p><img src="/2026/03/03/js-reverse/06.png" loading='lazy'></p>
+<p>第三个参数 <code>a.decodekey</code>：<br>调试时为 <code>undefined</code>，在当前链路下可先忽略。</p>
+<p><img src="/2026/03/03/js-reverse/07.png" loading='lazy'></p>
+<h3 id="2-3-还原加密函数-t"><a href="#2-3-还原加密函数-t" class="headerlink" title="2.3 还原加密函数 t()"></a>2.3 还原加密函数 <code>t()</code></h3><p>继续分析包裹函数 <code>t()</code>，可确认是 <code>AES-CBC + Pkcs7</code>。</p>
+<p><img src="/2026/03/03/js-reverse/08.png" loading='lazy'></p>
+<p><img src="/2026/03/03/js-reverse/09.png" loading='lazy'></p>
+<p>调试结果显示：</p>
+<ol>
+<li><code>e</code> 为待加密明文（业务 JSON 字符串）</li>
+<li>第二参数 <code>n</code> 即上文 <code>u</code>，用于生成 <code>iv</code></li>
+<li><code>key</code> 为固定字符串：<code>WAG0JIUGYALACVJF</code></li>
+</ol>
+<p><img src="/2026/03/03/js-reverse/10.png" loading='lazy'></p>
+<p>到这里请求端逻辑已经打通：只要本地复刻同样的 key、iv 与加密模式，就能生成有效 <code>requestData</code>。</p>
+<h2 id="3-Node-js-复刻请求加密"><a href="#3-Node-js-复刻请求加密" class="headerlink" title="3. Node.js 复刻请求加密"></a>3. Node.js 复刻请求加密</h2><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="title class_">CryptoJS</span> = <span class="built_in">require</span>(<span class="string">&quot;crypto-js&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">d</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> a = [</span><br><span class="line">    <span class="string">&quot;1&quot;</span>, <span class="string">&quot;2&quot;</span>, <span class="string">&quot;4&quot;</span>, <span class="string">&quot;5&quot;</span>, <span class="string">&quot;3&quot;</span>, <span class="string">&quot;8&quot;</span>, <span class="string">&quot;0&quot;</span>, <span class="string">&quot;7&quot;</span>, <span class="string">&quot;9&quot;</span>, <span class="string">&quot;6&quot;</span>,</span><br><span class="line">    <span class="string">&quot;A&quot;</span>, <span class="string">&quot;Q&quot;</span>, <span class="string">&quot;W&quot;</span>, <span class="string">&quot;E&quot;</span>, <span class="string">&quot;R&quot;</span>, <span class="string">&quot;T&quot;</span>, <span class="string">&quot;Y&quot;</span>, <span class="string">&quot;U&quot;</span>, <span class="string">&quot;I&quot;</span>, <span class="string">&quot;O&quot;</span>,</span><br><span class="line">    <span class="string">&quot;P&quot;</span>, <span class="string">&quot;S&quot;</span>, <span class="string">&quot;D&quot;</span>, <span class="string">&quot;F&quot;</span>, <span class="string">&quot;G&quot;</span>, <span class="string">&quot;H&quot;</span>, <span class="string">&quot;J&quot;</span>, <span class="string">&quot;K&quot;</span>, <span class="string">&quot;L&quot;</span>, <span class="string">&quot;q&quot;</span>,</span><br><span class="line">    <span class="string">&quot;w&quot;</span>, <span class="string">&quot;S&quot;</span>, <span class="string">&quot;e&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="string">&quot;s&quot;</span>, <span class="string">&quot;d&quot;</span>, <span class="string">&quot;z&quot;</span>, <span class="string">&quot;x&quot;</span>, <span class="string">&quot;c&quot;</span>, <span class="string">&quot;v&quot;</span>,</span><br><span class="line">    <span class="string">&quot;f&quot;</span>, <span class="string">&quot;r&quot;</span>, <span class="string">&quot;t&quot;</span>, <span class="string">&quot;g&quot;</span>, <span class="string">&quot;b&quot;</span>, <span class="string">&quot;y&quot;</span>, <span class="string">&quot;h&quot;</span>, <span class="string">&quot;n&quot;</span>, <span class="string">&quot;m&quot;</span>, <span class="string">&quot;j&quot;</span>,</span><br><span class="line">    <span class="string">&quot;u&quot;</span>, <span class="string">&quot;i&quot;</span>, <span class="string">&quot;o&quot;</span>, <span class="string">&quot;k&quot;</span>, <span class="string">&quot;l&quot;</span>, <span class="string">&quot;p&quot;</span></span><br><span class="line">  ];</span><br><span class="line">  <span class="keyword">let</span> e = <span class="string">&quot;&quot;</span>;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> n = <span class="number">0</span>; n &lt; <span class="number">16</span>; n++) &#123;</span><br><span class="line">    e += a[<span class="title class_">Math</span>.<span class="title function_">floor</span>(<span class="title class_">Math</span>.<span class="title function_">random</span>() * a.<span class="property">length</span>)];</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> e;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">encryptRequest</span>(<span class="params">c, u</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> key = <span class="title class_">CryptoJS</span>.<span class="property">enc</span>.<span class="property">Utf8</span>.<span class="title function_">parse</span>(<span class="string">&quot;WAG0JIUGYALACVJF&quot;</span>);</span><br><span class="line">  <span class="keyword">const</span> iv = <span class="title class_">CryptoJS</span>.<span class="property">enc</span>.<span class="property">Utf8</span>.<span class="title function_">parse</span>(u);</span><br><span class="line">  <span class="keyword">return</span> <span class="title class_">CryptoJS</span>.<span class="property">AES</span>.<span class="title function_">encrypt</span>(c, key, &#123;</span><br><span class="line">    iv,</span><br><span class="line">    <span class="attr">mode</span>: <span class="title class_">CryptoJS</span>.<span class="property">mode</span>.<span class="property">CBC</span>,</span><br><span class="line">    <span class="attr">padding</span>: <span class="title class_">CryptoJS</span>.<span class="property">pad</span>.<span class="property">Pkcs7</span></span><br><span class="line">  &#125;).<span class="title function_">toString</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> u = <span class="title function_">d</span>();</span><br><span class="line"><span class="keyword">const</span> c = <span class="string">&#x27;&#123;&quot;acc_id&quot;:78,&quot;page&quot;:1,&quot;class&quot;:2,&quot;sort&quot;:&quot;4&quot;,&quot;appid&quot;:&quot;wx_your_appid_here&quot;,&quot;ver&quot;:&quot;7.0.0&quot;,&quot;min_push&quot;:0,&quot;scene&quot;:1001&#125;&#x27;</span>;</span><br><span class="line"><span class="keyword">const</span> requestData = <span class="title function_">encryptRequest</span>(c, u);</span><br><span class="line"></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;requestData =&quot;</span>, requestData);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;iv =&quot;</span>, u);</span><br></pre></td></tr></table></figure>
+
+<p>运行后可得到可用的 <code>requestData</code> 与 <code>iv</code>。</p>
+<p><img src="/2026/03/03/js-reverse/11.png" loading='lazy'></p>
+<h2 id="4-Burp-验证请求可用性"><a href="#4-Burp-验证请求可用性" class="headerlink" title="4. Burp 验证请求可用性"></a>4. Burp 验证请求可用性</h2><p>将生成值填入请求后转发，接口能正常返回业务数据，说明请求加密复刻成功。</p>
+<p><img src="/2026/03/03/js-reverse/12.png" loading='lazy'></p>
+<h2 id="5-响应链路逆向"><a href="#5-响应链路逆向" class="headerlink" title="5. 响应链路逆向"></a>5. 响应链路逆向</h2><p>接下来处理响应解密。全局搜索 <code>decrypt</code>，定位到解密函数。</p>
+<p><img src="/2026/03/03/js-reverse/13.png" loading='lazy'></p>
+<p>调试后可确认：</p>
+<ol>
+<li><code>e</code> 是响应密文（Base64）</li>
+<li><code>n</code> 是固定 iv：<code>XV9LXBQGYXPIZHA7</code></li>
+<li><code>key</code> 仍是固定字符串：<code>WAG0JIUGYALACVJF</code></li>
+</ol>
+<h2 id="6-Node-js-复刻响应解密"><a href="#6-Node-js-复刻响应解密" class="headerlink" title="6. Node.js 复刻响应解密"></a>6. Node.js 复刻响应解密</h2><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="title class_">CryptoJS</span> = <span class="built_in">require</span>(<span class="string">&quot;crypto-js&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">decryptResponse</span>(<span class="params">e, n = <span class="string">&quot;XV9LXBQGYXPIZHA7&quot;</span></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> key = <span class="title class_">CryptoJS</span>.<span class="property">enc</span>.<span class="property">Utf8</span>.<span class="title function_">parse</span>(<span class="string">&quot;WAG0JIUGYALACVJF&quot;</span>);</span><br><span class="line">  <span class="keyword">const</span> iv = <span class="title class_">CryptoJS</span>.<span class="property">enc</span>.<span class="property">Utf8</span>.<span class="title function_">parse</span>(n);</span><br><span class="line">  <span class="keyword">const</span> ciphertext = <span class="title class_">CryptoJS</span>.<span class="property">enc</span>.<span class="property">Base64</span>.<span class="title function_">parse</span>(e);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> decrypted = <span class="title class_">CryptoJS</span>.<span class="property">AES</span>.<span class="title function_">decrypt</span>(&#123; ciphertext &#125;, key, &#123;</span><br><span class="line">    iv,</span><br><span class="line">    <span class="attr">mode</span>: <span class="title class_">CryptoJS</span>.<span class="property">mode</span>.<span class="property">CBC</span>,</span><br><span class="line">    <span class="attr">padding</span>: <span class="title class_">CryptoJS</span>.<span class="property">pad</span>.<span class="property">Pkcs7</span></span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> decrypted.<span class="title function_">toString</span>(<span class="title class_">CryptoJS</span>.<span class="property">enc</span>.<span class="property">Utf8</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> data = <span class="string">&quot;密文&quot;</span>;</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="title function_">decryptResponse</span>(data));</span><br></pre></td></tr></table></figure>
+
+<p>运行后可直接还原响应明文，拿到业务数据与敏感资源链接。</p>
+<p><img src="/2026/03/03/js-reverse/14.png" loading='lazy'></p>
+<h2 id="7-总结"><a href="#7-总结" class="headerlink" title="7. 总结"></a>7. 总结</h2><p>这次核心不在于“算法多复杂”，而在于把链路走通：<br><code>定位参数 -&gt; 追踪函数 -&gt; 断点确认 key/iv -&gt; 本地复刻 -&gt; Burp 验证 -&gt; 反向解密响应</code>。</p>
+<p>在小程序场景里，前端加密只要密钥和流程落在客户端，最终都可能被还原。<br>做 SRC 时，建议优先关注这种“可复刻通信链路 + 敏感数据返回”的组合点。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://www.52jl.top">Kenny</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.52jl.top/2026/03/03/js-reverse/">https://www.52jl.top/2026/03/03/js-reverse/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.52jl.top" target="_blank">kenny's blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/SRC/">SRC</a><a class="post-meta__tags" href="/tags/%E5%B0%8F%E7%A8%8B%E5%BA%8F/">小程序</a><a class="post-meta__tags" href="/tags/JS%E9%80%86%E5%90%91/">JS逆向</a><a class="post-meta__tags" href="/tags/AES/">AES</a></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width no-desc" href="/2026/03/03/edu-src/" title="EDU SRC 挖洞实战：我常用的小程序打法"><img class="cover" src="/img/covers/shinchan-cover-18.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">EDU SRC 挖洞实战：我常用的小程序打法</div></div></div></a></nav></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div><script>
+(() => {
+  const imageSelectors = "#article-container img, #recent-posts img, .article-sort-item-img img";
+  const addFallback = (img) => {
+    if (!img || img.dataset.ipFallbackBound === "1") return;
+    img.dataset.ipFallbackBound = "1";
+    img.addEventListener("error", () => {
+      const original = img.getAttribute("src") || "";
+      if (!original) return;
+      if (img.dataset.ipFallbackDone === "1") return;
+      img.dataset.ipFallbackDone = "1";
+      if (/\.webp(\?.*)?$/i.test(original)) {
+        img.onerror = () => {
+          img.onerror = null;
+          img.src = original.replace(/\.webp(\?.*)?$/i, ".jpg$1");
+          img.onerror = () => {
+            img.onerror = null;
+            img.src = "/img/404.jpg";
+          };
+        };
+        img.src = original.replace(/\.webp(\?.*)?$/i, ".png$1");
+        return;
+      }
+      img.onerror = null;
+      img.src = "/img/404.jpg";
+    });
+  };
+  const bindAll = () => document.querySelectorAll(imageSelectors).forEach(addFallback);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindAll);
+  } else {
+    bindAll();
+  }
+  document.addEventListener("pjax:complete", bindAll);
+})();
+</script>
+<script defer src="/js/anti-scrape.js?v=20260221a"></script></div></body></html>

@@ -1,0 +1,660 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Windows systeminfo 补丁风险分析 | kenny's blog</title><meta name="author" content="Kenny"><meta name="copyright" content="Kenny"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="f6f7f9"><meta name="description" content="Windows systeminfo 补丁风险分析             开始分析       载入内置漏洞库       复制结果       清空                       高级：自定义漏洞库（支持你粘贴 MS&#x2F;CVE&#x2F;KB 列表）              可直接粘贴你发的那类大表；不填则使用内置规则库。                  识别补丁：0">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Windows systeminfo 补丁风险分析">
+<meta property="og:url" content="https://www.52jl.top/tools/systeminfo-risk/index.html">
+<meta property="og:site_name" content="kenny&#39;s blog">
+<meta property="og:description" content="Windows systeminfo 补丁风险分析             开始分析       载入内置漏洞库       复制结果       清空                       高级：自定义漏洞库（支持你粘贴 MS&#x2F;CVE&#x2F;KB 列表）              可直接粘贴你发的那类大表；不填则使用内置规则库。                  识别补丁：0">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.52jl.top/img/avatar.jpg">
+<meta property="article:published_time" content="2026-02-14T15:01:53.364Z">
+<meta property="article:modified_time" content="2026-02-14T15:01:53.364Z">
+<meta property="article:author" content="Kenny">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.52jl.top/img/avatar.jpg"><script type="application/ld+json"></script><link rel="shortcut icon" href="/img/favicon.ico"><link rel="canonical" href="https://www.52jl.top/tools/systeminfo-risk/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":80,"languages":{"author":"作者: Kenny","link":"链接: ","source":"来源: kenny's blog","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: false,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Windows systeminfo 补丁风险分析',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'page'
+}</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet"><meta name="robots" content="index,follow,noarchive,max-snippet:80,max-image-preview:none,max-video-preview:0"><link rel="stylesheet" href="/css/custom.css?v=20260214a"><meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<script>
+(() => {
+  try {
+    if (window.top !== window.self) {
+      window.top.location = window.self.location.href;
+      return;
+    }
+
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal && window.location.protocol === 'http:') {
+      window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+    }
+  } catch (e) {}
+})();
+</script>
+</head><body><div class="bg-animation" id="web_bg" style="background-color: #f6f7f9;"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">15</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">42</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-handshake"></i><span> 友情链接</span></a></div><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/systeminfo-risk/"><i class="fa-fw fas fa-shield-halved"></i><span> systeminfo 补丁风险分析</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div></div></div><div class="page" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">kenny's blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fas fa-handshake"></i><span> 友情链接</span></a></div><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-house-signal"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-box-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-tree"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-toolbox"></i><span> Tools</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/tools/url-extractor/"><i class="fa-fw fas fa-filter"></i><span> IP/域名/URL 提取</span></a></li><li><a class="site-page child" href="/tools/password-dict/"><i class="fa-fw fas fa-key"></i><span> 密码字典生成</span></a></li><li><a class="site-page child" href="/tools/av-detector/"><i class="fa-fw fas fa-shield-virus"></i><span> 杀软识别</span></a></li><li><a class="site-page child" href="/tools/systeminfo-risk/"><i class="fa-fw fas fa-shield-halved"></i><span> systeminfo 补丁风险分析</span></a></li><li><a class="site-page child" href="/tools/shell-command/"><i class="fa-fw fas fa-terminal"></i><span> 命令编码工具</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><h1 class="title-seo">Windows systeminfo 补丁风险分析</h1></header><main class="layout hide-aside" id="content-inner"><div id="page"><div class="page-title">Windows systeminfo 补丁风险分析</div><div class="container" id="article-container">
+<div class="sysi-tool">
+  <div class="sysi-shell">
+    <h2 class="sysi-title">Windows systeminfo 补丁风险分析</h2>
+
+    <div class="sysi-row">
+      <button class="sysi-btn" id="sysi-analyze">开始分析</button>
+      <button class="sysi-btn alt" id="sysi-load-default">载入内置漏洞库</button>
+      <button class="sysi-btn alt" id="sysi-copy">复制结果</button>
+      <button class="sysi-btn warn" id="sysi-clear">清空</button>
+    </div>
+
+    <textarea id="sysi-input" rows="11" placeholder="请粘贴 systeminfo 完整输出（中英文都可）..."></textarea>
+    <details class="sysi-db-wrap">
+      <summary>高级：自定义漏洞库（支持你粘贴 MS/CVE/KB 列表）</summary>
+      <textarea id="sysi-db" rows="8" placeholder="每行至少包含：日期  漏洞编号  KB  影响产品  组件  严重性  说明（TAB 或多个空格分隔）"></textarea>
+      <div class="sysi-note">可直接粘贴你发的那类大表；不填则使用内置规则库。</div>
+    </details>
+
+    <div class="sysi-meta">
+      <span>识别补丁：<b id="sysi-kb-count">0</b></span>
+      <span>命中风险：<b id="sysi-risk-count">0</b></span>
+    </div>
+
+    <table class="sysi-table">
+      <thead>
+        <tr>
+          <th>漏洞编号</th>
+          <th>缺失补丁</th>
+          <th>影响产品</th>
+          <th>风险等级</th>
+          <th>风险说明</th>
+        </tr>
+      </thead>
+      <tbody id="sysi-result"></tbody>
+    </table>
+
+    <textarea id="sysi-output" rows="10" readonly placeholder="分析结果会显示在这里"></textarea>
+    <div class="sysi-note">提示：该工具用于快速筛查，不替代专业漏洞扫描。建议结合 Nessus/OpenVAS/WSUS 报告复核。</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const input = $("#sysi-input");
+  const dbInput = $("#sysi-db");
+  const output = $("#sysi-output");
+  const kbCount = $("#sysi-kb-count");
+  const riskCount = $("#sysi-risk-count");
+  const result = $("#sysi-result");
+
+  const BUILTIN_DB = `
+2017-03-14	MS17-017	KB4013081	Win7/Win8	GDIPaletteObjectsLocalPrivilegeEscalation	Critical	本地权限提升
+2017-03-14	MS17-010	KB4013389	Win7/Win2008/Win2003/WinXP	WindowsKernelModeDrivers	Critical	内核模式驱动漏洞
+2016-09-13	MS16-111	KB3186973	Win10 10586/Win8.1	kernelapi	Critical	内核 API 漏洞
+2016-06-14	MS16-075	KB3164038	Win2003/Win2008/Win7/Win8/Win2012	HotPotato	Critical	HotPotato 漏洞
+2016-03-08	MS16-034	KB3143145	Win2008/Win7/Win8/Win10/Win2012	KernelDriver	Critical	内核驱动漏洞
+2016-03-08	MS16-032	KB3143141	Win2008/Win7/Win8/Win10/Win2012	SecondaryLogonHandle	Critical	二次登录句柄漏洞
+2016-02-09	MS16-016	KB3136041	Win2008/WinVista/Win7	WebDAV	Critical	WebDAV 漏洞
+2015-10-13	MS15-097	KB3089656	Win8.1/Win2012	RemoteCodeExecution	Critical	远程代码执行
+2015-07-14	MS15-076	KB3067505	Win2003/Win2008/Win7/Win8/Win2012	RPC	Critical	RPC 漏洞
+2015-06-09	MS15-051	KB3057191	Win2003/Win2008/Win7/Win8/Win2012	WindowsKernelModeDrivers	Critical	内核模式驱动漏洞
+2015-03-10	MS15-010	KB3036220	Win2003/Win2008/Win7/Win8	KernelDriver	Critical	内核驱动漏洞
+2014-08-12	MS14-068	KB3011780	Win2003/Win2008/Win2012/Win7/Win8	DomainPrivilegeEscalation	Critical	域权限提升
+2014-07-08	MS14-066	KB2992611	Win7/Win8/Win8.1/2008R2/2012/2012R2	Schannel	Critical	远程代码执行
+2014-05-13	MS14-040	KB2975684	Win2003/Win2008/Win2012/Win7/Win8	AFDDriver	Critical	AFD 驱动漏洞
+2013-07-09	MS13-053	KB2850851	WinXP/WinVista/Win2003/Win2008/Win7	win32k.sys	Critical	win32k.sys 漏洞
+2012-03-13	MS12-020	KB2671387	Win2003/Win2008/Win7/WinXP	RDP	Critical	RDP 漏洞
+2011-10-11	MS11-080	KB2592799	Win2003/WinXP	AFD.sys	Critical	AFD.sys 漏洞
+2010-10-12	MS10-092	KB2305420	Win2008/Win7	TaskScheduler	Critical	任务计划程序漏洞
+2010-02-09	MS10-015	KB977165	Win2003/Win2008/Win7/WinXP	KiTrap0D	Critical	KiTrap0D 漏洞
+2008-10-23	MS08-067	KB958644	Win2000/WinXP/Win2003/WinVista/Win2008	RemoteCodeExecution	Critical	远程代码执行
+2008-10-14	MS08-066	KB956803	Win2000/WinXP/Win2003	AFD.sys	Critical	远程代码执行
+2006-08-09	MS06-040	KB921883	Win2003/WinXP/Win2000	RemoteCodeExecution	Critical	远程代码执行
+2005-08-09	MS05-039	KB899588	Win2000/WinXP/Win2003	PnPService	Critical	远程代码执行
+2003-06-11	MS03-026	KB823980	WinNT/Win2000/WinXP/Win2003	BufferOverrunInRPCInterface	Critical	远程代码执行
+2020-09-08	CVE-2020-1472	KB4571723,KB4571748,KB4577015	Win2008/Win2012/Win2016/Win2019/Win2022	Netlogon	Critical	ZeroLogon 域控提权
+2021-07-06	CVE-2021-34527	KB5004947,KB5005030,KB5005568	Win2012/Win2016/Win2019/Win2022/Win10/Win11	PrintSpooler	Critical	PrintNightmare 远程代码执行
+2022-08-09	CVE-2022-34713	KB5016616,KB5016627,KB5016688	Win10/Win11/Win2016/Win2019/Win2022	HTTP.sys	Critical	远程代码执行
+2024-06-11	CVE-2024-30080	KB5039211,KB5039227,KB5039239	Win10/Win11/Win2016/Win2019/Win2022	ServerService	Critical	远程代码执行
+`.trim();
+
+  const eolRules = [
+    { id: "EOL-WXP", level: "high", title: "Windows XP 已停止支持", affected: [/windows xp/i] },
+    { id: "EOL-2003", level: "high", title: "Windows Server 2003 已停止支持", affected: [/windows server 2003/i] },
+    { id: "EOL-2008", level: "high", title: "Windows Server 2008/R2 已停止支持", affected: [/windows server 2008/i] },
+    { id: "EOL-WIN7", level: "medium", title: "Windows 7 已停止常规支持", affected: [/windows 7/i] }
+  ];
+
+  const levelText = { critical: "高危", high: "高", medium: "中", low: "低" };
+  const levelRank = { critical: 4, high: 3, medium: 2, low: 1 };
+
+  const firstMatch = (text, regList) => {
+    for (const reg of regList) {
+      const m = text.match(reg);
+      if (m && m[1]) return m[1].trim();
+    }
+    return "";
+  };
+
+  const normalizeText = (text) => String(text || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\u3000/g, " ");
+
+  const parseIntSafe = (s) => {
+    if (!s) return null;
+    const n = Number(String(s).replace(/[^\d]/g, ""));
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const normalizeLevel = (s) => {
+    const low = String(s || "").toLowerCase();
+    if (/critical|严重|高危/.test(low)) return "critical";
+    if (/important|high|高/.test(low)) return "high";
+    if (/medium|moderate|中/.test(low)) return "medium";
+    return "low";
+  };
+
+  const extractStrictKBs = (text) => [...new Set((String(text || "").match(/\bKB\d{5,8}\b/gi) || []).map((x) => x.toUpperCase()))];
+  const extractLooseKBs = (text) => {
+    const tokens = String(text || "").match(/\b(?:KB)?\d{6,8}\b/gi) || [];
+    const out = new Set();
+    tokens.forEach((raw) => {
+      const up = raw.toUpperCase();
+      if (up.startsWith("KB")) {
+        out.add(up);
+        return;
+      }
+      if (/^(19|20)\d{6}$/.test(up)) return;
+      out.add("KB" + up);
+    });
+    return [...out];
+  };
+
+  const parseSystemInfo = (rawText) => {
+    const text = normalizeText(rawText);
+    const osName = firstMatch(text, [
+      /OS Name:\s*(.+)/i,
+      /OS 名称:\s*(.+)/i
+    ]);
+    const osVersion = firstMatch(text, [
+      /OS Version:\s*(.+)/i,
+      /OS 版本:\s*(.+)/i
+    ]);
+    const systemType = firstMatch(text, [
+      /System Type:\s*(.+)/i,
+      /系统类型:\s*(.+)/i
+    ]);
+
+    const hotfixCountText = firstMatch(text, [
+      /Hotfix\(s\):\s*(\d+)\s*Hotfix\(s\)\s*Installed/i,
+      /Hotfix\(s\):\s*(\d+)/i,
+      /热修复[^:：]*[:：]\s*(\d+)/i,
+      /补丁[^:：]*[:：]\s*(\d+)/i
+    ]);
+
+    const hotfixCount = parseIntSafe(hotfixCountText);
+    const kbList = extractStrictKBs(text);
+    const osLower = (osName + " " + osVersion).toLowerCase();
+    const modern = /(windows server 2016|windows server 2019|windows server 2022|windows 10|windows 11)/i.test(osLower);
+
+    return {
+      osName,
+      osVersion,
+      systemType,
+      kbList,
+      hotfixCount,
+      osLower,
+      modern
+    };
+  };
+
+  const splitDbColumns = (line) => {
+    let cols = line.split(/\t+/).map((x) => x.trim()).filter(Boolean);
+    if (cols.length < 4) cols = line.split(/\s{2,}/).map((x) => x.trim()).filter(Boolean);
+    return cols;
+  };
+
+  const parseDbLine = (line) => {
+    const raw = String(line || "").trim();
+    if (!raw || raw.startsWith("#")) return null;
+    const cols = splitDbColumns(raw);
+    if (cols.length < 2) return null;
+
+    const idIdx = cols.findIndex((c) => /^(MS\d{2}-\d{3}|CVE-\d{4}-\d{4,})$/i.test(c));
+    if (idIdx < 0) return null;
+
+    const id = cols[idIdx].toUpperCase();
+    const date = idIdx > 0 ? cols[0] : "";
+    const kbField = cols[idIdx + 1] || "";
+    const product = cols[idIdx + 2] || "";
+    const component = cols[idIdx + 3] || "";
+    const severity = cols[idIdx + 4] || "";
+    const impact = cols[idIdx + 5] || "";
+    const superseded = cols[idIdx + 6] || "";
+
+    return {
+      date,
+      id,
+      cve: id.startsWith("CVE-") ? id : "",
+      kbField,
+      product,
+      component,
+      severity,
+      level: normalizeLevel(severity),
+      impact,
+      superseded,
+      raw
+    };
+  };
+
+  const parseDbText = (text) => normalizeText(text).split("\n").map(parseDbLine).filter(Boolean);
+
+  const buildOsTags = (parsed) => {
+    const tags = new Set();
+    const full = `${parsed.osName} ${parsed.osVersion}`.toLowerCase();
+    if (/windows xp|winxp/.test(full)) tags.add("winxp");
+    if (/windows vista|winvista/.test(full)) tags.add("winvista");
+    if (/windows 7|win7/.test(full)) tags.add("win7");
+    if (/windows 8\.1|win8\.1/.test(full)) tags.add("win81");
+    if (/windows 8(?!\.)|win8(?!\.)/.test(full)) tags.add("win8");
+    if (/windows 10|win10/.test(full)) tags.add("win10");
+    if (/windows 11|win11/.test(full)) tags.add("win11");
+    if (/windows server 2003|server 2003/.test(full)) tags.add("win2003");
+    if (/windows server 2008 r2|server 2008 r2|2008r2/.test(full)) tags.add("win2008r2");
+    if (/windows server 2008|server 2008/.test(full)) tags.add("win2008");
+    if (/windows server 2012 r2|server 2012 r2|2012r2/.test(full)) tags.add("win2012r2");
+    if (/windows server 2012|server 2012/.test(full)) tags.add("win2012");
+    if (/windows server 2016|server 2016/.test(full)) tags.add("win2016");
+    if (/windows server 2019|server 2019/.test(full) || /build\s*17763/.test(full)) tags.add("win2019");
+    if (/windows server 2022|server 2022/.test(full)) tags.add("win2022");
+    if (/22h2/.test(full)) tags.add("22h2");
+    if (/21h2/.test(full)) tags.add("21h2");
+    return tags;
+  };
+
+  const matchAffectedProduct = (product, osTags) => {
+    const p = String(product || "").toLowerCase();
+    if (!p) return true;
+
+    const mapping = [
+      [/winxp|windows xp/, "winxp"],
+      [/winvista|vista/, "winvista"],
+      [/win7|windows 7/, "win7"],
+      [/win8\.1|windows 8\.1/, "win81"],
+      [/win8(?!\.)|windows 8(?!\.)/, "win8"],
+      [/win10|windows 10/, "win10"],
+      [/win11|windows 11/, "win11"],
+      [/win2003|server ?2003/, "win2003"],
+      [/win2008r2|server ?2008 ?r2|2008r2/, "win2008r2"],
+      [/win2008|server ?2008/, "win2008"],
+      [/win2012r2|server ?2012 ?r2|2012r2/, "win2012r2"],
+      [/win2012|server ?2012/, "win2012"],
+      [/win2016|server ?2016/, "win2016"],
+      [/win2019|server ?2019/, "win2019"],
+      [/win2022|server ?2022/, "win2022"]
+    ];
+
+    let hasKnown = false;
+    for (const [reg, tag] of mapping) {
+      if (reg.test(p)) {
+        hasKnown = true;
+        if (osTags.has(tag)) return true;
+      }
+    }
+
+    if (/windows 10 version 22h2|win10.*22h2/.test(p)) {
+      hasKnown = true;
+      if (osTags.has("win10") && osTags.has("22h2")) return true;
+    }
+
+    if (/windows 10 version 21h2|win10.*21h2/.test(p)) {
+      hasKnown = true;
+      if (osTags.has("win10") && osTags.has("21h2")) return true;
+    }
+
+    return !hasKnown ? false : false;
+  };
+
+  const sortHits = (hits) => hits.sort((a, b) => {
+    const lv = (levelRank[b.level] || 0) - (levelRank[a.level] || 0);
+    if (lv !== 0) return lv;
+    return String(b.date || "").localeCompare(String(a.date || ""));
+  });
+
+  const renderRows = (rows) => {
+    result.innerHTML = "";
+    if (!rows.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = "<td>未命中</td><td>-</td><td>-</td><td>-</td><td>未发现规则库中的高风险补丁缺失项</td>";
+      result.appendChild(tr);
+      return;
+    }
+    rows.forEach((row) => {
+      const tr = document.createElement("tr");
+      const kbText = row.missingKb || "-";
+      tr.innerHTML = `
+        <td>${row.id}<br><small>${row.cve || "-"}</small></td>
+        <td>${kbText}</td>
+        <td>${row.product || "-"}</td>
+        <td>${levelText[row.level] || row.level}</td>
+        <td>${row.desc}</td>
+      `;
+      result.appendChild(tr);
+    });
+  };
+
+  const buildSummary = (parsed, rows, stats) => {
+    const lines = [];
+    lines.push("=== systeminfo 补丁风险分析结果 ===");
+    lines.push(`系统名称: ${parsed.osName || "未识别"}`);
+    lines.push(`系统版本: ${parsed.osVersion || "未识别"}`);
+    lines.push(`系统类型: ${parsed.systemType || "未识别"}`);
+    lines.push(`漏洞库记录数: ${stats.totalDbRows}`);
+    lines.push(`适配当前系统记录: ${stats.matchedRows}`);
+    lines.push(`Hotfix 计数: ${parsed.hotfixCount === null ? "未识别" : parsed.hotfixCount}`);
+    lines.push(`识别到补丁数量: ${parsed.kbList.length}`);
+    lines.push(`命中风险数量: ${rows.length}`);
+    lines.push("");
+    if (!rows.length) {
+      lines.push("未命中当前规则库中的高风险补丁缺失项。");
+      lines.push("建议继续使用专业扫描器和补丁基线做深度核查。");
+      return lines.join("\n");
+    }
+    lines.push("命中风险项:");
+    rows.forEach((row, idx) => {
+      lines.push(`${idx + 1}. ${row.id} (${row.cve || "-"}) [${levelText[row.level] || row.level}]`);
+      lines.push(`   - ${row.desc}`);
+      lines.push(`   - 缺失补丁: ${row.missingKb || "漏洞库未提供明确 KB"}`);
+    });
+    lines.push("");
+    lines.push("建议:");
+    lines.push("1. 优先修复高危项（critical/high），并确认是否关闭或限制 SMBv1。");
+    lines.push("2. 对 0 补丁或补丁极少的系统，先排除输出不完整，再执行 WSUS/离线补丁核查。");
+    lines.push("3. 结合资产暴露面（445/3389/打印服务/域控角色）评估可利用风险。");
+    return lines.join("\n");
+  };
+
+  const analyze = () => {
+    const text = input.value.trim();
+    if (!text) return;
+
+    const parsed = parseSystemInfo(text);
+    const kbSet = new Set(parsed.kbList);
+    const hitMap = new Map();
+    const osTags = buildOsTags(parsed);
+    const dbText = dbInput.value.trim() || BUILTIN_DB;
+    const dbRows = parseDbText(dbText);
+    let matchedRows = 0;
+
+    const addHit = (item) => {
+      if (!item || !item.id) return;
+      if (!hitMap.has(item.id)) hitMap.set(item.id, item);
+    };
+
+    if (!parsed.osName) {
+      addHit({
+        id: "PARSE-OS",
+        cve: "",
+        level: "medium",
+        patchStatus: "系统字段未识别",
+        desc: "未解析到 OS Name/OS 名称，建议粘贴完整 systeminfo 原始输出。"
+      });
+    }
+
+    dbRows.forEach((row) => {
+      if (!matchAffectedProduct(row.product, osTags)) return;
+      matchedRows++;
+      const mappedKb = extractLooseKBs(`${row.kbField} ${row.superseded}`);
+      if (!mappedKb.length) {
+        if (row.level === "critical" || row.level === "high") {
+          addHit({
+            id: row.id,
+            cve: row.cve,
+            date: row.date,
+            product: row.product,
+            level: row.level,
+            missingKb: "",
+            desc: `${row.impact || "漏洞风险"}（漏洞库未提供明确 KB，需人工复核）`
+          });
+        }
+        return;
+      }
+      const patched = mappedKb.some((kb) => kbSet.has(kb));
+      if (patched) return;
+      addHit({
+        id: row.id,
+        cve: row.cve,
+        date: row.date,
+        product: row.product,
+        level: row.level,
+        missingKb: mappedKb.join("/"),
+        desc: `${row.impact || row.component || "漏洞风险"}；影响组件：${row.component || "未知"}`
+      });
+    });
+
+    eolRules.forEach((rule) => {
+      const matched = rule.affected.some((reg) => reg.test(parsed.osLower));
+      if (!matched) return;
+      addHit({
+        id: rule.id,
+        cve: "",
+        date: "",
+        product: parsed.osName || "-",
+        level: rule.level,
+        missingKb: "",
+        desc: `${rule.title}，建议升级或隔离。`
+      });
+    });
+
+    if (parsed.hotfixCount === 0 || parsed.kbList.length === 0) {
+      addHit({
+        id: "PATCH-EMPTY",
+        cve: "",
+        date: "",
+        product: parsed.osName || "-",
+        level: "critical",
+        missingKb: "系统补丁清单为空",
+        desc: "该主机处于明显高风险状态（或输出不完整），应优先复核补丁基线。"
+      });
+    }
+
+    if (parsed.modern && parsed.kbList.length > 0 && parsed.kbList.length < 5) {
+      addHit({
+        id: "PATCH-LOW",
+        cve: "",
+        date: "",
+        product: parsed.osName || "-",
+        level: "high",
+        missingKb: `补丁数量偏少（${parsed.kbList.length}）`,
+        desc: "现代系统补丁数量异常偏少，存在关键安全更新缺失风险。"
+      });
+    }
+
+    if (/windows server 2019/i.test(parsed.osLower) && (parsed.hotfixCount === 0 || parsed.kbList.length === 0)) {
+      addHit({
+        id: "WIN2019-BASELINE",
+        cve: "CVE-2020-1472/CVE-2021-34527",
+        date: "",
+        product: "Windows Server 2019",
+        level: "critical",
+        missingKb: "基线补丁缺失",
+        desc: "Server 2019 在无补丁基线下常见高危利用面包括 Netlogon 与打印服务链路。"
+      });
+    }
+
+    const hits = sortHits([...hitMap.values()]).slice(0, 300);
+    kbCount.textContent = String(parsed.kbList.length);
+    riskCount.textContent = String(hits.length);
+    renderRows(hits);
+    output.value = buildSummary(parsed, hits, {
+      totalDbRows: dbRows.length,
+      matchedRows
+    });
+  };
+
+  const copyResult = async () => {
+    const text = output.value.trim();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      output.select();
+      document.execCommand("copy");
+    }
+  };
+
+  $("#sysi-analyze").addEventListener("click", analyze);
+  $("#sysi-load-default").addEventListener("click", () => {
+    dbInput.value = BUILTIN_DB;
+  });
+  $("#sysi-copy").addEventListener("click", copyResult);
+  $("#sysi-clear").addEventListener("click", () => {
+    input.value = "";
+    output.value = "";
+    kbCount.textContent = "0";
+    riskCount.textContent = "0";
+    result.innerHTML = "";
+  });
+
+  if (!dbInput.value.trim()) dbInput.value = BUILTIN_DB;
+})();
+</script>
+
+</div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By Kenny</span></div><div class="footer_custom_text"><div class="footer-links"><a class="footer-link" href="https://qm.qq.com/q/QNgesnj1aU" target="_blank" rel="noopener noreferrer">QQ群：点击加群</a></div></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"></div><div id="rightside-config-show"><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><div class="js-pjax"></div><script>
+(() => {
+  const imageSelectors = "#article-container img, #recent-posts img, .article-sort-item-img img";
+  const addFallback = (img) => {
+    if (!img || img.dataset.ipFallbackBound === "1") return;
+    img.dataset.ipFallbackBound = "1";
+    img.addEventListener("error", () => {
+      const original = img.getAttribute("src") || "";
+      if (!original) return;
+      if (img.dataset.ipFallbackDone === "1") return;
+      img.dataset.ipFallbackDone = "1";
+      if (/\.webp(\?.*)?$/i.test(original)) {
+        img.onerror = () => {
+          img.onerror = null;
+          img.src = original.replace(/\.webp(\?.*)?$/i, ".jpg$1");
+          img.onerror = () => {
+            img.onerror = null;
+            img.src = "/img/404.jpg";
+          };
+        };
+        img.src = original.replace(/\.webp(\?.*)?$/i, ".png$1");
+        return;
+      }
+      img.onerror = null;
+      img.src = "/img/404.jpg";
+    });
+  };
+  const bindAll = () => document.querySelectorAll(imageSelectors).forEach(addFallback);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindAll);
+  } else {
+    bindAll();
+  }
+  document.addEventListener("pjax:complete", bindAll);
+})();
+</script>
+<script defer src="/js/anti-scrape.js?v=20260221a"></script></div></body></html>
