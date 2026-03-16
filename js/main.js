@@ -705,10 +705,25 @@ document.addEventListener('DOMContentLoaded', () => {
         tocEle.style.transformOrigin = `right ${tocEleHeight - tocEleBottom - btData.height / 2}px`
       }
 
+      const isOpening = !tocEle.classList.contains('open')
       tocEle.classList.toggle('open')
       tocEle.addEventListener('transitionend', () => {
         tocEle.style.cssText = ''
       }, { once: true })
+
+      // 添加点击外部关闭功能
+      if (isOpening) {
+        const closeToc = (e) => {
+          if (!tocEle.contains(e.target) && !item.contains(e.target)) {
+            tocEle.classList.remove('open')
+            document.removeEventListener('click', closeToc)
+          }
+        }
+        // 延迟添加监听器，避免立即触发
+        setTimeout(() => {
+          document.addEventListener('click', closeToc)
+        }, 100)
+      }
     },
     'chat-btn': () => { // Show chat
       window.chatBtnFn()
