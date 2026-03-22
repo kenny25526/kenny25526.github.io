@@ -530,6 +530,11 @@ document.addEventListener('DOMContentLoaded', () => {
         btf.scrollToDest(btf.getEleTop(document.getElementById(decodeURI(target.getAttribute('href')).replace('#', ''))), 300)
         if (window.innerWidth < 900) {
           $cardTocLayout.classList.remove('open')
+          // 移除遮罩层
+          const existingMask = document.getElementById('toc-mask')
+          if (existingMask) {
+            existingMask.remove()
+          }
         }
       }
 
@@ -695,6 +700,9 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     'mobile-toc-button': (p, item) => { // Show mobile toc
       const tocEle = document.getElementById('card-toc')
+      const isOpening = !tocEle.classList.contains('open')
+      const existingMask = document.getElementById('toc-mask')
+
       tocEle.style.transition = 'transform 0.3s ease-in-out'
 
       const tocEleHeight = tocEle.clientHeight
@@ -705,7 +713,6 @@ document.addEventListener('DOMContentLoaded', () => {
         tocEle.style.transformOrigin = `right ${tocEleHeight - tocEleBottom - btData.height / 2}px`
       }
 
-      const isOpening = !tocEle.classList.contains('open')
       tocEle.classList.toggle('open')
       tocEle.addEventListener('transitionend', () => {
         tocEle.style.cssText = ''
@@ -713,16 +720,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 添加点击外部关闭功能
       if (isOpening) {
-        const closeToc = (e) => {
-          if (!tocEle.contains(e.target) && !item.contains(e.target)) {
-            tocEle.classList.remove('open')
-            document.removeEventListener('click', closeToc)
-          }
+        // 创建遮罩层
+        const mask = document.createElement('div')
+        mask.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99; background: transparent;'
+        mask.id = 'toc-mask'
+
+        const closeToc = () => {
+          tocEle.classList.remove('open')
+          mask.remove()
         }
-        // 延迟添加监听器，避免立即触发
-        setTimeout(() => {
-          document.addEventListener('click', closeToc)
-        }, 100)
+
+        mask.addEventListener('click', closeToc)
+        document.body.appendChild(mask)
+      } else if (existingMask) {
+        // 关闭时移除遮罩层
+        existingMask.remove()
       }
     },
     'chat-btn': () => { // Show chat
