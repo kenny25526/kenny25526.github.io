@@ -720,17 +720,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 添加点击外部关闭功能
       if (isOpening) {
-        // 创建遮罩层
+        // 创建遮罩层，z-index设置为98，确保在目录(100)和rightside按钮(90)之间
         const mask = document.createElement('div')
-        mask.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99; background: transparent;'
+        mask.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 98; background: transparent; cursor: pointer;'
         mask.id = 'toc-mask'
 
-        const closeToc = () => {
+        const closeToc = (e) => {
+          e.stopPropagation()
           tocEle.classList.remove('open')
           mask.remove()
         }
 
-        mask.addEventListener('click', closeToc)
+        mask.addEventListener('click', closeToc, { capture: true })
+        mask.addEventListener('touchstart', closeToc, { capture: true, passive: false })
         document.body.appendChild(mask)
       } else if (existingMask) {
         // 关闭时移除遮罩层
